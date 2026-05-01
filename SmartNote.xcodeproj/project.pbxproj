@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -259,7 +259,6 @@
 			);
 			mainGroup = 4170B0FF628D4B3A3AAF700C;
 			minimizedProjectReferenceProxies = 1;
-			preferredProjectObjectVersion = 54;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -387,15 +386,16 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = SmartNote/Resources/SmartNote.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 40;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "智学笔记";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.smartnote.app;
+				MARKETING_VERSION = 1.3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.smartnote;
 				PRODUCT_NAME = SmartNote;
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -408,15 +408,16 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = SmartNote/Resources/SmartNote.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 40;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "智学笔记";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.smartnote.app;
+				MARKETING_VERSION = 1.3.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.smartnote;
 				PRODUCT_NAME = SmartNote;
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
