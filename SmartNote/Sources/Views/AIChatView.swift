@@ -6,6 +6,8 @@ struct AIChatView: View {
     @State private var messages: [ChatMessage] = []
     @State private var isSending = false
     @State private var showSettings = false
+    @State private var currentStreamingID: UUID?
+    @State private var streamingContent = ""
     
     var body: some View {
         VStack(spacing: 0) {
@@ -54,6 +56,16 @@ struct AIChatView: View {
             }
             
             Spacer()
+            
+            if isSending {
+                Button {
+                    cancelCurrentRequest()
+                } label: {
+                    Label("取消", systemImage: "xmark.circle.fill")
+                }
+                .buttonStyle(.bordered)
+                .tint(.red)
+            }
             
             if !appState.llmConfiguration.enabled {
                 Button {
@@ -121,6 +133,8 @@ struct AIChatView: View {
         let question = userMessage
         userMessage = ""
         isSending = true
+        currentStreamingID = systemMsg.id
+        streamingContent = ""
         
         Task {
             do {
@@ -128,13 +142,23 @@ struct AIChatView: View {
                 你是一个专业的学习助手。请用中文回答用户的问题。如果需要，可以结合学习资料中的知识点进行解答。
                 """
                 
-                let result = try await appState.llmService.sendMessage(system: prompt, user: question)
+                try await appState.llmService.sendMessageStreaming(system: prompt, user: question) { chunk in
+                    Task { @MainActor in
+                        self.streamingContent += chunk
+                        if let index = self.messages.firstIndex(where: { $0.id == self.currentStreamingID }) {
+                            self.messages[index] = ChatMessage(id: self.currentStreamingID!, role: .system, content: self.streamingContent)
+                        }
+                    }
+                }
                 
                 await MainActor.run {
-                    if let index = messages.firstIndex(where: { $0.id == systemMsg.id }) {
-                        messages[index] = ChatMessage(id: systemMsg.id, role: .system, content: result)
-                    }
                     isSending = false
+                    currentStreamingID = nil
+                }
+            } catch is CancellationError {
+                await MainActor.run {
+                    isSending = false
+                    currentStreamingID = nil
                 }
             } catch {
                 await MainActor.run {
@@ -142,9 +166,14 @@ struct AIChatView: View {
                         messages[index] = ChatMessage(id: systemMsg.id, role: .system, content: "抱歉，发生错误: \(error.localizedDescription)")
                     }
                     isSending = false
+                    currentStreamingID = nil
                 }
             }
         }
+    }
+    
+    private func cancelCurrentRequest() {
+        appState.llmService.cancelCurrentRequest()
     }
 }
 

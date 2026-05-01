@@ -216,6 +216,8 @@ struct AIAnalysisSheet: View {
     @State private var analysisType: AIAnalysisType = .keyPoints
     @State private var showSavePanel = false
     @State private var showMarkdownPreview = true
+    @State private var streamingText = ""
+    @State private var isCancelled = false
     
     enum AIAnalysisType: String, CaseIterable {
         case keyPoints = "核心考点"
@@ -230,6 +232,7 @@ struct AIAnalysisSheet: View {
                     .font(.headline)
                 Spacer()
                 Button("关闭") {
+                    cancelAnalysis()
                     dismiss()
                 }
             }
@@ -253,20 +256,33 @@ struct AIAnalysisSheet: View {
                     }
                     .pickerStyle(.segmented)
                     
-                    Button {
-                        performAIAnalysis()
-                    } label: {
-                        if appState.isAnalyzingWithAI {
-                            HStack {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                                Text("分析中...")
+                    HStack {
+                        Button {
+                            performAIAnalysis()
+                        } label: {
+                            if appState.isAnalyzingWithAI {
+                                HStack {
+                                    ProgressView()
+                                        .scaleEffect(0.8)
+                                    Text("分析中...")
+                                }
+                            } else {
+                                Label("开始 AI 分析", systemImage: "sparkles")
                             }
-                        } else {
-                            Label("开始 AI 分析", systemImage: "sparkles")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(appState.isAnalyzingWithAI)
+                        
+                        if appState.isAnalyzingWithAI {
+                            Button {
+                                cancelAnalysis()
+                            } label: {
+                                Label("取消", systemImage: "xmark.circle.fill")
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(.red)
                         }
                     }
-                    .buttonStyle(.borderedProminent)
                     .disabled(appState.isAnalyzingWithAI || !appState.llmConfiguration.enabled)
                     
                     if !appState.llmConfiguration.enabled {
@@ -328,26 +344,55 @@ struct AIAnalysisSheet: View {
         let text = material.extractedText ?? material.content
         guard !text.isEmpty else { return }
         
+        isCancelled = false
+        streamingText = ""
+        
+        let prompt: String
         switch analysisType {
         case .keyPoints:
-            appState.analyzeWithAI(for: material)
+            prompt = """
+            你是一个专业的学习助手。请分析以下学习资料，提取：
+            1. 核心考点（最重要的知识点）
+            2. 关键概念和定义
+            3. 需要记忆的重点内容
+            4. 可能的出题方向
+            
+            请用中文回复，格式清晰，使用 Markdown 格式。
+            """
         case .summary:
-            appState.generateSummaryWithAI(for: material)
+            prompt = "请用简洁的中文总结以下内容的核心要点："
         case .questions:
-            Task {
-                do {
-                    let result = try await appState.llmService.generateQuestions(text)
-                    await MainActor.run {
-                        appState.aiAnalysisResult = result
+            prompt = "基于以下学习资料，生成 5 道复习思考题或选择题："
+        }
+        
+        Task {
+            do {
+                try await appState.llmService.sendMessageStreaming(system: prompt, user: text) { chunk in
+                    Task { @MainActor in
+                        if !self.isCancelled {
+                            self.streamingText += chunk
+                            appState.aiAnalysisResult = self.streamingText
+                        }
                     }
-                } catch {
-                    await MainActor.run {
+                }
+            } catch is CancellationError {
+                await MainActor.run {
+                    // User cancelled, keep the partial result
+                }
+            } catch {
+                await MainActor.run {
+                    if !self.isCancelled {
                         appState.errorMessage = error.localizedDescription
                         appState.showError = true
                     }
                 }
             }
         }
+    }
+    
+    private func cancelAnalysis() {
+        isCancelled = true
+        appState.llmService.cancelCurrentRequest()
     }
     
     private func saveAsPDF() {

@@ -2,6 +2,7 @@ import Foundation
 
 class LLMService {
     private var configuration: LLMConfiguration
+    private var currentTask: Task<String, Error>?
     
     init(configuration: LLMConfiguration = LLMConfiguration()) {
         self.configuration = configuration
@@ -13,6 +14,11 @@ class LLMService {
     
     func isConfigured() -> Bool {
         return configuration.enabled && !configuration.modelID.isEmpty
+    }
+    
+    func cancelCurrentRequest() {
+        currentTask?.cancel()
+        currentTask = nil
     }
     
     func analyzeText(_ text: String, prompt: String? = nil) async throws -> String {
@@ -27,7 +33,7 @@ class LLMService {
         3. 需要记忆的重点内容
         4. 可能的出题方向
         
-        请用中文回复，格式清晰。
+        请用中文回复，格式清晰，使用 Markdown 格式。
         """
         
         return try await sendChatMessage(system: systemPrompt, user: text)
@@ -67,6 +73,21 @@ class LLMService {
         }
         
         return try await sendChatMessage(system: system, user: user)
+    }
+    
+    func sendMessageStreaming(system: String, user: String, onChunk: @escaping (String) -> Void) async throws {
+        guard isConfigured() else {
+            throw LLMError.notConfigured
+        }
+        
+        switch configuration.provider {
+        case .lmstudio:
+            try await streamLMStudio(system: system, user: user, onChunk: onChunk)
+        case .openai:
+            try await streamOpenAI(system: system, user: user, onChunk: onChunk)
+        case .anthropic:
+            try await streamAnthropic(system: system, user: user, onChunk: onChunk)
+        }
     }
     
     private func sendChatMessage(system: String, user: String) async throws -> String {
@@ -122,6 +143,175 @@ class LLMService {
         }
         
         return content
+    }
+    
+    private func streamLMStudio(system: String, user: String, onChunk: @escaping (String) -> Void) async throws {
+        let url = URL(string: "\(configuration.baseURL)/v1/chat/completions")!
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        if !configuration.apiKey.isEmpty {
+            request.setValue("Bearer \(configuration.apiKey)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let payload: [String: Any] = [
+            "model": configuration.modelID,
+            "messages": [
+                ["role": "system", "content": system],
+                ["role": "user", "content": user]
+            ],
+            "temperature": configuration.temperature,
+            "max_tokens": configuration.maxTokens,
+            "stream": true
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        
+        let (bytes, response) = try await URLSession.shared.bytes(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw LLMError.invalidResponse
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw LLMError.serverError(statusCode: httpResponse.statusCode)
+        }
+        
+        var buffer = ""
+        for try await line in bytes.lines {
+            if line.hasPrefix("data: ") {
+                let dataStr = String(line.dropFirst(6))
+                
+                if dataStr == "[DONE]" {
+                    break
+                }
+                
+                if let data = dataStr.data(using: .utf8),
+                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let choices = json["choices"] as? [[String: Any]],
+                   let delta = choices.first?["delta"] as? [String: Any],
+                   let content = delta["content"] as? String {
+                    buffer += content
+                    onChunk(content)
+                }
+            }
+            
+            try Task.checkCancellation()
+        }
+        
+        if buffer.isEmpty {
+            throw LLMError.parseError
+        }
+    }
+    
+    private func streamOpenAI(system: String, user: String, onChunk: @escaping (String) -> Void) async throws {
+        let url = URL(string: "\(configuration.baseURL)/chat/completions")!
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        if !configuration.apiKey.isEmpty {
+            request.setValue("Bearer \(configuration.apiKey)", forHTTPHeaderField: "Authorization")
+        }
+        
+        let payload: [String: Any] = [
+            "model": configuration.modelID,
+            "messages": [
+                ["role": "system", "content": system],
+                ["role": "user", "content": user]
+            ],
+            "temperature": configuration.temperature,
+            "max_tokens": configuration.maxTokens,
+            "stream": true
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        
+        let (bytes, response) = try await URLSession.shared.bytes(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw LLMError.invalidResponse
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw LLMError.serverError(statusCode: httpResponse.statusCode)
+        }
+        
+        var buffer = ""
+        for try await line in bytes.lines {
+            if line.hasPrefix("data: ") {
+                let dataStr = String(line.dropFirst(6))
+                
+                if dataStr == "[DONE]" {
+                    break
+                }
+                
+                if let data = dataStr.data(using: .utf8),
+                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let choices = json["choices"] as? [[String: Any]],
+                   let delta = choices.first?["delta"] as? [String: Any],
+                   let content = delta["content"] as? String {
+                    buffer += content
+                    onChunk(content)
+                }
+            }
+            
+            try Task.checkCancellation()
+        }
+        
+        if buffer.isEmpty {
+            throw LLMError.parseError
+        }
+    }
+    
+    private func streamAnthropic(system: String, user: String, onChunk: @escaping (String) -> Void) async throws {
+        let url = URL(string: "\(configuration.baseURL)/v1/messages")!
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(configuration.apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        
+        let combinedText = "System: \(system)\n\nUser: \(user)"
+        
+        let payload: [String: Any] = [
+            "model": configuration.modelID,
+            "messages": [
+                ["role": "user", "content": combinedText]
+            ],
+            "temperature": configuration.temperature,
+            "max_tokens": configuration.maxTokens,
+            "stream": true
+        ]
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: payload)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw LLMError.invalidResponse
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw LLMError.serverError(statusCode: httpResponse.statusCode)
+        }
+        
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let content = json["content"] as? [[String: Any]],
+              let firstBlock = content.first,
+              let text = firstBlock["text"] as? String else {
+            throw LLMError.parseError
+        }
+        
+        for char in text {
+            try Task.checkCancellation()
+            onChunk(String(char))
+            try await Task.sleep(nanoseconds: 10_000_000)
+        }
     }
     
     private func callOpenAI(system: String, user: String) async throws -> String {
@@ -235,6 +425,7 @@ enum LLMError: LocalizedError {
     case invalidResponse
     case serverError(statusCode: Int)
     case parseError
+    case cancelled
     
     var errorDescription: String? {
         switch self {
@@ -246,6 +437,8 @@ enum LLMError: LocalizedError {
             return "服务器错误 (状态码: \(statusCode))"
         case .parseError:
             return "解析响应失败"
+        case .cancelled:
+            return "请求已取消"
         }
     }
 }
