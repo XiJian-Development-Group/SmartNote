@@ -36,9 +36,9 @@ struct SmartGradingView: View {
             
             if !gradingResult.isEmpty {
                 resultView
-            } else {
-                actionButtons
+                Divider()
             }
+            actionButtons
         }
         .sheet(isPresented: $showMaterialPicker) {
             MaterialPickerSheet(selectedMaterials: $selectedMaterials)
