@@ -216,6 +216,14 @@ struct SmartGradingView: View {
                         Label("生成同类", systemImage: "plus.circle")
                     }
                     .buttonStyle(.bordered)
+                    
+                    Button {
+                        resetGrading()
+                    } label: {
+                        Label("重新开始", systemImage: "arrow.counterclockwise")
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.orange)
                 }
             }
         }
@@ -422,6 +430,16 @@ struct SmartGradingView: View {
         default:
             return nil
         }
+    }
+    
+    private func resetGrading() {
+        selectedFiles.removeAll()
+        selectedMaterials.removeAll()
+        gradingResult = ""
+        extractedTexts.removeAll()
+        explanationResult = ""
+        generatedQuestions = ""
+        analysisContent = ""
     }
     
     private func organizeWrongQuestions() {
