@@ -1,0 +1,65 @@
+name: SmartNote
+options:
+  bundleIdPrefix: com.smartnote
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_HARDENED_RUNTIME: YES
+    COMBINE_HIDPI_IMAGES: YES
+
+targets:
+  SmartNote:
+    type: application
+    platform: macOS
+    sources:
+      - path: SmartNote/Sources
+      - path: SmartNote/Resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.smartnote.app
+        INFOPLIST_FILE: SmartNote/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: SmartNote/Resources/SmartNote.entitlements
+        PRODUCT_NAME: SmartNote
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_EMIT_LOC_STRINGS: YES
+        GENERATE_INFOPLIST_FILE: NO
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+    info:
+      path: SmartNote/Resources/Info.plist
+      properties:
+        CFBundleName: SmartNote
+        CFBundleDisplayName: 智学笔记
+        CFBundleIdentifier: com.smartnote.app
+        CFBundleVersion: "1"
+        CFBundleShortVersionString: "1.0.0"
+        CFBundlePackageType: APPL
+        CFBundleExecutable: SmartNote
+        LSMinimumSystemVersion: "13.0"
+        LSApplicationCategoryType: public.app-category.education
+        NSHumanReadableCopyright: "Copyright © 2024 SmartNote. All rights reserved."
+        NSPrincipalClass: NSApplication
+    entitlements:
+      path: SmartNote/Resources/SmartNote.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+        com.apple.security.files.user-selected.read-write: true
+        com.apple.security.personal-information.calendars: true
+        com.apple.security.personal-information.reminders: true
+
+schemes:
+  SmartNote:
+    build:
+      targets:
+        SmartNote: all
+    run:
+      config: Debug
+    archive:
+      config: Release
