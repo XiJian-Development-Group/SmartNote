@@ -2,7 +2,6 @@ import SwiftUI
 
 struct AIChatView: View {
     @EnvironmentObject var appState: AppState
-    @StateObject private var speechService = SpeechService.shared
     @State private var userMessage = ""
     @State private var messages: [ChatMessage] = []
     @State private var isSending = false
@@ -91,19 +90,19 @@ struct AIChatView: View {
     
     private var speechControls: some View {
         HStack(spacing: 8) {
-            if speechService.isSpeaking {
+            if appState.speechService.isSpeaking {
                 Button {
-                    speechService.togglePause()
+                    appState.speechService.togglePause()
                 } label: {
                     Label(
-                        speechService.isPaused ? "继续" : "暂停",
-                        systemImage: speechService.isPaused ? "play.fill" : "pause.fill"
+                        appState.speechService.isPaused ? "继续" : "暂停",
+                        systemImage: appState.speechService.isPaused ? "play.fill" : "pause.fill"
                     )
                 }
                 .buttonStyle(.bordered)
                 
                 Button {
-                    speechService.stop()
+                    appState.speechService.stop()
                 } label: {
                     Label("停止", systemImage: "stop.fill")
                 }
@@ -112,9 +111,9 @@ struct AIChatView: View {
             }
             
             Menu {
-                ForEach(speechService.getChineseVoices(), id: \.self) { voice in
-                    Button(speechService.getVoiceDisplayName(voice)) {
-                        speechService.setVoice(voice)
+                ForEach(appState.speechService.getChineseVoices(), id: \.self) { voice in
+                    Button(appState.speechService.getVoiceDisplayName(voice)) {
+                        appState.speechService.setVoice(voice)
                     }
                 }
             } label: {
@@ -192,7 +191,7 @@ struct AIChatView: View {
                     isSending = false
                     currentStreamingID = nil
                     if !streamingContent.isEmpty {
-                        speechService.speak(streamingContent)
+                        appState.speechService.speak(streamingContent)
                     }
                 }
             } catch is CancellationError {
