@@ -53,7 +53,7 @@ enum LLMProvider: String, Codable, CaseIterable, Identifiable {
     var description: String {
         switch self {
         case .lmstudio:
-            return "本地 LLM 服务器，支持 GGUF 格式模型"
+            return "本地 LLM 服务器，支持 GGUF 与 MLX 格式模型"
         case .openai:
             return "OpenAI 官方 API 或兼容服务"
         case .anthropic:

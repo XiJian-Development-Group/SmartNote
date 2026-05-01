@@ -114,16 +114,16 @@ struct SettingsView: View {
                 .font(.title)
                 .fontWeight(.bold)
             
-            Text("版本 1.0.0")
+            Text("版本 1.0.1")
                 .font(.caption)
                 .foregroundColor(.secondary)
             
-            Text("macOS 原生大学生智能复习工具")
+            Text("AI智能复习工具")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
             
-            Text("© 2024 SmartNote")
+            Text("By skyc8266")
                 .font(.caption2)
                 .foregroundColor(.secondary)
             
