@@ -25,11 +25,6 @@ struct SettingsView: View {
                 .tabItem {
                     Label("存储", systemImage: "internaldrive")
                 }
-            
-            aboutSection
-                .tabItem {
-                    Label("关于", systemImage: "info.circle")
-                }
         }
         .frame(width: 500, height: 400)
         .onChange(of: settings) { newValue in
@@ -147,7 +142,7 @@ struct SettingsView: View {
                 .font(.title)
                 .fontWeight(.bold)
             
-            Text("版本 1.0.1")
+            Text("版本 1.3.0")
                 .font(.caption)
                 .foregroundColor(.secondary)
             

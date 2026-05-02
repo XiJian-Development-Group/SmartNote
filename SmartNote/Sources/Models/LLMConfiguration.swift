@@ -54,9 +54,9 @@ enum LLMProvider: String, Codable, CaseIterable, Identifiable {
     var description: String {
         switch self {
         case .lmstudio:
-            return "本地 LLM 服务器，支持 GGUF 与 MLX 格式模型"
+            return "本地 LLM 服务器，支持 GGUF 与 MLX 模型"
         case .openai:
-            return "OpenAI 官方 API 或兼容服务"
+            return "OpenAI 兼容 API"
         case .anthropic:
             return "Claude 系列模型，需付费使用"
         }
@@ -87,7 +87,7 @@ enum LLMProvider: String, Codable, CaseIterable, Identifiable {
     var defaultModel: String {
         switch self {
         case .lmstudio:
-            return "llama-3-8b-instruct"
+            return "lfm2.5-1.2B"
         case .openai:
             return "gpt-3.5-turbo"
         case .anthropic:
