@@ -44,6 +44,7 @@
 
 /* Begin PBXFileReference section */
 		01A74D231E413B5F996B5308 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		09DFE1FE2FA5E24300513934 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		0E57E6AD3AF6399A1E7F4E50 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		12987FCC65DCD2D306F5CCB3 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
 		183A64BA18C98E763E093D8C /* UserLearningProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLearningProfile.swift; sourceTree = "<group>"; };
@@ -93,6 +94,7 @@
 		4170B0FF628D4B3A3AAF700C = {
 			isa = PBXGroup;
 			children = (
+				09DFE1FE2FA5E24300513934 /* README.md */,
 				57AC357A7B13540BFBB84A46 /* Resources */,
 				F7263EA545A13A0DDBD355EB /* Sources */,
 				DB91F87EFACDB75871C18F39 /* Products */,
