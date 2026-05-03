@@ -202,6 +202,66 @@ struct AppSettings: Codable, Equatable {
         case light
         case dark
     }
+    
+    enum CodingKeys: String, CodingKey {
+        case autoScanDirectories
+        case scanPaths
+        case darkModePreference
+        case calendarIntegrationEnabled
+        case reminderEnabled
+        case defaultStudyMinutes
+        case showFileExtensions
+        case llmConfiguration
+        case pomodoroWorkDuration
+        case pomodoroBreakDuration
+        case examCountdowns
+    }
+    
+    init() {
+        autoScanDirectories = true
+        scanPaths = []
+        darkModePreference = .system
+        calendarIntegrationEnabled = true
+        reminderEnabled = true
+        defaultStudyMinutes = 30
+        showFileExtensions = true
+        llmConfiguration = LLMConfiguration()
+        pomodoroWorkDuration = 25
+        pomodoroBreakDuration = 5
+        examCountdowns = []
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        autoScanDirectories = try container.decodeIfPresent(Bool.self, forKey: .autoScanDirectories) ?? true
+        scanPaths = try container.decodeIfPresent([String].self, forKey: .scanPaths) ?? []
+        darkModePreference = try container.decodeIfPresent(DarkModePreference.self, forKey: .darkModePreference) ?? .system
+        calendarIntegrationEnabled = try container.decodeIfPresent(Bool.self, forKey: .calendarIntegrationEnabled) ?? true
+        reminderEnabled = try container.decodeIfPresent(Bool.self, forKey: .reminderEnabled) ?? true
+        defaultStudyMinutes = try container.decodeIfPresent(Int.self, forKey: .defaultStudyMinutes) ?? 30
+        showFileExtensions = try container.decodeIfPresent(Bool.self, forKey: .showFileExtensions) ?? true
+        llmConfiguration = try container.decodeIfPresent(LLMConfiguration.self, forKey: .llmConfiguration) ?? LLMConfiguration()
+        pomodoroWorkDuration = try container.decodeIfPresent(Int.self, forKey: .pomodoroWorkDuration) ?? 25
+        pomodoroBreakDuration = try container.decodeIfPresent(Int.self, forKey: .pomodoroBreakDuration) ?? 5
+        examCountdowns = try container.decodeIfPresent([ExamCountdown].self, forKey: .examCountdowns) ?? []
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        try container.encode(autoScanDirectories, forKey: .autoScanDirectories)
+        try container.encode(scanPaths, forKey: .scanPaths)
+        try container.encode(darkModePreference, forKey: .darkModePreference)
+        try container.encode(calendarIntegrationEnabled, forKey: .calendarIntegrationEnabled)
+        try container.encode(reminderEnabled, forKey: .reminderEnabled)
+        try container.encode(defaultStudyMinutes, forKey: .defaultStudyMinutes)
+        try container.encode(showFileExtensions, forKey: .showFileExtensions)
+        try container.encode(llmConfiguration, forKey: .llmConfiguration)
+        try container.encode(pomodoroWorkDuration, forKey: .pomodoroWorkDuration)
+        try container.encode(pomodoroBreakDuration, forKey: .pomodoroBreakDuration)
+        try container.encode(examCountdowns, forKey: .examCountdowns)
+    }
 }
 
 struct ExportData: Codable {
