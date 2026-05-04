@@ -30,16 +30,16 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_EMIT_LOC_STRINGS: YES
         GENERATE_INFOPLIST_FILE: NO
-        MARKETING_VERSION: "1.4.2"
-        CURRENT_PROJECT_VERSION: "57"
+        MARKETING_VERSION: "1.4.4"
+        CURRENT_PROJECT_VERSION: "66"
     info:
       path: SmartNote/Resources/Info.plist
       properties:
         CFBundleName: SmartNote
         CFBundleDisplayName: 智学笔记
         CFBundleIdentifier: com.skyc8266.smartnote
-        CFBundleVersion: "57"
-        CFBundleShortVersionString: "1.4.2"
+        CFBundleVersion: "66"
+        CFBundleShortVersionString: "1.4.4"
         CFBundlePackageType: APPL
         CFBundleExecutable: SmartNote
         LSMinimumSystemVersion: "13.0"
