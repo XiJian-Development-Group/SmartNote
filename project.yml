@@ -21,6 +21,12 @@ targets:
     sources:
       - path: SmartNote/Sources
       - path: SmartNote/Resources
+    preBuildScripts:
+      - name: Copy Ciallo Web Files
+        script: |
+          echo "Copying ciallo web files to app bundle..."
+          mkdir -p "$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources"
+          cp -R "$SRCROOT/ciallo" "$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources/"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.skyc8266.smartnote
