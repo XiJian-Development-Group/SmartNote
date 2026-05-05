@@ -122,6 +122,30 @@ class StorageService {
         return load(from: flashCardsFileURL) ?? []
     }
     
+    private var diaryEntriesFileURL: URL {
+        appSupportDirectory.appendingPathComponent("diaryEntries.json")
+    }
+    
+    private var diaryCategoriesFileURL: URL {
+        appSupportDirectory.appendingPathComponent("diaryCategories.json")
+    }
+    
+    func saveDiaryEntries(_ entries: [DiaryEntry]) {
+        save(entries, to: diaryEntriesFileURL)
+    }
+    
+    func loadDiaryEntries() -> [DiaryEntry] {
+        return load(from: diaryEntriesFileURL) ?? []
+    }
+    
+    func saveDiaryCategories(_ categories: [DiaryCategory]) {
+        save(categories, to: diaryCategoriesFileURL)
+    }
+    
+    func loadDiaryCategories() -> [DiaryCategory] {
+        return load(from: diaryCategoriesFileURL) ?? []
+    }
+    
     private var p2pIdentityFileURL: URL {
         appSupportDirectory.appendingPathComponent("p2pIdentity.json")
     }

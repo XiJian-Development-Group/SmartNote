@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -11,6 +11,8 @@
 		06DDF901E2848FD484DD0C57 /* FocusModeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC170FA87CD834A81E9A4CC8 /* FocusModeService.swift */; };
 		0CB88EC66EFF82034EC22064 /* P2PService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35933360A6AA6EE2A69BEFD4 /* P2PService.swift */; };
 		137C3BB73D6E4E4BBFCBFD50 /* DuplicateScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84839B0FC350C553762798B0 /* DuplicateScannerView.swift */; };
+		268DDF1724C0158B44778F82 /* DiaryEncryptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 677C192800FE87ECC35092EC /* DiaryEncryptionService.swift */; };
+		26E36D156DF354C79863FC60 /* WhiteBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF0F9399D305DF370C71A6C /* WhiteBoardView.swift */; };
 		2F98FE09BB19688189632973 /* StudyMaterial.swift in Sources */ = {isa = PBXBuildFile; fileRef = D54F87F628B7AE589BEFF23D /* StudyMaterial.swift */; };
 		329452853E950533BAE8A7C3 /* PomodoroTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52DB2C22BCC415B73BF84A48 /* PomodoroTimer.swift */; };
 		34D9205B28A70BBE00763929 /* FlashCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E16F5008A6E6C57E3DCF9CC0 /* FlashCard.swift */; };
@@ -24,6 +26,7 @@
 		5A11D0F9260737C7E1A00140 /* PDFService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1E56D223E7A85D761A70BA /* PDFService.swift */; };
 		5C108930AB66F5F867A1918B /* KeywordExtractionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1CBA1BA3BF23D2680740DCD /* KeywordExtractionService.swift */; };
 		65F6A70AAF8886E06BCA9D7C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0E57E6AD3AF6399A1E7F4E50 /* Assets.xcassets */; };
+		66B59954535C5BF449686A57 /* DiaryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8D8BD98EC7FF3BD5FD28E14 /* DiaryListView.swift */; };
 		67621F51E84AAAA8AB0E2627 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B8C1B44A2A61CA79BD48879 /* ContentView.swift */; };
 		6BEAC51EFE84A910F12692E9 /* CalendarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D50C4DEA6DDBE484CB505052 /* CalendarService.swift */; };
 		719E56A223EC013911943F9E /* P2PCryptoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0C0B9F554192EC67B33B58 /* P2PCryptoService.swift */; };
@@ -34,14 +37,17 @@
 		802B980AB4E7AB89C3E34CC0 /* FocusModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43014842DCDF52D74827ACFE /* FocusModeView.swift */; };
 		83C6C4978B69312028ECEAE9 /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3157E15A32FE4D1A505F6ED5 /* SpeechService.swift */; };
 		86654172C280D417E594730D /* MaterialsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75B7484EF8E90D3649A6A5FA /* MaterialsListView.swift */; };
+		89E322B839246189D7DC2772 /* DiaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0863EA110BC965E52DEF48 /* DiaryService.swift */; };
 		8A18D613355C9D48767099C6 /* P2PCreateIdentityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE4AC128765C446DF922DCB /* P2PCreateIdentityView.swift */; };
 		8C441C29A6D80A32A928C786 /* P2PSocialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D0E79C54C3F1A34CD32B6E /* P2PSocialView.swift */; };
+		9212FED957EB7BE89CB44D96 /* Diary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63B827EA762FC4151DBAED5F /* Diary.swift */; };
 		96E3AA1638583660A537C17C /* SmartNoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A56F3D9C89D292DF37A1E7 /* SmartNoteApp.swift */; };
 		A04052BAA18BF67F53334614 /* PDFAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01B9E1AAB643D41A88EFF1E8 /* PDFAnnotation.swift */; };
 		A6538E9AE726EB1B6A0A139A /* PDFAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E52D5CE99C2649DE472BDD06 /* PDFAnnotationView.swift */; };
 		A83592B1242E65D43DD45C35 /* CreateMaterialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4575EE9184B750B4B671582 /* CreateMaterialView.swift */; };
 		A8DC49BD20C525E43FE77C09 /* DuplicateScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83656D0505253324AD314B29 /* DuplicateScanner.swift */; };
 		AADD190F79B79514A050BD7B /* UserLearningProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 183A64BA18C98E763E093D8C /* UserLearningProfile.swift */; };
+		AF44A4684FCEFA9A9B8455E1 /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = 44E819ACF011BFB1CBCEC366 /* Markdown */; };
 		B1B05AFB264D51D621CB3350 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC14ECD3A7BAB1809B071A70 /* SettingsView.swift */; };
 		B3FEF150B1EA9E2B81679BB2 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9153CA3BAB1A98A91814C442 /* Components.swift */; };
 		BB948A6D3AE4669685CE4F77 /* WrongQuestionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2679F36366EF4AB15F14DAD /* WrongQuestionView.swift */; };
@@ -61,6 +67,7 @@
 		E6313AD984EC773F2474EF1D /* AIChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1BF99288F70ED636D3AAB01 /* AIChatView.swift */; };
 		E80FE8723B16A857F3991A5D /* P2PChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E90171FD20FC35D9B433345 /* P2PChatView.swift */; };
 		ED76B8DD4128726DB1ECE13A /* ReviewPlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6D3227CDBCFE8A5C9B904F8 /* ReviewPlanView.swift */; };
+		EE7E152B7390070BBD45661A /* DiaryEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F26CA084D90A23CA66459BF9 /* DiaryEditorView.swift */; };
 		EF6FDF917407F1948B782F62 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01A74D231E413B5F996B5308 /* NotificationService.swift */; };
 		F50B5F6181F691E1DF61BDFA /* FlashCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB2A1ABC3F53C6BD569E7B9A /* FlashCardView.swift */; };
 		F78AE3270A4A3B1DD86BEB27 /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3552CF8976544956A158CCD /* LLMService.swift */; };
@@ -91,6 +98,9 @@
 		52DB2C22BCC415B73BF84A48 /* PomodoroTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroTimer.swift; sourceTree = "<group>"; };
 		59AD75CCE073CFD5DDE5346A /* P2PNetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PNetworkService.swift; sourceTree = "<group>"; };
 		5B8C1B44A2A61CA79BD48879 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		5FF0F9399D305DF370C71A6C /* WhiteBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiteBoardView.swift; sourceTree = "<group>"; };
+		63B827EA762FC4151DBAED5F /* Diary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diary.swift; sourceTree = "<group>"; };
+		677C192800FE87ECC35092EC /* DiaryEncryptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryEncryptionService.swift; sourceTree = "<group>"; };
 		6800551BD3F4E594202A9C63 /* FileScannerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileScannerService.swift; sourceTree = "<group>"; };
 		70EA20C8E3AFF5E8F5780261 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		73DA60CFB77A276CCCB9BCD1 /* SmartNote.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SmartNote.entitlements; sourceTree = "<group>"; };
@@ -103,6 +113,7 @@
 		9153CA3BAB1A98A91814C442 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		92C67150FE8E22E2AEAC4C82 /* KeyPointsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyPointsView.swift; sourceTree = "<group>"; };
 		A1BF99288F70ED636D3AAB01 /* AIChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatView.swift; sourceTree = "<group>"; };
+		AA0863EA110BC965E52DEF48 /* DiaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryService.swift; sourceTree = "<group>"; };
 		B6D3227CDBCFE8A5C9B904F8 /* ReviewPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewPlanView.swift; sourceTree = "<group>"; };
 		B9CD2DA9C12FD47108F0A6DC /* P2PAddFriendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PAddFriendView.swift; sourceTree = "<group>"; };
 		B9CD98BF6A753ECF9FE0480B /* SmartGradingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartGradingView.swift; sourceTree = "<group>"; };
@@ -128,12 +139,25 @@
 		EC170FA87CD834A81E9A4CC8 /* FocusModeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusModeService.swift; sourceTree = "<group>"; };
 		EDECE7F741B10883BAD49248 /* LearningAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningAnalysisService.swift; sourceTree = "<group>"; };
 		EE1E56D223E7A85D761A70BA /* PDFService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFService.swift; sourceTree = "<group>"; };
+		F26CA084D90A23CA66459BF9 /* DiaryEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryEditorView.swift; sourceTree = "<group>"; };
 		F332C2BF2D9E8D571CB00EFA /* LLMSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMSettingsView.swift; sourceTree = "<group>"; };
 		F3552CF8976544956A158CCD /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
 		F4575EE9184B750B4B671582 /* CreateMaterialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateMaterialView.swift; sourceTree = "<group>"; };
+		F8D8BD98EC7FF3BD5FD28E14 /* DiaryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryListView.swift; sourceTree = "<group>"; };
 		FCE4AC128765C446DF922DCB /* P2PCreateIdentityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PCreateIdentityView.swift; sourceTree = "<group>"; };
 		FD1E5B0EE3EA703F874316BC /* MaterialDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialDetailView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9DDBE89D2182D0A082AB83D5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF44A4684FCEFA9A9B8455E1 /* Markdown in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		27539AF4A4F7E9D89EFA5157 /* Social */ = {
@@ -182,6 +206,8 @@
 			isa = PBXGroup;
 			children = (
 				D50C4DEA6DDBE484CB505052 /* CalendarService.swift */,
+				677C192800FE87ECC35092EC /* DiaryEncryptionService.swift */,
+				AA0863EA110BC965E52DEF48 /* DiaryService.swift */,
 				83656D0505253324AD314B29 /* DuplicateScanner.swift */,
 				CB5EFEE65AEF8F68B4C6D2F6 /* ExportService.swift */,
 				6800551BD3F4E594202A9C63 /* FileScannerService.swift */,
@@ -226,6 +252,8 @@
 				9153CA3BAB1A98A91814C442 /* Components.swift */,
 				5B8C1B44A2A61CA79BD48879 /* ContentView.swift */,
 				F4575EE9184B750B4B671582 /* CreateMaterialView.swift */,
+				F26CA084D90A23CA66459BF9 /* DiaryEditorView.swift */,
+				F8D8BD98EC7FF3BD5FD28E14 /* DiaryListView.swift */,
 				84839B0FC350C553762798B0 /* DuplicateScannerView.swift */,
 				20D77772B153256013321672 /* ExamCountdownView.swift */,
 				270C3E3C779EA0B469949129 /* FileImportView.swift */,
@@ -249,6 +277,7 @@
 				B9CD98BF6A753ECF9FE0480B /* SmartGradingView.swift */,
 				D249E5C4EC6332AE451B8016 /* StatisticsView.swift */,
 				C6EE24BB16C4F533244DA72D /* StatusBarView.swift */,
+				5FF0F9399D305DF370C71A6C /* WhiteBoardView.swift */,
 				C2679F36366EF4AB15F14DAD /* WrongQuestionView.swift */,
 				C96737D8EEF3BD72484731DB /* Components */,
 				27539AF4A4F7E9D89EFA5157 /* Social */,
@@ -267,6 +296,7 @@
 		D80D46B42349BDAF46B8AD46 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				63B827EA762FC4151DBAED5F /* Diary.swift */,
 				BF69A8C2FBED9C695F7D3F91 /* ExamCountdown.swift */,
 				E16F5008A6E6C57E3DCF9CC0 /* FlashCard.swift */,
 				BEF8E19044ACFD37E7466B8F /* LLMConfiguration.swift */,
@@ -313,6 +343,7 @@
 				BA010ACED040B51996DFCA56 /* Copy Ciallo Web Files */,
 				96FAD1BBB37DA395A1B99198 /* Sources */,
 				8A74F8D00FE50169D217D754 /* Resources */,
+				9DDBE89D2182D0A082AB83D5 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -320,6 +351,7 @@
 			);
 			name = SmartNote;
 			packageProductDependencies = (
+				44E819ACF011BFB1CBCEC366 /* Markdown */,
 			);
 			productName = SmartNote;
 			productReference = 48DD289F04C084C67319D15A /* SmartNote.app */;
@@ -349,6 +381,10 @@
 			);
 			mainGroup = 4170B0FF628D4B3A3AAF700C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				CA9F344E819256EF08AB4AD4 /* XCRemoteSwiftPackageReference "swift-markdown" */,
+			);
+			preferredProjectObjectVersion = 54;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -400,6 +436,11 @@
 				B3FEF150B1EA9E2B81679BB2 /* Components.swift in Sources */,
 				67621F51E84AAAA8AB0E2627 /* ContentView.swift in Sources */,
 				A83592B1242E65D43DD45C35 /* CreateMaterialView.swift in Sources */,
+				9212FED957EB7BE89CB44D96 /* Diary.swift in Sources */,
+				EE7E152B7390070BBD45661A /* DiaryEditorView.swift in Sources */,
+				268DDF1724C0158B44778F82 /* DiaryEncryptionService.swift in Sources */,
+				66B59954535C5BF449686A57 /* DiaryListView.swift in Sources */,
+				89E322B839246189D7DC2772 /* DiaryService.swift in Sources */,
 				A8DC49BD20C525E43FE77C09 /* DuplicateScanner.swift in Sources */,
 				137C3BB73D6E4E4BBFCBFD50 /* DuplicateScannerView.swift in Sources */,
 				D3AF9A33FA1E726319056CEC /* ExamCountdown.swift in Sources */,
@@ -451,6 +492,7 @@
 				7E21801EB2DB6F679E2C20F0 /* StorageService.swift in Sources */,
 				2F98FE09BB19688189632973 /* StudyMaterial.swift in Sources */,
 				AADD190F79B79514A050BD7B /* UserLearningProfile.swift in Sources */,
+				26E36D156DF354C79863FC60 /* WhiteBoardView.swift in Sources */,
 				36972F90F0E8E74A9A18AD47 /* WrongQuestion.swift in Sources */,
 				BB948A6D3AE4669685CE4F77 /* WrongQuestionView.swift in Sources */,
 			);
@@ -524,15 +566,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = SmartNote/Resources/SmartNote.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 68;
+				CURRENT_PROJECT_VERSION = 66;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.4.5;
+				MARKETING_VERSION = 1.4.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.smartnote;
 				PRODUCT_NAME = SmartNote;
 				SDKROOT = macosx;
@@ -546,15 +587,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = SmartNote/Resources/SmartNote.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 68;
+				CURRENT_PROJECT_VERSION = 66;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.4.5;
+				MARKETING_VERSION = 1.4.4;
 				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.smartnote;
 				PRODUCT_NAME = SmartNote;
 				SDKROOT = macosx;
@@ -650,6 +690,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		CA9F344E819256EF08AB4AD4 /* XCRemoteSwiftPackageReference "swift-markdown" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/swiftlang/swift-markdown";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		44E819ACF011BFB1CBCEC366 /* Markdown */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CA9F344E819256EF08AB4AD4 /* XCRemoteSwiftPackageReference "swift-markdown" */;
+			productName = Markdown;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 2C1A81DFD445D6D2BC2EBC90 /* Project object */;
 }

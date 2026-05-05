@@ -1,4 +1,5 @@
 import SwiftUI
+import Markdown
 
 struct MarkdownText: View {
     let content: String
@@ -9,160 +10,262 @@ struct MarkdownText: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(parseMarkdown(content), id: \.self) { element in
-                renderElement(element)
+            ForEach(Array(parseAndRender().enumerated()), id: \.offset) { _, element in
+                element
             }
         }
     }
     
-    private func parseMarkdown(_ text: String) -> [MarkdownElement] {
-        var elements: [MarkdownElement] = []
-        let lines = text.components(separatedBy: "\n")
-        
-        for line in lines {
-            if line.hasPrefix("### ") {
-                elements.append(.heading3(String(line.dropFirst(4))))
-            } else if line.hasPrefix("## ") {
-                elements.append(.heading2(String(line.dropFirst(3))))
-            } else if line.hasPrefix("# ") {
-                elements.append(.heading1(String(line.dropFirst(2))))
-            } else if line.hasPrefix("- ") || line.hasPrefix("* ") {
-                let itemText = String(line.dropFirst(2))
-                elements.append(.listItem(itemText))
-            } else if line.hasPrefix("1.") || line.hasPrefix("2.") || line.hasPrefix("3.") ||
-                      line.hasPrefix("4.") || line.hasPrefix("5.") || line.hasPrefix("6.") ||
-                      line.hasPrefix("7.") || line.hasPrefix("8.") || line.hasPrefix("9.") {
-                elements.append(.numberedListItem(line))
-            } else if line.contains("**") {
-                elements.append(.bold(line))
-            } else if line.contains("`") {
-                elements.append(.code(line))
-            } else if line.hasPrefix("---") || line.hasPrefix("***") {
-                elements.append(.divider)
-            } else if !line.isEmpty {
-                elements.append(.paragraph(line))
-            }
-        }
-        
-        return elements
+    private func parseAndRender() -> [AnyView] {
+        let document = Document(parsing: content)
+        return document.children.map { AnyView(renderMarkup($0)) }
     }
     
     @ViewBuilder
-    private func renderElement(_ element: MarkdownElement) -> some View {
-        switch element {
-        case .heading1(let text):
+    private func renderMarkup(_ markup: any Markup) -> some View {
+        switch markup {
+        case let heading as Heading:
+            renderHeading(heading)
+        case let paragraph as Paragraph:
+            renderParagraph(paragraph)
+        case let list as UnorderedList:
+            renderUnorderedList(list)
+        case let list as OrderedList:
+            renderOrderedList(list)
+        case let blockQuote as BlockQuote:
+            renderBlockQuote(blockQuote)
+        case let codeBlock as CodeBlock:
+            renderCodeBlock(codeBlock)
+        case let thematicBreak as ThematicBreak:
+            renderThematicBreak(thematicBreak)
+        case let table as Markdown.Table:
+            renderTable(table)
+        default:
+            if let text = markup as? Markdown.Text {
+                Text(text.string)
+                    .font(.body)
+            } else if let strong = markup as? Strong {
+                Text(strong.plainText)
+                    .fontWeight(.bold)
+            } else if let emphasis = markup as? Emphasis {
+                Text(emphasis.plainText)
+                    .italic()
+            } else if let code = markup as? Markdown.InlineCode {
+                Text(code.code)
+                    .font(.system(.body, design: .monospaced))
+                    .padding(.horizontal, 4)
+                    .background(Color(nsColor: .controlBackgroundColor))
+                    .cornerRadius(3)
+            } else if let link = markup as? Markdown.Link {
+                linkView(link)
+            } else {
+                Text(markup.plainText)
+                    .font(.body)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func renderHeading(_ heading: Heading) -> some View {
+        let text = heading.plainText
+        switch heading.level {
+        case 1:
             Text(text)
                 .font(.title)
                 .fontWeight(.bold)
                 .padding(.top, 8)
-            
-        case .heading2(let text):
+        case 2:
             Text(text)
                 .font(.title2)
                 .fontWeight(.bold)
                 .padding(.top, 6)
-            
-        case .heading3(let text):
+        case 3:
             Text(text)
                 .font(.title3)
                 .fontWeight(.semibold)
                 .padding(.top, 4)
-            
-        case .paragraph(let text):
-            Text(attributedString(from: text))
-                .font(.body)
-                .fixedSize(horizontal: false, vertical: true)
-            
-        case .listItem(let text):
-            HStack(alignment: .top, spacing: 8) {
-                Text("•")
-                    .font(.body)
-                Text(attributedString(from: text))
-                    .font(.body)
-            }
-            
-        case .numberedListItem(let text):
-            HStack(alignment: .top, spacing: 8) {
-                if let number = text.prefix(1).first, number.isNumber {
-                    Text(String(number) + ".")
-                        .font(.body)
-                }
-                Text(attributedString(from: String(text.dropFirst(3))))
-                    .font(.body)
-            }
-            
-        case .code(let text):
+        default:
             Text(text)
-                .font(.system(.body, design: .monospaced))
-                .padding(8)
-                .background(Color(nsColor: .controlBackgroundColor))
-                .cornerRadius(4)
-            
-        case .bold(let text):
-            Text(attributedString(from: text))
-                .font(.body.weight(.bold))
-            
-        case .divider:
-            Divider()
-                .padding(.vertical, 4)
+                .font(.headline)
+                .fontWeight(.bold)
+                .padding(.top, 2)
         }
     }
     
-    private func attributedString(from text: String) -> AttributedString {
-        var result = AttributedString(text)
-        
-        var searchStart = result.startIndex
-        while searchStart < result.endIndex {
-            if let boldStart = result[searchStart...].range(of: "**") {
-                if let boldEnd = result[boldStart.upperBound...].range(of: "**") {
-                    let boldRange = boldStart.lowerBound..<boldEnd.upperBound
-                    result[boldRange].inlinePresentationIntent = .stronglyEmphasized
-                    
-                    let innerRange = boldStart.upperBound..<boldEnd.lowerBound
-                    result[innerRange].font = .body.weight(.bold)
-                    
-                    searchStart = boldEnd.upperBound
-                } else {
-                    break
+    @ViewBuilder
+    private func renderParagraph(_ paragraph: Paragraph) -> some View {
+        Text(attributedString(from: paragraph))
+            .font(.body)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+    
+    @ViewBuilder
+    private func renderUnorderedList(_ list: UnorderedList) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(Array(list.children.enumerated()), id: \.offset) { _, item in
+                if let listItem = item as? ListItem {
+                    HStack(alignment: .top, spacing: 8) {
+                        Text("•")
+                            .font(.body)
+                        Text(listItem.plainText)
+                            .font(.body)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
-            } else {
-                break
             }
         }
-        
-        searchStart = result.startIndex
-        while searchStart < result.endIndex {
-            if let codeStart = result[searchStart...].range(of: "`") {
-                if let codeEnd = result[codeStart.upperBound...].range(of: "`") {
-                    let codeRange = codeStart.lowerBound..<codeEnd.upperBound
-                    let innerRange = codeStart.upperBound..<codeEnd.lowerBound
-                    
-                    result[innerRange].font = .system(.body, design: .monospaced)
-                    result[innerRange].backgroundColor = Color(nsColor: .controlBackgroundColor)
-                    
-                    searchStart = codeEnd.upperBound
-                } else {
-                    break
+    }
+    
+    @ViewBuilder
+    private func renderOrderedList(_ list: OrderedList) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(Array(list.children.enumerated()), id: \.offset) { index, item in
+                if let listItem = item as? ListItem {
+                    HStack(alignment: .top, spacing: 8) {
+                        Text("\(index + 1).")
+                            .font(.body)
+                        Text(listItem.plainText)
+                            .font(.body)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
-            } else {
-                break
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func renderBlockQuote(_ blockQuote: BlockQuote) -> some View {
+        HStack(spacing: 0) {
+            Rectangle()
+                .fill(Color.secondary.opacity(0.5))
+                .frame(width: 4)
+            Text(blockQuote.plainText)
+                .font(.body)
+                .foregroundColor(.secondary)
+                .padding(.leading, 8)
+        }
+        .padding(.vertical, 4)
+    }
+    
+    @ViewBuilder
+    private func renderCodeBlock(_ codeBlock: CodeBlock) -> some View {
+        Text(codeBlock.code)
+            .font(.system(.body, design: .monospaced))
+            .padding(8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(nsColor: .controlBackgroundColor))
+            .cornerRadius(4)
+    }
+    
+    @ViewBuilder
+    private func renderThematicBreak(_ thematicBreak: ThematicBreak) -> some View {
+        Divider()
+            .padding(.vertical, 4)
+    }
+    
+    @ViewBuilder
+    private func renderTable(_ table: Markdown.Table) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            let head = table.head
+            HStack(spacing: 0) {
+                ForEach(Array(head.cells.enumerated()), id: \.offset) { _, cell in
+                    Text(cell.plainText)
+                        .fontWeight(.bold)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(8)
+                        .background(Color(nsColor: .controlBackgroundColor))
+                }
+            }
+            
+            ForEach(Array(table.body.rows.enumerated()), id: \.offset) { _, row in
+                HStack(spacing: 0) {
+                    ForEach(Array(row.cells.enumerated()), id: \.offset) { _, cell in
+                        Text(cell.plainText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(8)
+                    }
+                }
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+        )
+    }
+    
+    @ViewBuilder
+    private func linkView(_ link: Markdown.Link) -> some View {
+        if let destination = link.destination {
+            Link(destination: URL(string: destination) ?? URL(string: "about:blank")!) {
+                Text(link.plainText)
+                    .foregroundColor(.blue)
+            }
+        } else {
+            Text(link.plainText)
+                .foregroundColor(.blue)
+        }
+    }
+    
+    private func attributedString(from markup: any Markup) -> AttributedString {
+        let text = markup.plainText
+        var result = AttributedString(text)
+        
+        if let paragraph = markup as? Paragraph {
+            for child in paragraph.children {
+                processInlineElements(&result, in: child)
             }
         }
         
         return result
     }
+    
+    private func processInlineElements(_ result: inout AttributedString, in markup: any Markup) {
+        if let strong = markup as? Strong {
+            let range = result.range(of: strong.plainText)
+            if let range = range {
+                result[range].inlinePresentationIntent = .stronglyEmphasized
+                result[range].font = .body.weight(.bold)
+            }
+        } else if let emphasis = markup as? Emphasis {
+            let range = result.range(of: emphasis.plainText)
+            if let range = range {
+                result[range].inlinePresentationIntent = .emphasized
+                result[range].font = .body.italic()
+            }
+        } else if let inlineCode = markup as? Markdown.InlineCode {
+            let range = result.range(of: inlineCode.code)
+            if let range = range {
+                result[range].font = .system(.body, design: .monospaced)
+                result[range].backgroundColor = Color(nsColor: .controlBackgroundColor)
+            }
+        } else if let link = markup as? Markdown.Link {
+            let range = result.range(of: link.plainText)
+            if let range = range {
+                result[range].foregroundColor = .blue
+                result[range].underlineStyle = .single
+            }
+        }
+        
+        for child in markup.children {
+            processInlineElements(&result, in: child)
+        }
+    }
 }
 
-enum MarkdownElement: Hashable {
-    case heading1(String)
-    case heading2(String)
-    case heading3(String)
-    case paragraph(String)
-    case listItem(String)
-    case numberedListItem(String)
-    case bold(String)
-    case code(String)
-    case divider
+extension Markup {
+    var plainText: String {
+        var result = ""
+        for child in children {
+            if let text = child as? Markdown.Text {
+                result += text.string
+            } else if let code = child as? Markdown.InlineCode {
+                result += code.code
+            } else {
+                result += child.plainText
+            }
+        }
+        return result
+    }
 }
 
 struct MarkdownTextField: View {

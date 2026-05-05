@@ -6,6 +6,11 @@ options:
   xcodeVersion: "15.0"
   generateEmptyDirectories: true
 
+packages:
+  Markdown:
+    url: https://github.com/swiftlang/swift-markdown
+    from: "0.4.0"
+
 settings:
   base:
     SWIFT_VERSION: "5.9"
@@ -21,6 +26,8 @@ targets:
     sources:
       - path: SmartNote/Sources
       - path: SmartNote/Resources
+    dependencies:
+      - package: Markdown
     preBuildScripts:
       - name: Copy Ciallo Web Files
         script: |

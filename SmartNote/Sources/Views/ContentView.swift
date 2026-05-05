@@ -100,6 +100,14 @@ struct SidebarView: View {
                 NavigationLink(value: 17) {
                     Label("放松亿下", systemImage: "gamecontroller")
                 }
+                
+                NavigationLink(value: 18) {
+                    Label("日记", systemImage: "book.fill")
+                }
+                
+                NavigationLink(value: 19) {
+                    Label("白板", systemImage: "square.and.pencil")
+                }
             }
             
             Section("统计") {
@@ -156,6 +164,10 @@ struct DetailView: View {
                 P2PSocialView()
             case 17:
                 RelaxGameView()
+            case 18:
+                DiaryListView()
+            case 19:
+                WhiteBoardView()
             default:
                 MaterialsListView()
             }
