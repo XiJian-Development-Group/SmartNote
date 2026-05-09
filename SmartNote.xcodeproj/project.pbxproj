@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 63;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -34,7 +34,6 @@
 		7BBD0FACD5978D7ECF7703FE /* ExamCountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D77772B153256013321672 /* ExamCountdownView.swift */; };
 		7E21801EB2DB6F679E2C20F0 /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12987FCC65DCD2D306F5CCB3 /* StorageService.swift */; };
 		7E55A9BF32BD91003C73C3D6 /* KeyPointsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C67150FE8E22E2AEAC4C82 /* KeyPointsView.swift */; };
-		802B980AB4E7AB89C3E34CC0 /* FocusModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43014842DCDF52D74827ACFE /* FocusModeView.swift */; };
 		83C6C4978B69312028ECEAE9 /* SpeechService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3157E15A32FE4D1A505F6ED5 /* SpeechService.swift */; };
 		86654172C280D417E594730D /* MaterialsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75B7484EF8E90D3649A6A5FA /* MaterialsListView.swift */; };
 		89E322B839246189D7DC2772 /* DiaryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0863EA110BC965E52DEF48 /* DiaryService.swift */; };
@@ -93,7 +92,6 @@
 		35933360A6AA6EE2A69BEFD4 /* P2PService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PService.swift; sourceTree = "<group>"; };
 		3E90171FD20FC35D9B433345 /* P2PChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PChatView.swift; sourceTree = "<group>"; };
 		41D0E79C54C3F1A34CD32B6E /* P2PSocialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PSocialView.swift; sourceTree = "<group>"; };
-		43014842DCDF52D74827ACFE /* FocusModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusModeView.swift; sourceTree = "<group>"; };
 		48DD289F04C084C67319D15A /* SmartNote.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmartNote.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		52DB2C22BCC415B73BF84A48 /* PomodoroTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroTimer.swift; sourceTree = "<group>"; };
 		59AD75CCE073CFD5DDE5346A /* P2PNetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PNetworkService.swift; sourceTree = "<group>"; };
@@ -258,7 +256,6 @@
 				20D77772B153256013321672 /* ExamCountdownView.swift */,
 				270C3E3C779EA0B469949129 /* FileImportView.swift */,
 				DB2A1ABC3F53C6BD569E7B9A /* FlashCardView.swift */,
-				43014842DCDF52D74827ACFE /* FocusModeView.swift */,
 				92C67150FE8E22E2AEAC4C82 /* KeyPointsView.swift */,
 				81E7459E7FE5DC39CDD074EA /* LearningProfileSettingsView.swift */,
 				F332C2BF2D9E8D571CB00EFA /* LLMSettingsView.swift */,
@@ -384,7 +381,6 @@
 			packageReferences = (
 				CA9F344E819256EF08AB4AD4 /* XCRemoteSwiftPackageReference "swift-markdown" */,
 			);
-			preferredProjectObjectVersion = 54;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -452,7 +448,6 @@
 				F50B5F6181F691E1DF61BDFA /* FlashCardView.swift in Sources */,
 				E5FE28187FFF047A3A7D2AFE /* FlowLayout.swift in Sources */,
 				06DDF901E2848FD484DD0C57 /* FocusModeService.swift in Sources */,
-				802B980AB4E7AB89C3E34CC0 /* FocusModeView.swift in Sources */,
 				7E55A9BF32BD91003C73C3D6 /* KeyPointsView.swift in Sources */,
 				5C108930AB66F5F867A1918B /* KeywordExtractionService.swift in Sources */,
 				41B61849E433C92F3630126A /* LLMConfiguration.swift in Sources */,

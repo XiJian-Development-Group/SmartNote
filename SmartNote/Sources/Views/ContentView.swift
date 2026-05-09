@@ -28,7 +28,7 @@ struct SidebarView: View {
     
     var body: some View {
         List(selection: $appState.selectedTab) {
-            Section("资料管理") {
+            Section("资料库") {
                 NavigationLink(value: 0) {
                     Label("全部资料", systemImage: "folder.fill")
                 }
@@ -50,13 +50,9 @@ struct SidebarView: View {
                 }
             }
             
-            Section("智能功能") {
+            Section("学习") {
                 NavigationLink(value: 5) {
                     Label("考点提取", systemImage: "brain.head.profile")
-                }
-                
-                NavigationLink(value: 6) {
-                    Label("复习计划", systemImage: "calendar.badge.clock")
                 }
                 
                 NavigationLink(value: 9) {
@@ -78,9 +74,13 @@ struct SidebarView: View {
                 NavigationLink(value: 12) {
                     Label("背诵卡片", systemImage: "rectangle.stack")
                 }
+                
+                NavigationLink(value: 19) {
+                    Label("白板", systemImage: "square.and.pencil")
+                }
             }
             
-            Section("工具") {
+            Section("计划") {
                 NavigationLink(value: 13) {
                     Label("考试倒计时", systemImage: "calendar.badge.exclamationmark")
                 }
@@ -89,12 +89,19 @@ struct SidebarView: View {
                     Label("重复清理", systemImage: "doc.on.doc")
                 }
                 
-                NavigationLink(value: 15) {
-                    Label("专注模式", systemImage: "moon.fill")
+                NavigationLink(value: 6) {
+                    Label("复习计划", systemImage: "calendar.badge.clock")
+                }
+                // Value 15 Removed
+            }
+            
+            Section("实用工具") {
+                NavigationLink(value: 7) {
+                    Label("学习统计", systemImage: "chart.bar.fill")
                 }
                 
                 NavigationLink(value: 16) {
-                    Label("P2P 社交", systemImage: "bubble.left.and.bubble.right.fill")
+                    Label("社交", systemImage: "bubble.left.and.bubble.right.fill")
                 }
                 
                 NavigationLink(value: 17) {
@@ -103,16 +110,6 @@ struct SidebarView: View {
                 
                 NavigationLink(value: 18) {
                     Label("日记", systemImage: "book.fill")
-                }
-                
-                NavigationLink(value: 19) {
-                    Label("白板", systemImage: "square.and.pencil")
-                }
-            }
-            
-            Section("统计") {
-                NavigationLink(value: 7) {
-                    Label("学习统计", systemImage: "chart.bar.fill")
                 }
             }
         }
@@ -159,7 +156,8 @@ struct DetailView: View {
             case 14:
                 DuplicateScannerView()
             case 15:
-                FocusModeView()
+                // Func 15 Removed
+                print("No such function, func ID is 15; Info form developer: Function 15 [Focus Mode] Removed since v1.4.4")
             case 16:
                 P2PSocialView()
             case 17:
