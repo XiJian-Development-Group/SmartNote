@@ -123,10 +123,9 @@ struct DetailView: View {
     @EnvironmentObject var appState: AppState
     
     var body: some View {
-        Group {
             switch appState.selectedTab {
             case 0:
-                MaterialsListView()
+                MaterialsListView(filter: nil)
             case 1:
                 MaterialsListView(filter: .lecture)
             case 2:
@@ -154,10 +153,7 @@ struct DetailView: View {
             case 13:
                 ExamCountdownView()
             case 14:
-                DuplicateScannerView()
-            case 15:
-                // Func 15 Removed
-                print("No such function, func ID is 15; Info form developer: Function 15 [Focus Mode] Removed since v1.4.4")
+                DuplicateScannerView() // Function ID 15 Removed since v1.4.4
             case 16:
                 P2PSocialView()
             case 17:
@@ -169,6 +165,5 @@ struct DetailView: View {
             default:
                 MaterialsListView()
             }
-        }
     }
 }
