@@ -47,10 +47,10 @@ struct AIChatView: View {
     private var headerView: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("AI 对话")
+                Text("智能对话")
                     .font(.title2)
                     .fontWeight(.semibold)
-                Text("与 AI 助手交流学习问题")
+                Text("与 AI 助手讨论问题")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
