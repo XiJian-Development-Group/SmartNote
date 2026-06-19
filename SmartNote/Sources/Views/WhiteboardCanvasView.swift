@@ -11,7 +11,7 @@ struct WhiteboardCanvasView: View {
     @Binding var zoom: Double
     @Binding var offset: CGSize
     @Binding var selectedIDs: Set<UUID>
-    @Binding var isOptionKeyPressed: Bool  // Option 键状态（用于模式切换）
+    @Binding var isOptionKeyPressed: Bool
     let canvasSize: CGSize
     
     // 当前正在绘制的对象（绘画/拖动过程中的临时对象）
@@ -19,9 +19,8 @@ struct WhiteboardCanvasView: View {
     @State private var dragStartPoint: WhiteboardPoint?
     @State private var dragOriginalObjects: [WhiteboardObject] = []
     @State private var currentStroke: StrokeShape?
-    
-    // 性能监控
-    @State private var lastDrawTime: Date = Date()
+    @State private var dragStartScreen: CGPoint = .zero
+    @State private var hasMovedSignificantly: Bool = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -29,7 +28,7 @@ struct WhiteboardCanvasView: View {
                 // 背景网格
                 GridBackground(zoom: zoom, offset: offset)
                 
-                // 内容
+                // 已有对象
                 ForEach(displayedObjects) { object in
                     ObjectShapeView(
                         object: object,
@@ -37,14 +36,9 @@ struct WhiteboardCanvasView: View {
                         canvasOffset: offset,
                         isSelected: selectedIDs.contains(object.id)
                     )
-                    .onTapGesture {
-                        if tool == .select && !isOptionKeyPressed {
-                            handleTap(object: object)
-                        }
-                    }
                 }
                 
-                // 当前正在绘制的对象
+                // 当前正在绘制的对象（实时显示）
                 if let drawing = drawingObject {
                     ObjectShapeView(
                         object: drawing,
@@ -54,28 +48,40 @@ struct WhiteboardCanvasView: View {
                     )
                 }
                 
+                // 当前笔划（实时显示）
+                if let stroke = currentStroke, !stroke.points.isEmpty {
+                    StrokeView(stroke: stroke, zoom: zoom, canvasOffset: offset)
+                }
+                
                 // 选区边框
                 if !selectedIDs.isEmpty && tool == .select {
                     SelectionBoundsView(objects: selectedObjects, zoom: zoom, canvasOffset: offset)
                 }
             }
             .contentShape(Rectangle())
+            // 使用高优先级手势，避免 onTapGesture 拦截
             .gesture(
                 DragGesture(minimumDistance: 0, coordinateSpace: .local)
                     .onChanged { value in
-                        handleDragChanged(value: value, geometry: geometry)
+                        handleDragChanged(value: value)
                     }
                     .onEnded { value in
-                        handleDragEnded(value: value, geometry: geometry)
+                        handleDragEnded(value: value)
                     }
             )
-            .onTapGesture {
-                if tool == .select {
-                    selectedIDs.removeAll()
-                }
-            }
+            // 用 .simultaneousGesture 让 onTap 和 DragGesture 可以同时工作
+            .simultaneousGesture(
+                TapGesture(count: 1)
+                    .onEnded {
+                        if tool == .select && !hasMovedSignificantly {
+                            selectedIDs.removeAll()
+                        }
+                        hasMovedSignificantly = false
+                    }
+            )
         }
         .background(Color(white: 1.0))
+        .clipped()
     }
     
     // MARK: - 计算属性
@@ -101,34 +107,26 @@ struct WhiteboardCanvasView: View {
     
     // MARK: - 交互处理
     
-    private func handleTap(object: WhiteboardObject) {
-        // 在选择模式下点击切换选择
-        if NSEvent.modifierFlags.contains(.shift) {
-            selectedIDs.insert(object.id)
-        } else {
-            selectedIDs = [object.id]
-        }
-    }
-    
-    private func handleDragChanged(value: DragGesture.Value, geometry: GeometryProxy) {
-        let now = Date()
-        // 限制最大 60 FPS（避免过密事件）
-        if now.timeIntervalSince(lastDrawTime) < 0.016 {
-            return
-        }
-        lastDrawTime = now
-        
+    private func handleDragChanged(value: DragGesture.Value) {
+        // 不做帧率限制，确保实时性
         let worldPoint = screenToWorld(value.location)
         let startWorld = screenToWorld(value.startLocation)
-        // Option 键按下时：画笔模式
+        
+        // 计算是否已经显著移动（用本地坐标系）
+        let dx = value.location.x - value.startLocation.x
+        let dy = value.location.y - value.startLocation.y
+        if sqrt(dx*dx + dy*dy) > 3 {
+            hasMovedSignificantly = true
+        }
+        
+        // Option 键按下时：选择模式
         let effectiveTool = isOptionKeyPressed ? .select : tool
         
         switch effectiveTool {
         case .pen:
-            // 默认压力为 1.0（触控板无压力信息时可使用此默认值）
             handlePenDrawing(worldPoint: worldPoint, pressure: 1.0)
         case .eraser:
-            handleErase(worldPoint: worldPoint)
+            handleErase(worldPoint: worldPoint, radius: strokeWidth)
         case .line, .arrow:
             handleLineDrawing(worldPoint: worldPoint, start: startWorld)
         case .rectangle:
@@ -138,29 +136,34 @@ struct WhiteboardCanvasView: View {
         case .triangle:
             handleTriangleDrawing(worldPoint: worldPoint, start: startWorld)
         case .select:
-            handleSelectDrag(worldPoint: worldPoint, start: startWorld, currentScreen: value.location, startScreen: value.startLocation)
+            handleSelectDrag(worldPoint: worldPoint, start: startWorld)
         }
     }
     
-    private func handleDragEnded(value: DragGesture.Value, geometry: GeometryProxy) {
+    private func handleDragEnded(value: DragGesture.Value) {
         let effectiveTool = isOptionKeyPressed ? .select : tool
         
         switch effectiveTool {
         case .pen:
-            if let stroke = currentStroke {
+            if let stroke = currentStroke, stroke.points.count > 1 {
                 service.addObject(.stroke(stroke))
-                currentStroke = nil
             }
+            currentStroke = nil
         case .line, .arrow, .rectangle, .ellipse, .triangle:
             if let drawing = drawingObject {
                 service.addObject(drawing)
-                drawingObject = nil
             }
+            drawingObject = nil
         case .eraser:
             break
         case .select:
             dragStartPoint = nil
             dragOriginalObjects = []
+        }
+        
+        // 短延迟后重置 hasMovedSignificantly，让 tap 行为生效
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            self.hasMovedSignificantly = false
         }
     }
     
@@ -178,17 +181,87 @@ struct WhiteboardCanvasView: View {
         }
     }
     
-    private func handleErase(worldPoint: WhiteboardPoint) {
+    // MARK: - 范围擦除
+    
+    /// 范围擦除：只删除笔划上触点附近的段，非笔划对象整对象擦除
+    private func handleErase(worldPoint: WhiteboardPoint, radius: Double) {
         guard let doc = service.currentDocument else { return }
-        var toDelete: Set<UUID> = []
+        let worldRadius = radius / zoom  // 转换为世界坐标半径
+        let tolerance = worldRadius + 5
+        
+        var toRemoveIds: Set<UUID> = []
+        var modifiedStrokes: [StrokeShape] = []
+        var hasChanges = false
+        
         for obj in doc.objects {
-            if obj.contains(worldPoint) {
-                toDelete.insert(obj.id)
+            switch obj {
+            case .stroke(let s):
+                if let modified = eraseStrokeRange(s, at: worldPoint, tolerance: tolerance) {
+                    if modified.points.isEmpty {
+                        toRemoveIds.insert(s.id)
+                    } else {
+                        modifiedStrokes.append(modified)
+                        hasChanges = true
+                    }
+                }
+            case .rectangle, .ellipse, .triangle, .line, .arrow:
+                if obj.contains(worldPoint) {
+                    toRemoveIds.insert(obj.id)
+                }
             }
         }
-        if !toDelete.isEmpty {
-            service.deleteObjects(ids: toDelete)
+        
+        if !toRemoveIds.isEmpty {
+            service.deleteObjects(ids: toRemoveIds)
         }
+        if hasChanges {
+            // 应用修改的笔划
+            var newObjects = doc.objects
+            for modified in modifiedStrokes {
+                if let index = newObjects.firstIndex(where: { $0.id == modified.id }) {
+                    newObjects[index] = .stroke(modified)
+                }
+            }
+            service.replaceAllObjects(newObjects)
+        }
+    }
+    
+    /// 在笔划上擦除触点附近的段，返回修改后的笔划（如果无变化返回 nil）
+    private func eraseStrokeRange(_ stroke: StrokeShape, at point: WhiteboardPoint, tolerance: Double) -> StrokeShape? {
+        let points = stroke.points
+        guard !points.isEmpty else { return nil }
+        
+        // 找到所有在擦除范围内的点
+        var erasedIndices = Set<Int>()
+        for (i, p) in points.enumerated() {
+            let dx = p.x - point.x
+            let dy = p.y - point.y
+            if dx*dx + dy*dy <= tolerance * tolerance {
+                erasedIndices.insert(i)
+            }
+        }
+        
+        if erasedIndices.isEmpty { return nil }
+        
+        // 扩展擦除范围：相邻的擦除点合并为一段
+        // 找到被擦除段之间的保留段
+        var keptPoints: [WhiteboardPoint] = []
+        var i = 0
+        while i < points.count {
+            if erasedIndices.contains(i) {
+                // 跳过擦除段
+                while i < points.count && erasedIndices.contains(i) {
+                    i += 1
+                }
+            } else {
+                keptPoints.append(points[i])
+                i += 1
+            }
+        }
+        
+        var newStroke = stroke
+        newStroke.points = keptPoints
+        return newStroke
     }
     
     private func handleLineDrawing(worldPoint: WhiteboardPoint, start: WhiteboardPoint) {
@@ -251,7 +324,7 @@ struct WhiteboardCanvasView: View {
         }
     }
     
-    private func handleSelectDrag(worldPoint: WhiteboardPoint, start: WhiteboardPoint, currentScreen: CGPoint, startScreen: CGPoint) {
+    private func handleSelectDrag(worldPoint: WhiteboardPoint, start: WhiteboardPoint) {
         if !selectedIDs.isEmpty && dragStartPoint == nil {
             // 移动选中对象
             dragStartPoint = start
@@ -259,8 +332,6 @@ struct WhiteboardCanvasView: View {
         }
         
         guard let _ = dragStartPoint else {
-            // 框选
-            handleMarqueeSelect(currentScreen: currentScreen, startScreen: startScreen)
             return
         }
         
@@ -270,17 +341,15 @@ struct WhiteboardCanvasView: View {
         let offset2 = WhiteboardPoint(x: dx, y: dy)
         
         // 应用移动到当前画板对象
-        var newDoc = service.currentDocument
+        guard var doc = service.currentDocument else { return }
         for origObj in dragOriginalObjects {
             if let newObj = translateObject(origObj, by: offset2),
-               let index = newDoc?.objects.firstIndex(where: { $0.id == origObj.id }) {
-                newDoc?.objects[index] = newObj
+               let index = doc.objects.firstIndex(where: { $0.id == origObj.id }) {
+                doc.objects[index] = newObj
             }
         }
-        if let doc = newDoc {
-            // 直接更新，不记录撤销
-            service.replaceAllObjects(doc.objects, recordUndo: false)
-        }
+        // 直接更新，不记录撤销
+        service.replaceAllObjects(doc.objects, recordUndo: false)
     }
     
     private func translateObject(_ object: WhiteboardObject, by offset: WhiteboardPoint) -> WhiteboardObject? {
@@ -292,10 +361,6 @@ struct WhiteboardCanvasView: View {
         case .line(let l): return .line(l.translated(by: offset))
         case .arrow(let a): return .arrow(a.translated(by: offset))
         }
-    }
-    
-    private func handleMarqueeSelect(currentScreen: CGPoint, startScreen: CGPoint) {
-        // 简化处理：暂不实现框选
     }
 }
 
@@ -358,10 +423,14 @@ struct StrokeView: View {
             ))
             
             if points.count == 1 {
-                // 单点
-                path.addLine(to: CGPoint(
-                    x: points[0].x * zoom + canvasOffset.width + 0.5,
-                    y: points[0].y * zoom + canvasOffset.height + 0.5
+                // 单点：画一个小圆点
+                let p0 = points[0]
+                let r = (stroke.strokeWidth * zoom) / 2
+                path.addEllipse(in: CGRect(
+                    x: p0.x * zoom + canvasOffset.width - r,
+                    y: p0.y * zoom + canvasOffset.height - r,
+                    width: r * 2,
+                    height: r * 2
                 ))
             } else if points.count == 2 {
                 path.addLine(to: CGPoint(
@@ -369,7 +438,7 @@ struct StrokeView: View {
                     y: points[1].y * zoom + canvasOffset.height
                 ))
             } else {
-                // 使用 Catmull-Rom 风格的平滑
+                // 使用 二次贝塞尔曲线 串联所有点（中点法）
                 for i in 1..<points.count {
                     let curr = points[i]
                     let prev = points[i - 1]
@@ -382,7 +451,6 @@ struct StrokeView: View {
                         control: CGPoint(x: prev.x * zoom + canvasOffset.width, y: prev.y * zoom + canvasOffset.height)
                     )
                 }
-                // 最后一笔
                 if let last = points.last {
                     path.addLine(to: CGPoint(
                         x: last.x * zoom + canvasOffset.width,
@@ -597,11 +665,9 @@ struct GridBackground: View {
             let gridSize: Double = 50
             let scaledGrid = gridSize * zoom
             
-            // 偏移计算
             let offsetX = offset.width.truncatingRemainder(dividingBy: scaledGrid)
             let offsetY = offset.height.truncatingRemainder(dividingBy: scaledGrid)
             
-            // 绘制竖线
             var x: Double = offsetX
             while x < size.width {
                 var path = Path()
@@ -611,7 +677,6 @@ struct GridBackground: View {
                 x += scaledGrid
             }
             
-            // 绘制横线
             var y: Double = offsetY
             while y < size.height {
                 var path = Path()
@@ -621,7 +686,6 @@ struct GridBackground: View {
                 y += scaledGrid
             }
             
-            // 中心轴
             var centerX = Path()
             centerX.move(to: CGPoint(x: size.width / 2, y: 0))
             centerX.addLine(to: CGPoint(x: size.width / 2, y: size.height))
@@ -643,7 +707,6 @@ struct SelectionBoundsView: View {
     let canvasOffset: CGSize
     
     var body: some View {
-        // 计算所有选中对象的边界
         if let bounds = combinedBounds {
             let padding = 8.0
             Rectangle()
