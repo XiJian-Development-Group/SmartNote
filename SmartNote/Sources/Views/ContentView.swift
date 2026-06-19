@@ -165,7 +165,7 @@ struct DetailView: View {
             case 18:
                 DiaryListView()
             case 19:
-                WhiteBoardView()
+                WhiteboardView()
             case 20:
                 TodoListView()
             default:
