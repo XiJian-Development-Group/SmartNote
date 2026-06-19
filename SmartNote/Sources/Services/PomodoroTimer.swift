@@ -19,6 +19,10 @@ class PomodoroTimer: ObservableObject {
     
     @Published var isFocusModeEnabled = false
     
+    // 关联的待办事项
+    @Published var linkedTodoID: UUID? = nil
+    @Published var linkedTodoTitle: String? = nil
+    
     private var timer: Timer?
     private var studySession: StudySession?
     
@@ -50,7 +54,7 @@ class PomodoroTimer: ObservableObject {
         if currentPhase == .work {
             studySession = StudySession(
                 id: UUID(),
-                subject: subject ?? "通用",
+                subject: subject ?? linkedTodoTitle ?? "通用",
                 startTime: Date(),
                 duration: 0,
                 completed: false
@@ -66,6 +70,19 @@ class PomodoroTimer: ObservableObject {
         }
         
         sendNotification(title: "开始\(currentPhase.displayName)", body: "保持专注！")
+    }
+    
+    /// 启动番茄钟并关联指定待办
+    func startForTodo(todoID: UUID, todoTitle: String) {
+        linkedTodoID = todoID
+        linkedTodoTitle = todoTitle
+        start(subject: todoTitle)
+    }
+    
+    /// 解除当前关联的待办
+    func unlinkTodo() {
+        linkedTodoID = nil
+        linkedTodoTitle = nil
     }
     
     func pause() {
@@ -92,6 +109,8 @@ class PomodoroTimer: ObservableObject {
         if isFocusModeEnabled {
             disableFocusMode()
         }
+        
+        // 不清空关联，保留以便用户查看上次关联
     }
     
     func reset() {

@@ -162,7 +162,7 @@ class TodoService: ObservableObject {
             stopPomodoroForCurrentTodo()
         }
         
-        pomodoroService.start(subject: item.title)
+        pomodoroService.startForTodo(todoID: item.id, todoTitle: item.title)
         
         if let index = items.firstIndex(where: { $0.id == item.id }) {
             items[index].status = .inProgress
@@ -175,10 +175,10 @@ class TodoService: ObservableObject {
     
     /// 停止当前待办的番茄钟并记录时间
     func stopPomodoroForCurrentTodo() {
-        if let linkedID = pomodoroService.currentTodoID,
+        if let linkedID = pomodoroService.linkedTodoID,
            let index = items.firstIndex(where: { $0.id == linkedID }) {
             // 累加番茄钟专注时间
-            if let lastSession = items[index].pomodoroSessions.last {
+            if let lastSession = items[index].pomodoroSessions.last, lastSession.endTime == nil {
                 let duration = Date().timeIntervalSince(lastSession.startTime)
                 items[index].pomodoroSessions[items[index].pomodoroSessions.count - 1].endTime = Date()
                 items[index].pomodoroSessions[items[index].pomodoroSessions.count - 1].duration += duration
@@ -187,6 +187,7 @@ class TodoService: ObservableObject {
             }
             saveItems()
         }
+        pomodoroService.unlinkTodo()
     }
     
     func stopPomodoroForTodo(_ item: TodoItem) {

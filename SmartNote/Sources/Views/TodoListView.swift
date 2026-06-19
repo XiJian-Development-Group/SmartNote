@@ -41,6 +41,7 @@ struct TodoListView: View {
                     Image(systemName: isSelectionMode ? "checkmark.circle.fill" : "checkmark.circle")
                 }
                 .help(isSelectionMode ? "退出选择" : "批量选择")
+                .keyboardShortcut("a", modifiers: [.command, .shift])
                 
                 Button {
                     showStatistics = true
@@ -50,16 +51,18 @@ struct TodoListView: View {
                 .help("统计")
                 
                 Button {
-                    editingItem = nil
-                    showEditor = true
+                    openNewEditor()
                 } label: {
                     Image(systemName: "plus")
                 }
-                .help("新建待办")
+                .help("新建待办 (⌘N)")
+                .keyboardShortcut("n", modifiers: .command)
             }
         }
         .searchable(text: $searchText, prompt: "搜索标题、描述、标签")
-        .sheet(isPresented: $showEditor) {
+        .sheet(isPresented: $showEditor, onDismiss: {
+            editingItem = nil
+        }) {
             TodoEditorView(
                 item: editingItem,
                 onSave: { newItem in
@@ -107,6 +110,23 @@ struct TodoListView: View {
             }
         } message: {
             Text("将选中的 \(selectedItems.count) 个待办标记为完成？")
+        }
+    }
+    
+    // MARK: - 操作
+    
+    private func openNewEditor() {
+        editingItem = nil
+        // 等待下一帧让 SwiftUI 捕获新值
+        DispatchQueue.main.async {
+            showEditor = true
+        }
+    }
+    
+    private func openEditEditor(for item: TodoItem) {
+        editingItem = item
+        DispatchQueue.main.async {
+            showEditor = true
         }
     }
     
@@ -252,55 +272,43 @@ struct TodoListView: View {
     // MARK: - 列表内容
     
     private var todoListContent: some View {
-        List(selection: isSelectionMode ? $selectedItems : .constant(Set<UUID>())) {
-            ForEach(filteredItems) { item in
-                TodoRowView(
-                    item: item,
-                    isSelectionMode: isSelectionMode,
-                    isSelected: selectedItems.contains(item.id),
-                    onToggle: {
-                        todoService.toggleComplete(item)
-                    },
-                    onTogglePin: {
-                        todoService.togglePin(item)
-                    },
-                    onEdit: {
-                        editingItem = item
-                        showEditor = true
-                    },
-                    onStartPomodoro: {
-                        todoService.startPomodoroForTodo(item)
-                    },
-                    onDelete: {
-                        todoService.delete(item)
-                    }
-                )
-                .tag(item.id)
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    Button(role: .destructive) {
-                        todoService.delete(item)
-                    } label: {
-                        Label("删除", systemImage: "trash")
-                    }
-                    
-                    Button {
-                        editingItem = item
-                        showEditor = true
-                    } label: {
-                        Label("编辑", systemImage: "pencil")
-                    }
-                    .tint(.blue)
-                    
-                    Button {
-                        todoService.startPomodoroForTodo(item)
-                    } label: {
-                        Label("番茄钟", systemImage: "timer")
-                    }
-                    .tint(.orange)
+        // 使用 ScrollView + LazyVStack 而非 List，避免 selection binding 与 onTap 冲突
+        ScrollView {
+            LazyVStack(spacing: 4) {
+                ForEach(filteredItems) { item in
+                    TodoRowView(
+                        item: item,
+                        isSelectionMode: isSelectionMode,
+                        isSelected: selectedItems.contains(item.id),
+                        onToggle: {
+                            todoService.toggleComplete(item)
+                        },
+                        onTogglePin: {
+                            todoService.togglePin(item)
+                        },
+                        onEdit: {
+                            openEditEditor(for: item)
+                        },
+                        onStartPomodoro: {
+                            todoService.startPomodoroForTodo(item)
+                        },
+                        onDelete: {
+                            todoService.delete(item)
+                        },
+                        onToggleSelection: {
+                            if selectedItems.contains(item.id) {
+                                selectedItems.remove(item.id)
+                            } else {
+                                selectedItems.insert(item.id)
+                            }
+                        }
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 2)
                 }
             }
+            .padding(.vertical, 8)
         }
-        .listStyle(.inset)
     }
     
     // MARK: - 空状态
@@ -315,12 +323,12 @@ struct TodoListView: View {
                 .foregroundColor(.secondary)
             if searchText.isEmpty {
                 Button {
-                    editingItem = nil
-                    showEditor = true
+                    openNewEditor()
                 } label: {
                     Label("添加待办", systemImage: "plus.circle.fill")
                 }
                 .buttonStyle(.borderedProminent)
+                .keyboardShortcut("n", modifiers: .command)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -338,22 +346,20 @@ struct TodoRowView: View {
     let onEdit: () -> Void
     let onStartPomodoro: () -> Void
     let onDelete: () -> Void
+    let onToggleSelection: () -> Void
     
     var body: some View {
         HStack(spacing: 12) {
-            if isSelectionMode {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isSelected ? .accentColor : .secondary)
+            // 完成状态圆圈
+            Button(action: handleCheckButton) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : (item.status == .completed ? "checkmark.circle.fill" : "circle"))
+                    .foregroundColor(isSelected ? .accentColor : (item.status == .completed ? .green : .secondary))
                     .font(.system(size: 18))
-            } else {
-                Button(action: onToggle) {
-                    Image(systemName: item.status == .completed ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(item.status == .completed ? .green : .secondary)
-                        .font(.system(size: 18))
-                }
-                .buttonStyle(.plain)
             }
+            .buttonStyle(.plain)
+            .help(isSelectionMode ? (isSelected ? "取消选择" : "选择") : (item.status == .completed ? "标记为未完成" : "标记为完成"))
             
+            // 主体内容（点击编辑）
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     if item.isPinned {
@@ -411,22 +417,47 @@ struct TodoRowView: View {
                     }
                 }
             }
-            
-            Spacer()
-            
-            if !isSelectionMode {
-                Button(action: onTogglePin) {
-                    Image(systemName: item.isPinned ? "pin.fill" : "pin")
-                        .foregroundColor(item.isPinned ? .orange : .secondary)
-                        .font(.system(size: 14))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                if isSelectionMode {
+                    onToggleSelection()
+                } else {
+                    onEdit()
                 }
-                .buttonStyle(.plain)
-                .help(item.isPinned ? "取消置顶" : "置顶")
+            }
+            
+            // 右侧操作区
+            if !isSelectionMode {
+                HStack(spacing: 8) {
+                    // 番茄钟快捷启动
+                    Button(action: onStartPomodoro) {
+                        Image(systemName: "timer")
+                            .foregroundColor(item.status == .inProgress ? .orange : .secondary)
+                            .font(.system(size: 14))
+                    }
+                    .buttonStyle(.plain)
+                    .help("启动番茄钟")
+                    
+                    // 置顶
+                    Button(action: onTogglePin) {
+                        Image(systemName: item.isPinned ? "pin.fill" : "pin")
+                            .foregroundColor(item.isPinned ? .orange : .secondary)
+                            .font(.system(size: 14))
+                    }
+                    .buttonStyle(.plain)
+                    .help(item.isPinned ? "取消置顶" : "置顶")
+                }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
+        .padding(.horizontal, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+        )
         .contentShape(Rectangle())
-        .onTapGesture {
+        .onTapGesture(count: 2) {
             if !isSelectionMode {
                 onEdit()
             }
@@ -466,7 +497,22 @@ struct TodoRowView: View {
                 } label: {
                     Label("删除", systemImage: "trash")
                 }
+            } else {
+                Button {
+                    onToggleSelection()
+                } label: {
+                    Label(isSelected ? "取消选择" : "选择",
+                          systemImage: isSelected ? "circle" : "checkmark.circle")
+                }
             }
+        }
+    }
+    
+    private func handleCheckButton() {
+        if isSelectionMode {
+            onToggleSelection()
+        } else {
+            onToggle()
         }
     }
     
