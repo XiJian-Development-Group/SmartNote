@@ -194,6 +194,30 @@ class StorageService {
         try? FileManager.default.removeItem(at: p2pBlackListFileURL)
     }
     
+    private var todoItemsFileURL: URL {
+        appSupportDirectory.appendingPathComponent("todoItems.json")
+    }
+    
+    private var todoCategoriesFileURL: URL {
+        appSupportDirectory.appendingPathComponent("todoCategories.json")
+    }
+    
+    func saveTodoItems(_ items: [TodoItem]) {
+        save(items, to: todoItemsFileURL)
+    }
+    
+    func loadTodoItems() -> [TodoItem] {
+        return load(from: todoItemsFileURL) ?? []
+    }
+    
+    func saveTodoCategories(_ categories: [TodoCategory]) {
+        save(categories, to: todoCategoriesFileURL)
+    }
+    
+    func loadTodoCategories() -> [TodoCategory] {
+        return load(from: todoCategoriesFileURL) ?? []
+    }
+    
     private func save<T: Encodable>(_ object: T, to url: URL) {
         do {
             let encoder = JSONEncoder()

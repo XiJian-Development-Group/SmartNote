@@ -51,10 +51,10 @@ class AppState: ObservableObject {
         examCountdowns = storageService.loadSettings().examCountdowns
     }
     
-    func importFiles(_ urls: [URL]) {
+    func importFiles(_ urls: [URL], storageMode: MaterialStorageMode = .copy) {
         isScanning = true
         Task {
-            let newMaterials = await fileScanner.scanFiles(urls: urls)
+            let newMaterials = await fileScanner.scanFiles(urls: urls, storageMode: storageMode)
             await MainActor.run {
                 materials.append(contentsOf: newMaterials)
                 storageService.saveMaterials(materials)

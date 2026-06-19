@@ -192,6 +192,13 @@ struct MaterialRowView: View {
                             .foregroundColor(.yellow)
                             .font(.caption)
                     }
+                    
+                    if material.storageMode == .reference {
+                        Image(systemName: "link")
+                            .foregroundColor(.orange)
+                            .font(.caption)
+                            .help("关联文件：原文件移动将导致无法访问")
+                    }
                 }
                 
                 HStack(spacing: 8) {

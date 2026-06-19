@@ -179,4 +179,67 @@ class NotificationService: ObservableObject {
             print("Error sending task reminder: \(error)")
         }
     }
+    
+    // MARK: - 待办提醒
+    
+    /// 为待办事项安排提醒
+    func scheduleTodoReminder(item: TodoItem, at date: Date) {
+        cancelTodoReminder(todoID: item.id)
+        
+        let content = UNMutableNotificationContent()
+        content.title = "📋 待办提醒"
+        var body = item.title
+        if !item.description.isEmpty {
+            body += "\n\(item.description)"
+        }
+        content.body = body
+        content.sound = .default
+        content.userInfo = ["todoID": item.id.uuidString]
+        
+        let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        
+        let request = UNNotificationRequest(
+            identifier: "todo_\(item.id.uuidString)",
+            content: content,
+            trigger: trigger
+        )
+        
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Error scheduling todo reminder: \(error)")
+            }
+        }
+    }
+    
+    /// 取消待办提醒
+    func cancelTodoReminder(todoID: UUID) {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: ["todo_\(todoID.uuidString)"]
+        )
+    }
+    
+    /// 立即发送待办提醒（应用内提醒）
+    func sendImmediateTodoNotification(title: String, body: String) async {
+        guard isAuthorized else { return }
+        
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        
+        let request = UNNotificationRequest(
+            identifier: "todoImmediate_\(Date().timeIntervalSince1970)",
+            content: content,
+            trigger: trigger
+        )
+        
+        do {
+            try await UNUserNotificationCenter.current().add(request)
+        } catch {
+            print("Error sending immediate todo notification: \(error)")
+        }
+    }
 }

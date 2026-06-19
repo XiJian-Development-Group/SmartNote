@@ -7,7 +7,8 @@ struct DiaryListView: View {
     @State private var showDatePicker = false
     @State private var selectedEntries: Set<UUID> = []
     @State private var isSelectionMode = false
-    @State private var showNewEntry = false
+    @State private var showEditor = false
+    @State private var editingEntry: DiaryEntry? = nil
     @State private var showDeleteConfirmation = false
     @State private var entriesToDelete: [UUID] = []
     
@@ -27,8 +28,8 @@ struct DiaryListView: View {
                 diaryListContent
             }
         }
-        .sheet(isPresented: $showNewEntry) {
-            DiaryEditorView(entry: nil)
+        .sheet(isPresented: $showEditor) {
+            DiaryEditorView(entry: editingEntry)
         }
         .alert("确认删除", isPresented: $showDeleteConfirmation) {
             Button("取消", role: .cancel) {}
@@ -81,7 +82,8 @@ struct DiaryListView: View {
                 }
                 
                 Button {
-                    showNewEntry = true
+                    editingEntry = nil
+                    showEditor = true
                 } label: {
                     Image(systemName: "plus")
                 }
@@ -148,7 +150,8 @@ struct DiaryListView: View {
                     if isSelectionMode {
                         toggleSelection(entry.id)
                     } else {
-                        showNewEntry = true
+                        editingEntry = entry
+                        showEditor = true
                     }
                 },
                 onPin: {

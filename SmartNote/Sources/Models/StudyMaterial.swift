@@ -15,6 +15,7 @@ struct StudyMaterial: Identifiable, Codable, Hashable {
     var fileSize: Int64
     var isFavorite: Bool
     var notes: String
+    var storageMode: MaterialStorageMode
     
     init(
         id: UUID = UUID(),
@@ -30,7 +31,8 @@ struct StudyMaterial: Identifiable, Codable, Hashable {
         modifiedAt: Date = Date(),
         fileSize: Int64 = 0,
         isFavorite: Bool = false,
-        notes: String = ""
+        notes: String = "",
+        storageMode: MaterialStorageMode = .copy
     ) {
         self.id = id
         self.name = name
@@ -46,6 +48,7 @@ struct StudyMaterial: Identifiable, Codable, Hashable {
         self.fileSize = fileSize
         self.isFavorite = isFavorite
         self.notes = notes
+        self.storageMode = storageMode
     }
     
     var displayFileSize: String {
@@ -117,6 +120,35 @@ enum MaterialCategory: String, Codable, CaseIterable {
         case .notes: return "green"
         case .personalAnalysis: return "purple"
         case .other: return "gray"
+        }
+    }
+}
+
+/// 资料存储模式
+enum MaterialStorageMode: String, Codable, CaseIterable, Identifiable {
+    case copy
+    case reference
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .copy: return "复制"
+        case .reference: return "关联"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .copy: return "复制文件到SmartNote存储目录，原文件变动不影响资料"
+        case .reference: return "仅创建文件链接，原文件变动会同步更新"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .copy: return "doc.on.doc.fill"
+        case .reference: return "link"
         }
     }
 }

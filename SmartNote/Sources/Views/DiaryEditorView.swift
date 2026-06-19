@@ -118,8 +118,9 @@ struct DiaryEditorView: View {
             
             if showPreview {
                 ScrollView {
-                    MarkdownPreviewView(content: content)
+                    MarkdownText(content)
                         .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             } else {
                 TextEditor(text: $content)
@@ -242,48 +243,6 @@ struct MaterialPickerView: View {
         } else {
             selectedIDs.append(id)
         }
-    }
-}
-
-struct MarkdownPreviewView: View {
-    let content: String
-    
-    var body: some View {
-        Text(attributedContent)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
-    private var attributedContent: AttributedString {
-        var result = AttributedString()
-        
-        let lines = content.components(separatedBy: "\n")
-        
-        for (index, line) in lines.enumerated() {
-            var lineAttr = AttributedString(line)
-            
-            if line.hasPrefix("# ") {
-                lineAttr = AttributedString(String(line.dropFirst(2)))
-                lineAttr.font = .title
-                lineAttr.font = .title.bold()
-            } else if line.hasPrefix("## ") {
-                lineAttr = AttributedString(String(line.dropFirst(3)))
-                lineAttr.font = .title2.bold()
-            } else if line.hasPrefix("### ") {
-                lineAttr = AttributedString(String(line.dropFirst(4)))
-                lineAttr.font = .headline
-            } else if line.hasPrefix("- ") || line.hasPrefix("* ") {
-                var bulletAttr = AttributedString("• ")
-                bulletAttr.append(lineAttr)
-                lineAttr = bulletAttr
-            }
-            
-            if index > 0 {
-                result.append(AttributedString("\n"))
-            }
-            result.append(lineAttr)
-        }
-        
-        return result
     }
 }
 

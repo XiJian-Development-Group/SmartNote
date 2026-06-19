@@ -10,6 +10,7 @@
 		01278A3F060B847D549DDE83 /* LLMSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F332C2BF2D9E8D571CB00EFA /* LLMSettingsView.swift */; };
 		06DDF901E2848FD484DD0C57 /* FocusModeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC170FA87CD834A81E9A4CC8 /* FocusModeService.swift */; };
 		0CB88EC66EFF82034EC22064 /* P2PService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35933360A6AA6EE2A69BEFD4 /* P2PService.swift */; };
+		0D3AA91BBAC72021E2F85522 /* TodoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B4D9C3200C34A11A49F9FD4 /* TodoService.swift */; };
 		137C3BB73D6E4E4BBFCBFD50 /* DuplicateScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84839B0FC350C553762798B0 /* DuplicateScannerView.swift */; };
 		268DDF1724C0158B44778F82 /* DiaryEncryptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 677C192800FE87ECC35092EC /* DiaryEncryptionService.swift */; };
 		26E36D156DF354C79863FC60 /* WhiteBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF0F9399D305DF370C71A6C /* WhiteBoardView.swift */; };
@@ -25,9 +26,11 @@
 		574B9D96A352982436D54469 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA20C8E3AFF5E8F5780261 /* AppState.swift */; };
 		5A11D0F9260737C7E1A00140 /* PDFService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1E56D223E7A85D761A70BA /* PDFService.swift */; };
 		5C108930AB66F5F867A1918B /* KeywordExtractionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1CBA1BA3BF23D2680740DCD /* KeywordExtractionService.swift */; };
+		64BFA27FBB8EF88DFAE38BFF /* TodoListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE6B781C89797E2A26CB86A2 /* TodoListView.swift */; };
 		65F6A70AAF8886E06BCA9D7C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0E57E6AD3AF6399A1E7F4E50 /* Assets.xcassets */; };
 		66B59954535C5BF449686A57 /* DiaryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8D8BD98EC7FF3BD5FD28E14 /* DiaryListView.swift */; };
 		67621F51E84AAAA8AB0E2627 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B8C1B44A2A61CA79BD48879 /* ContentView.swift */; };
+		69247B994BB40400FEA18176 /* TodoEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99E35DB7755156968804420 /* TodoEditorView.swift */; };
 		6BEAC51EFE84A910F12692E9 /* CalendarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D50C4DEA6DDBE484CB505052 /* CalendarService.swift */; };
 		719E56A223EC013911943F9E /* P2PCryptoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0C0B9F554192EC67B33B58 /* P2PCryptoService.swift */; };
 		779CC755CC9ECB20892847C1 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6EE24BB16C4F533244DA72D /* StatusBarView.swift */; };
@@ -41,6 +44,7 @@
 		8C441C29A6D80A32A928C786 /* P2PSocialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D0E79C54C3F1A34CD32B6E /* P2PSocialView.swift */; };
 		9212FED957EB7BE89CB44D96 /* Diary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63B827EA762FC4151DBAED5F /* Diary.swift */; };
 		96E3AA1638583660A537C17C /* SmartNoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A56F3D9C89D292DF37A1E7 /* SmartNoteApp.swift */; };
+		9FD3F4890BD41A5194537223 /* TodoStatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F77F9236E0D091628720FB7A /* TodoStatisticsView.swift */; };
 		A04052BAA18BF67F53334614 /* PDFAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01B9E1AAB643D41A88EFF1E8 /* PDFAnnotation.swift */; };
 		A6538E9AE726EB1B6A0A139A /* PDFAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E52D5CE99C2649DE472BDD06 /* PDFAnnotationView.swift */; };
 		A83592B1242E65D43DD45C35 /* CreateMaterialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4575EE9184B750B4B671582 /* CreateMaterialView.swift */; };
@@ -72,6 +76,7 @@
 		F78AE3270A4A3B1DD86BEB27 /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3552CF8976544956A158CCD /* LLMService.swift */; };
 		FB568611ABDCD521EC8C1FC2 /* PDFAnnotationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35417BC62B272D7F6B24E2C7 /* PDFAnnotationService.swift */; };
 		FD26ECDCB88D37EA644DDA79 /* FileImportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270C3E3C779EA0B469949129 /* FileImportView.swift */; };
+		FEE2C5166E03E99BB7F5337A /* TodoItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CBFCF8E6360A6B9A44AAE27 /* TodoItem.swift */; };
 		FF6F66BF60F7910C14210550 /* LearningProfileSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E7459E7FE5DC39CDD074EA /* LearningProfileSettingsView.swift */; };
 /* End PBXBuildFile section */
 
@@ -83,6 +88,7 @@
 		12987FCC65DCD2D306F5CCB3 /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
 		183A64BA18C98E763E093D8C /* UserLearningProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserLearningProfile.swift; sourceTree = "<group>"; };
 		1B1163580FC0527F161967C0 /* MarkdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownView.swift; sourceTree = "<group>"; };
+		1B4D9C3200C34A11A49F9FD4 /* TodoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoService.swift; sourceTree = "<group>"; };
 		20D77772B153256013321672 /* ExamCountdownView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamCountdownView.swift; sourceTree = "<group>"; };
 		235D53B84549223D70F9128D /* RelaxGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelaxGameView.swift; sourceTree = "<group>"; };
 		270C3E3C779EA0B469949129 /* FileImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileImportView.swift; sourceTree = "<group>"; };
@@ -108,11 +114,14 @@
 		83D3416A6F06F0A71B9E8C68 /* WrongQuestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongQuestion.swift; sourceTree = "<group>"; };
 		84839B0FC350C553762798B0 /* DuplicateScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateScannerView.swift; sourceTree = "<group>"; };
 		8589B9024F0431513B5331FE /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
+		8CBFCF8E6360A6B9A44AAE27 /* TodoItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoItem.swift; sourceTree = "<group>"; };
 		9153CA3BAB1A98A91814C442 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		92C67150FE8E22E2AEAC4C82 /* KeyPointsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyPointsView.swift; sourceTree = "<group>"; };
 		A1BF99288F70ED636D3AAB01 /* AIChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatView.swift; sourceTree = "<group>"; };
 		AA0863EA110BC965E52DEF48 /* DiaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryService.swift; sourceTree = "<group>"; };
+		AE6B781C89797E2A26CB86A2 /* TodoListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoListView.swift; sourceTree = "<group>"; };
 		B6D3227CDBCFE8A5C9B904F8 /* ReviewPlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewPlanView.swift; sourceTree = "<group>"; };
+		B99E35DB7755156968804420 /* TodoEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoEditorView.swift; sourceTree = "<group>"; };
 		B9CD2DA9C12FD47108F0A6DC /* P2PAddFriendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PAddFriendView.swift; sourceTree = "<group>"; };
 		B9CD98BF6A753ECF9FE0480B /* SmartGradingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartGradingView.swift; sourceTree = "<group>"; };
 		BB8A0D5710EFF14D4DCAEDD9 /* P2PSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PSettingsView.swift; sourceTree = "<group>"; };
@@ -141,6 +150,7 @@
 		F332C2BF2D9E8D571CB00EFA /* LLMSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMSettingsView.swift; sourceTree = "<group>"; };
 		F3552CF8976544956A158CCD /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
 		F4575EE9184B750B4B671582 /* CreateMaterialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateMaterialView.swift; sourceTree = "<group>"; };
+		F77F9236E0D091628720FB7A /* TodoStatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoStatisticsView.swift; sourceTree = "<group>"; };
 		F8D8BD98EC7FF3BD5FD28E14 /* DiaryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryListView.swift; sourceTree = "<group>"; };
 		FCE4AC128765C446DF922DCB /* P2PCreateIdentityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PCreateIdentityView.swift; sourceTree = "<group>"; };
 		FD1E5B0EE3EA703F874316BC /* MaterialDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialDetailView.swift; sourceTree = "<group>"; };
@@ -223,6 +233,7 @@
 				52DB2C22BCC415B73BF84A48 /* PomodoroTimer.swift */,
 				3157E15A32FE4D1A505F6ED5 /* SpeechService.swift */,
 				12987FCC65DCD2D306F5CCB3 /* StorageService.swift */,
+				1B4D9C3200C34A11A49F9FD4 /* TodoService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -274,6 +285,9 @@
 				B9CD98BF6A753ECF9FE0480B /* SmartGradingView.swift */,
 				D249E5C4EC6332AE451B8016 /* StatisticsView.swift */,
 				C6EE24BB16C4F533244DA72D /* StatusBarView.swift */,
+				B99E35DB7755156968804420 /* TodoEditorView.swift */,
+				AE6B781C89797E2A26CB86A2 /* TodoListView.swift */,
+				F77F9236E0D091628720FB7A /* TodoStatisticsView.swift */,
 				5FF0F9399D305DF370C71A6C /* WhiteBoardView.swift */,
 				C2679F36366EF4AB15F14DAD /* WrongQuestionView.swift */,
 				C96737D8EEF3BD72484731DB /* Components */,
@@ -301,6 +315,7 @@
 				01B9E1AAB643D41A88EFF1E8 /* PDFAnnotation.swift */,
 				C7882398FAA6EDA889F8A4A6 /* ReviewPlan.swift */,
 				D54F87F628B7AE589BEFF23D /* StudyMaterial.swift */,
+				8CBFCF8E6360A6B9A44AAE27 /* TodoItem.swift */,
 				183A64BA18C98E763E093D8C /* UserLearningProfile.swift */,
 				83D3416A6F06F0A71B9E8C68 /* WrongQuestion.swift */,
 			);
@@ -486,6 +501,11 @@
 				779CC755CC9ECB20892847C1 /* StatusBarView.swift in Sources */,
 				7E21801EB2DB6F679E2C20F0 /* StorageService.swift in Sources */,
 				2F98FE09BB19688189632973 /* StudyMaterial.swift in Sources */,
+				69247B994BB40400FEA18176 /* TodoEditorView.swift in Sources */,
+				FEE2C5166E03E99BB7F5337A /* TodoItem.swift in Sources */,
+				64BFA27FBB8EF88DFAE38BFF /* TodoListView.swift in Sources */,
+				0D3AA91BBAC72021E2F85522 /* TodoService.swift in Sources */,
+				9FD3F4890BD41A5194537223 /* TodoStatisticsView.swift in Sources */,
 				AADD190F79B79514A050BD7B /* UserLearningProfile.swift in Sources */,
 				26E36D156DF354C79863FC60 /* WhiteBoardView.swift in Sources */,
 				36972F90F0E8E74A9A18AD47 /* WrongQuestion.swift in Sources */,
@@ -551,7 +571,7 @@
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 5.9;
 			};
 			name = Release;
 		};
@@ -559,9 +579,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				AUTOMATION_APPLE_EVENTS = NO;
 				CODE_SIGN_ENTITLEMENTS = SmartNote/Resources/SmartNote.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 70;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "智学笔记";
@@ -570,9 +598,15 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.4.6;
+				MARKETING_VERSION = 1.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.smartnote;
 				PRODUCT_NAME = SmartNote;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
@@ -582,9 +616,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				AUTOMATION_APPLE_EVENTS = NO;
 				CODE_SIGN_ENTITLEMENTS = SmartNote/Resources/SmartNote.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 70;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "智学笔记";
@@ -593,9 +635,15 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.4.6;
+				MARKETING_VERSION = 1.5.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.smartnote;
 				PRODUCT_NAME = SmartNote;
+				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
+				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
+				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
+				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
+				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
+				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
@@ -663,7 +711,7 @@
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 5.9;
 			};
 			name = Debug;
 		};

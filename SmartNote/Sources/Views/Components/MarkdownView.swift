@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import Markdown
 
 struct MarkdownText: View {
@@ -195,14 +196,26 @@ struct MarkdownText: View {
     
     @ViewBuilder
     private func linkView(_ link: Markdown.Link) -> some View {
-        if let destination = link.destination {
-            Link(destination: URL(string: destination) ?? URL(string: "about:blank")!) {
+        if let destination = link.destination, let url = URL(string: destination) {
+            Link(destination: url) {
                 Text(link.plainText)
                     .foregroundColor(.blue)
+                    .underline()
+            }
+            .onTapGesture {
+                openLink(url)
             }
         } else {
             Text(link.plainText)
                 .foregroundColor(.blue)
+                .underline()
+        }
+    }
+    
+    /// 打开链接：按住Command键（⌘）点击时在默认浏览器打开
+    private func openLink(_ url: URL) {
+        if NSEvent.modifierFlags.contains(.command) {
+            NSWorkspace.shared.open(url)
         }
     }
     

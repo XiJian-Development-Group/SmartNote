@@ -9,11 +9,11 @@ actor FileScannerService {
         "txt", "md"
     ]
     
-    func scanFiles(urls: [URL]) async -> [StudyMaterial] {
+    func scanFiles(urls: [URL], storageMode: MaterialStorageMode = .copy) async -> [StudyMaterial] {
         var materials: [StudyMaterial] = []
         
         for url in urls {
-            let material = await processFile(at: url)
+            let material = await processFile(at: url, storageMode: storageMode)
             if let material = material {
                 materials.append(material)
             }
@@ -22,7 +22,7 @@ actor FileScannerService {
         return materials
     }
     
-    func scanDirectory(at url: URL) async -> [StudyMaterial] {
+    func scanDirectory(at url: URL, storageMode: MaterialStorageMode = .copy) async -> [StudyMaterial] {
         var materials: [StudyMaterial] = []
         let fileManager = FileManager.default
         
@@ -39,7 +39,7 @@ actor FileScannerService {
                 continue
             }
             
-            let material = await processFile(at: fileURL)
+            let material = await processFile(at: fileURL, storageMode: storageMode)
             if let material = material {
                 materials.append(material)
             }
@@ -48,7 +48,7 @@ actor FileScannerService {
         return materials
     }
     
-    func scanCommonDirectories() async -> [StudyMaterial] {
+    func scanCommonDirectories(storageMode: MaterialStorageMode = .copy) async -> [StudyMaterial] {
         var materials: [StudyMaterial] = []
         let fileManager = FileManager.default
         
@@ -59,14 +59,14 @@ actor FileScannerService {
         ].compactMap { $0 }
         
         for directory in directories {
-            let foundMaterials = await scanDirectory(at: directory)
+            let foundMaterials = await scanDirectory(at: directory, storageMode: storageMode)
             materials.append(contentsOf: foundMaterials)
         }
         
         return materials
     }
     
-    private func processFile(at url: URL) async -> StudyMaterial? {
+    private func processFile(at url: URL, storageMode: MaterialStorageMode = .copy) async -> StudyMaterial? {
         let fileManager = FileManager.default
         
         guard fileManager.fileExists(atPath: url.path) else {
@@ -87,21 +87,77 @@ actor FileScannerService {
                 content = extractPDFText(from: url) ?? ""
             }
             
+            // 根据存储模式处理文件
+            let storedURL: URL
+            var finalStorageMode = storageMode
+            switch storageMode {
+            case .copy:
+                if let copied = copyFileToStorage(from: url) {
+                    storedURL = copied
+                } else {
+                    // 复制失败时降级为关联模式以保证数据不丢失
+                    storedURL = url
+                    finalStorageMode = .reference
+                }
+            case .reference:
+                storedURL = url
+            }
+            
             let material = StudyMaterial(
                 name: url.deletingPathExtension().lastPathComponent,
                 type: materialType,
                 category: category,
-                localURL: url,
+                localURL: storedURL,
                 originalURL: url,
                 content: content,
                 createdAt: createdAt,
                 modifiedAt: modifiedAt,
-                fileSize: fileSize
+                fileSize: fileSize,
+                storageMode: finalStorageMode
             )
             
             return material
         } catch {
             print("Error processing file: \(error)")
+            return nil
+        }
+    }
+    
+    /// 获取SmartNote专用存储目录
+    static func getStorageDirectory() -> URL {
+        let fileManager = FileManager.default
+        let paths = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+        let appSupport = paths.first!.appendingPathComponent("SmartNote")
+        let storage = appSupport.appendingPathComponent("Materials", isDirectory: true)
+        
+        if !fileManager.fileExists(atPath: storage.path) {
+            try? fileManager.createDirectory(at: storage, withIntermediateDirectories: true)
+        }
+        return storage
+    }
+    
+    /// 复制文件到SmartNote存储目录
+    private func copyFileToStorage(from sourceURL: URL) -> URL? {
+        let fileManager = FileManager.default
+        let storageDir = FileScannerService.getStorageDirectory()
+        
+        // 生成唯一文件名以避免冲突
+        let originalName = sourceURL.lastPathComponent
+        var destination = storageDir.appendingPathComponent(originalName)
+        var counter = 1
+        while fileManager.fileExists(atPath: destination.path) {
+            let nameWithoutExt = sourceURL.deletingPathExtension().lastPathComponent
+            let ext = sourceURL.pathExtension
+            let newName = ext.isEmpty ? "\(nameWithoutExt)_\(counter)" : "\(nameWithoutExt)_\(counter).\(ext)"
+            destination = storageDir.appendingPathComponent(newName)
+            counter += 1
+        }
+        
+        do {
+            try fileManager.copyItem(at: sourceURL, to: destination)
+            return destination
+        } catch {
+            print("Error copying file: \(error)")
             return nil
         }
     }

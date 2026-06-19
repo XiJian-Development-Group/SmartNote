@@ -92,6 +92,10 @@ struct SidebarView: View {
                 NavigationLink(value: 6) {
                     Label("复习计划", systemImage: "calendar.badge.clock")
                 }
+                
+                NavigationLink(value: 20) {
+                    Label("待办清单", systemImage: "checklist")
+                }
                 // Value 15 Removed
             }
             
@@ -162,6 +166,8 @@ struct DetailView: View {
                 DiaryListView()
             case 19:
                 WhiteBoardView()
+            case 20:
+                TodoListView()
             default:
                 MaterialsListView()
             }
