@@ -56,7 +56,7 @@ struct TodoEditorView: View {
         dueDate = item.dueDate ?? Date()
         hasReminder = item.reminderTime != nil
         reminderTime = item.reminderTime ?? Date()
-        reminderOffset = item.reminderOffset
+        // reminderOffset = item.reminderOffset
         isPinned = item.isPinned
         tagsText = item.tags.joined(separator: ", ")
         status = item.status
@@ -350,7 +350,7 @@ struct TodoEditorView: View {
         saved.isPinned = isPinned
         saved.dueDate = hasDueDate ? dueDate : nil
         saved.reminderTime = (hasDueDate && hasReminder) ? reminderTime : nil
-        saved.reminderOffset = reminderOffset
+        // saved.reminderOffset = reminderOffset
         saved.tags = tags
         saved.updatedAt = Date()
         
