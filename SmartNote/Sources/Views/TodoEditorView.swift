@@ -4,7 +4,7 @@ struct TodoEditorView: View {
     @StateObject private var todoService = TodoService.shared
     @Environment(\.dismiss) var dismiss
     
-    let item: TodoItem?
+    let itemID: UUID?
     let onSave: (TodoItem) -> Void
     
     @State private var title: String = ""
@@ -15,22 +15,17 @@ struct TodoEditorView: View {
     @State private var dueDate: Date = Date()
     @State private var hasReminder: Bool = false
     @State private var reminderTime: Date = Date()
-    @State private var reminderOffset: Int = 0 // 提前多少分钟提醒
+    @State private var reminderOffset: Int = 0
     @State private var isPinned: Bool = false
     @State private var tagsText: String = ""
     @State private var status: TodoStatus = .pending
+    @State private var loaded = false
     
-    private var isNewItem: Bool { item == nil }
-    private var editingItem: TodoItem
+    private var isNewItem: Bool { itemID == nil }
     
     init(item: TodoItem?, onSave: @escaping (TodoItem) -> Void) {
-        self.item = item
+        self.itemID = item?.id
         self.onSave = onSave
-        if let item = item {
-            self.editingItem = item
-        } else {
-            self.editingItem = TodoItem()
-        }
     }
     
     var body: some View {
@@ -40,9 +35,32 @@ struct TodoEditorView: View {
             editorContent
         }
         .frame(width: 700, height: 720)
-        .onAppear {
+        .task(id: itemID) {
             loadFromItem()
         }
+    }
+    
+    private func loadFromItem() {
+        guard let id = itemID, let item = todoService.items.first(where: { $0.id == id }) else {
+            // 新建模式
+            if !loaded {
+                loaded = true
+            }
+            return
+        }
+        title = item.title
+        description = item.description
+        category = item.category
+        priority = item.priority
+        hasDueDate = item.dueDate != nil
+        dueDate = item.dueDate ?? Date()
+        hasReminder = item.reminderTime != nil
+        reminderTime = item.reminderTime ?? Date()
+        reminderOffset = item.reminderOffset
+        isPinned = item.isPinned
+        tagsText = item.tags.joined(separator: ", ")
+        status = item.status
+        loaded = true
     }
     
     // MARK: - 顶部
@@ -276,25 +294,25 @@ struct TodoEditorView: View {
                 StatBox(
                     icon: "timer",
                     title: "番茄钟时长",
-                    value: formatTime(editingItem.totalFocusedSeconds),
+                    value: formatTime(currentItem?.totalFocusedSeconds ?? 0),
                     color: .orange
                 )
                 StatBox(
                     icon: "clock",
                     title: "累计处理",
-                    value: formatTime(editingItem.totalElapsedSeconds),
+                    value: formatTime(currentItem?.totalElapsedSeconds ?? 0),
                     color: .blue
                 )
                 StatBox(
                     icon: "calendar",
                     title: "存在时长",
-                    value: formatTime(editingItem.totalCompletionSeconds),
+                    value: formatTime(currentItem?.totalCompletionSeconds ?? 0),
                     color: .green
                 )
             }
             
-            if !editingItem.pomodoroSessions.isEmpty {
-                Text("番茄钟会话数：\(editingItem.pomodoroSessions.count)")
+            if let currentItem = currentItem, !currentItem.pomodoroSessions.isEmpty {
+                Text("番茄钟会话数：\(currentItem.pomodoroSessions.count)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -306,30 +324,20 @@ struct TodoEditorView: View {
     
     // MARK: - 辅助方法
     
-    private func loadFromItem() {
-        guard let item = item else { return }
-        title = item.title
-        description = item.description
-        category = item.category
-        priority = item.priority
-        hasDueDate = item.dueDate != nil
-        dueDate = item.dueDate ?? Date()
-        hasReminder = item.reminderTime != nil
-        reminderTime = item.reminderTime ?? Date()
-        isPinned = item.isPinned
-        status = item.status
-        tagsText = item.tags.joined(separator: " ")
+    private var currentItem: TodoItem? {
+        guard let id = itemID else { return nil }
+        return todoService.items.first { $0.id == id }
     }
     
     private func saveItem() {
         let tags = tagsText
-            .split(separator: " ")
+            .split(separator: ",")
             .map { String($0).trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
         
         var saved: TodoItem
-        if let item = item {
-            saved = item
+        if let id = itemID, let existing = todoService.items.first(where: { $0.id == id }) {
+            saved = existing
         } else {
             saved = TodoItem()
         }
@@ -342,6 +350,7 @@ struct TodoEditorView: View {
         saved.isPinned = isPinned
         saved.dueDate = hasDueDate ? dueDate : nil
         saved.reminderTime = (hasDueDate && hasReminder) ? reminderTime : nil
+        saved.reminderOffset = reminderOffset
         saved.tags = tags
         saved.updatedAt = Date()
         

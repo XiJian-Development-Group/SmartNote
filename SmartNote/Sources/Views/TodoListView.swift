@@ -63,6 +63,8 @@ struct TodoListView: View {
         .sheet(isPresented: $showEditor, onDismiss: {
             editingItem = nil
         }) {
+            // 关键修复：使用 .id() 强制 SwiftUI 每次打开 sheet 都创建新的 view 实例
+            // 否则 SwiftUI 会复用上次的 view，导致 title/content 等 @State 状态污染
             TodoEditorView(
                 item: editingItem,
                 onSave: { newItem in
@@ -73,6 +75,7 @@ struct TodoListView: View {
                     }
                 }
             )
+            .id(editingItem?.id ?? UUID())
         }
         .sheet(isPresented: $showStatistics) {
             TodoStatisticsView()

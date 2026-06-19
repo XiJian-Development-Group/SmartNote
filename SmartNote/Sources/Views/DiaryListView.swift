@@ -29,7 +29,13 @@ struct DiaryListView: View {
             }
         }
         .sheet(isPresented: $showEditor) {
+            // 关键修复：使用 .id() 强制 SwiftUI 每次打开 sheet 都创建新的 view 实例
+            // 否则 SwiftUI 会复用上次的 view，导致 entry / isNewEntry 状态污染
             DiaryEditorView(entry: editingEntry)
+                .id(editingEntry?.id ?? UUID())
+                .onAppear {
+                    print("[DiaryListView] Sheet opened with entry: \(editingEntry?.id.uuidString ?? "nil") title: \(editingEntry?.title ?? "nil")")
+                }
         }
         .alert("确认删除", isPresented: $showDeleteConfirmation) {
             Button("取消", role: .cancel) {}

@@ -4,7 +4,8 @@ struct DiaryEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var diaryService = DiaryService.shared
     
-    var entry: DiaryEntry?
+    let entryID: UUID?  // 只传递 ID（let 引用，但通过 ID 重新加载）
+    let isNew: Bool
     
     @State private var title: String = ""
     @State private var content: String = ""
@@ -15,6 +16,14 @@ struct DiaryEditorView: View {
     @State private var showCategoryPicker = false
     
     @State private var isNewEntry: Bool = true
+    @State private var entryLoaded = false
+    
+    init(entry: DiaryEntry? = nil) {
+        // 每次 init 都是新实例（sheet 关闭后重新打开会调用 init）
+        self.entryID = entry?.id
+        self.isNew = entry == nil
+        self._isNewEntry = State(initialValue: entry == nil)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -24,17 +33,29 @@ struct DiaryEditorView: View {
             
             editorContent
         }
-        .onAppear {
-            if let entry = entry {
-                isNewEntry = false
-                title = entry.title
-                content = entry.content
-                category = entry.category
-                linkedMaterials = entry.linkedMaterialIDs
-                
-                if entry.isEncrypted, let decrypted = diaryService.decryptEntry(entry) {
-                    content = decrypted.content
-                }
+        .task(id: entryID) {
+            // entryID 变化时重新加载（应对 sheet 复用）
+            loadEntryData()
+        }
+    }
+    
+    private func loadEntryData() {
+        if let id = entryID, let entry = diaryService.entries.first(where: { $0.id == id }) {
+            isNewEntry = false
+            title = entry.title
+            content = entry.content
+            category = entry.category
+            linkedMaterials = entry.linkedMaterialIDs
+            
+            if entry.isEncrypted, let decrypted = diaryService.decryptEntry(entry) {
+                content = decrypted.content
+            }
+            entryLoaded = true
+        } else {
+            isNewEntry = true
+            if !entryLoaded {
+                // 第一次新建，不要清空已有内容
+                entryLoaded = true
             }
         }
     }
@@ -131,9 +152,6 @@ struct DiaryEditorView: View {
         .sheet(isPresented: $showMaterialPicker) {
             MaterialPickerView(selectedIDs: $linkedMaterials)
         }
-        .popover(isPresented: $showCategoryPicker) {
-            categoryPopover
-        }
     }
     
     private var categoryPopover: some View {
@@ -142,24 +160,28 @@ struct DiaryEditorView: View {
                 .font(.headline)
                 .padding()
             
-            ForEach(diaryService.categories) { cat in
-                Button {
-                    category = cat.name
-                    showCategoryPicker = false
-                } label: {
-                    HStack {
-                        Circle()
-                            .fill(Color(hex: cat.color) ?? .blue)
-                            .frame(width: 10, height: 10)
-                        Text(cat.name)
-                        Spacer()
-                        if category == cat.name {
-                            Image(systemName: "checkmark")
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(diaryService.categories) { cat in
+                        Button {
+                            category = cat.name
+                            showCategoryPicker = false
+                        } label: {
+                            HStack {
+                                Circle()
+                                    .fill(Color(hex: cat.color) ?? .blue)
+                                    .frame(width: 10, height: 10)
+                                Text(cat.name)
+                                Spacer()
+                                if category == cat.name {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                            .padding(.horizontal)
                         }
+                        .buttonStyle(.plain)
                     }
-                    .padding(.horizontal)
                 }
-                .buttonStyle(.plain)
             }
             
             Divider()
@@ -172,26 +194,30 @@ struct DiaryEditorView: View {
             }
             .buttonStyle(.plain)
         }
-        .frame(width: 200)
+        .frame(width: 200, height: 250)
     }
     
     private func saveEntry() {
-        let newEntry = DiaryEntry(
-            id: entry?.id ?? UUID(),
-            title: title,
-            content: content,
-            category: category,
-            createdAt: entry?.createdAt ?? Date(),
-            updatedAt: Date(),
-            isPinned: entry?.isPinned ?? false,
-            linkedMaterialIDs: linkedMaterials,
-            isEncrypted: false
-        )
-        
         if isNewEntry {
+            let newEntry = DiaryEntry(
+                id: UUID(),
+                title: title,
+                content: content,
+                category: category,
+                createdAt: Date(),
+                updatedAt: Date(),
+                isPinned: false,
+                linkedMaterialIDs: linkedMaterials,
+                isEncrypted: false
+            )
             diaryService.addEntry(newEntry)
-        } else {
-            diaryService.updateEntry(newEntry)
+        } else if let id = entryID, var existing = diaryService.entries.first(where: { $0.id == id }) {
+            existing.title = title
+            existing.content = content
+            existing.category = category
+            existing.updatedAt = Date()
+            existing.linkedMaterialIDs = linkedMaterials
+            diaryService.updateEntry(existing)
         }
     }
     
