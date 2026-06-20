@@ -33,6 +33,16 @@ struct SmartNoteApp: App {
             }
         }
         
+        // 日记编辑器独立窗口
+        // - openWindow(id: "diary-editor")            → 新建（无 value）
+        // - openWindow(id: "diary-editor", value: id)  → 编辑对应日记
+        WindowGroup("日记编辑器", id: "diary-editor", for: UUID.self) { $entryID in
+            DiaryEditorView(entryID: entryID)
+                .environmentObject(appState)
+                .frame(minWidth: 700, minHeight: 600)
+        }
+        .windowResizability(.contentMinSize)
+        
         Settings {
             SettingsView()
                 .environmentObject(appState)

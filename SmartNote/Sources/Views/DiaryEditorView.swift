@@ -3,7 +3,7 @@ import AppKit
 import UniformTypeIdentifiers
 
 struct DiaryEditorView: View {
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismissWindow) private var dismissWindow
     @StateObject private var diaryService = DiaryService.shared
     @StateObject private var whiteboardService = WhiteboardService.shared
     
@@ -27,9 +27,9 @@ struct DiaryEditorView: View {
     @State private var showAddCategorySheet = false
     @State private var newCategoryName: String = ""
     
-    init(entry: DiaryEntry? = nil) {
-        self.entryID = entry?.id
-        self.isNew = entry == nil
+    init(entryID: UUID? = nil) {
+        self.entryID = entryID
+        self.isNew = entryID == nil
     }
     
     var body: some View {
@@ -47,6 +47,8 @@ struct DiaryEditorView: View {
     private var isNewEntry: Bool { entryID == nil }
     
     private func loadEntryData() {
+        // 只在第一次加载，避免 view 重建时覆盖用户正在编辑的内容
+        guard !entryLoaded else { return }
         if let id = entryID, let entry = diaryService.entries.first(where: { $0.id == id }) {
             title = entry.title
             content = entry.content
@@ -58,12 +60,9 @@ struct DiaryEditorView: View {
             if entry.isEncrypted, let decrypted = diaryService.decryptEntry(entry) {
                 content = decrypted.content
             }
-            entryLoaded = true
-        } else {
-            if !entryLoaded {
-                entryLoaded = true
-            }
         }
+        // 新建日记：保持默认状态（空标题/空内容/默认分类），不要覆盖用户输入
+        entryLoaded = true
     }
     
     // MARK: - 头部
@@ -71,7 +70,7 @@ struct DiaryEditorView: View {
     private var editorHeader: some View {
         HStack(spacing: 12) {
             Button("取消") {
-                dismiss()
+                dismissWindow()
             }
             .buttonStyle(.bordered)
             
@@ -91,7 +90,7 @@ struct DiaryEditorView: View {
             
             Button {
                 saveEntry()
-                dismiss()
+                dismissWindow()
             } label: {
                 Text("保存")
             }

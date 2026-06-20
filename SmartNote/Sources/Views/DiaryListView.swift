@@ -4,13 +4,12 @@ import UniformTypeIdentifiers
 
 struct DiaryListView: View {
     @StateObject private var diaryService = DiaryService.shared
+    @Environment(\.openWindow) private var openWindow
     @State private var searchText = ""
     @State private var selectedDate: Date = Date()
     @State private var showDatePicker = false
     @State private var selectedEntries: Set<UUID> = []
     @State private var isSelectionMode = false
-    @State private var showEditor = false
-    @State private var editingEntry: DiaryEntry? = nil
     @State private var showDeleteConfirmation = false
     @State private var entriesToDelete: [UUID] = []
     
@@ -62,10 +61,6 @@ struct DiaryListView: View {
             } else {
                 diaryListContent
             }
-        }
-        .sheet(isPresented: $showEditor) {
-            DiaryEditorView(entry: editingEntry)
-                .id(editingEntry?.id ?? UUID())
         }
         .sheet(isPresented: $showStatistics) {
             DiaryStatisticsView()
@@ -129,8 +124,7 @@ struct DiaryListView: View {
                 }
                 
                 Button {
-                    editingEntry = nil
-                    showEditor = true
+                    openWindow(id: "diary-editor")
                 } label: {
                     Image(systemName: "plus")
                 }
@@ -223,8 +217,7 @@ struct DiaryListView: View {
                             if isSelectionMode {
                                 toggleSelection(entry.id)
                             } else {
-                                editingEntry = entry
-                                showEditor = true
+                                openWindow(id: "diary-editor", value: entry.id)
                             }
                         },
                         onPin: {
