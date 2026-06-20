@@ -277,24 +277,33 @@ struct WhiteboardView: View {
             
             // 缩放控制
             propertySection(title: "缩放", icon: "magnifyingglass") {
-                HStack(spacing: 6) {
-                    Button {
-                        zoom = max(0.1, zoom - 0.1)
-                    } label: {
-                        Image(systemName: "minus.magnifyingglass")
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Button {
+                            zoom = max(0.1, zoom - 0.1)
+                        } label: {
+                            Image(systemName: "minus.magnifyingglass")
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Text("\(Int(zoom * 100))%")
+                            .font(.system(size: 11, design: .monospaced))
+                            .frame(width: 50)
+                        
+                        Button {
+                            zoom = min(10, zoom + 0.1)
+                        } label: {
+                            Image(systemName: "plus.magnifyingglass")
+                        }
+                        .buttonStyle(.bordered)
                     }
-                    .buttonStyle(.bordered)
                     
-                    Text("\(Int(zoom * 100))%")
-                        .font(.system(size: 11, design: .monospaced))
-                        .frame(width: 50)
-                    
-                    Button {
-                        zoom = min(10, zoom + 0.1)
-                    } label: {
-                        Image(systemName: "plus.magnifyingglass")
-                    }
-                    .buttonStyle(.bordered)
+                    Text("• 触控板捏合 / Cmd+滚轮：缩放")
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
+                    Text("• 触控板两指滑动 / 滚轮：平移")
+                        .font(.system(size: 9))
+                        .foregroundColor(.secondary)
                 }
             }
             

@@ -23,6 +23,10 @@ struct DiaryEditorView: View {
     @State private var showImagePicker = false
     @State private var entryLoaded = false
     
+    // 添加分类
+    @State private var showAddCategorySheet = false
+    @State private var newCategoryName: String = ""
+    
     init(entry: DiaryEntry? = nil) {
         self.entryID = entry?.id
         self.isNew = entry == nil
@@ -192,6 +196,9 @@ struct DiaryEditorView: View {
         .sheet(isPresented: $showWhiteboardPicker) {
             WhiteboardPickerView(selectedID: $whiteboardID)
         }
+        .sheet(isPresented: $showAddCategorySheet) {
+            addCategorySheet
+        }
     }
     
     // MARK: - 图片预览条
@@ -328,15 +335,79 @@ struct DiaryEditorView: View {
             Divider()
             
             Button {
-                let newCat = DiaryCategory(name: "新分类 \(diaryService.categories.count + 1)")
-                diaryService.addCategory(newCat)
+                newCategoryName = ""
+                showAddCategorySheet = true
             } label: {
                 Label("新建分类", systemImage: "plus")
                     .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             .buttonStyle(.plain)
         }
         .frame(width: 200)
+    }
+    
+    // MARK: - 新建分类 Sheet
+    
+    private var addCategorySheet: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Button("取消") {
+                    showAddCategorySheet = false
+                }
+                .buttonStyle(.bordered)
+                
+                Spacer()
+                
+                Text("新建分类")
+                    .font(.headline)
+                
+                Spacer()
+                
+                Button("保存") {
+                    let trimmed = newCategoryName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !trimmed.isEmpty {
+                        // 随机颜色调色板
+                        let palette = ["#007AFF", "#34C759", "#FF9500", "#AF52DE", "#FF3B30", "#5856D6", "#FF2D55", "#5AC8FA"]
+                        let color = palette[diaryService.categories.count % palette.count]
+                        let newCat = DiaryCategory(name: trimmed, color: color)
+                        diaryService.addCategory(newCat)
+                        // 自动选中新分类
+                        category = trimmed
+                    }
+                    showAddCategorySheet = false
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(newCategoryName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            .padding()
+            
+            Divider()
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("分类名称")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                TextField("例如：学习、生活、工作", text: $newCategoryName)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit {
+                        let trimmed = newCategoryName.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !trimmed.isEmpty {
+                            let palette = ["#007AFF", "#34C759", "#FF9500", "#AF52DE", "#FF3B30", "#5856D6", "#FF2D55", "#5AC8FA"]
+                            let color = palette[diaryService.categories.count % palette.count]
+                            let newCat = DiaryCategory(name: trimmed, color: color)
+                            diaryService.addCategory(newCat)
+                            category = trimmed
+                            showAddCategorySheet = false
+                        }
+                    }
+            }
+            .padding()
+            
+            Spacer()
+        }
+        .frame(width: 360, height: 200)
     }
     
     // MARK: - 计算属性

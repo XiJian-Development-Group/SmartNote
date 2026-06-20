@@ -30,6 +30,11 @@ struct WhiteboardCanvasView: View {
     // 用于驱动 TimelineView 重绘
     @State private var renderTick: Int = 0
     
+    // 缩放/平移状态
+    @State private var pinchStartZoom: Double = 1.0
+    @State private var pinchStartOffset: CGSize = .zero
+    @State private var lastMouseLocation: CGPoint? = nil
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -61,6 +66,7 @@ struct WhiteboardCanvasView: View {
                 DragGesture(minimumDistance: 0, coordinateSpace: .local)
                     .onChanged { value in
                         handleDragChanged(value: value)
+                        lastMouseLocation = value.location
                     }
                     .onEnded { value in
                         handleDragEnded(value: value)
@@ -75,9 +81,76 @@ struct WhiteboardCanvasView: View {
                         hasMovedSignificantly = false
                     }
             )
+            // 触控板捏合手势（缩放）
+            .simultaneousGesture(
+                MagnificationGesture()
+                    .onChanged { value in
+                        let newZoom = max(0.1, min(10, pinchStartZoom * Double(value)))
+                        let center = lastMouseLocation ?? CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                        applyZoom(newZoom: newZoom, center: center)
+                    }
+                    .onEnded { _ in
+                        pinchStartZoom = zoom
+                        pinchStartOffset = offset
+                    }
+            )
+            // 背景层：监听鼠标滚轮 / 触控板手势
+            .background(
+                CanvasEventMonitor { deltaX, deltaY, isZoom, isMagnify in
+                    handleCanvasEvent(
+                        deltaX: deltaX,
+                        deltaY: deltaY,
+                        isZoom: isZoom,
+                        isMagnify: isMagnify,
+                        viewSize: geometry.size
+                    )
+                }
+                .frame(width: 0, height: 0)
+            )
         }
         .background(Color(white: 1.0))
         .clipped()
+        .onAppear {
+            pinchStartZoom = zoom
+            pinchStartOffset = offset
+        }
+    }
+    
+    // MARK: - 缩放与平移
+    
+    private func applyZoom(newZoom: Double, center: CGPoint) {
+        let oldZoom = zoom
+        guard oldZoom > 0 else { return }
+        let ratio = newZoom / oldZoom
+        // 保持 center 点对应的世界坐标不变：
+        // (center - offset) / oldZoom = (center - newOffset) / newZoom
+        // newOffset = center - (center - offset) * ratio
+        let newOffsetW = center.x - (center.x - offset.width) * ratio
+        let newOffsetH = center.y - (center.y - offset.height) * ratio
+        zoom = newZoom
+        offset = CGSize(width: newOffsetW, height: newOffsetH)
+    }
+    
+    private func handleCanvasEvent(deltaX: CGFloat, deltaY: CGFloat, isZoom: Bool, isMagnify: Bool, viewSize: CGSize) {
+        if isZoom {
+            // 缩放：围绕视图中心或上次鼠标位置
+            let center = lastMouseLocation ?? CGPoint(x: viewSize.width / 2, y: viewSize.height / 2)
+            if isMagnify {
+                // Magnify 事件：deltaY 是 magnification（增量）
+                let factor = 1.0 + Double(deltaY)
+                let newZoom = max(0.1, min(10, zoom * factor))
+                applyZoom(newZoom: newZoom, center: center)
+            } else {
+                // 滚轮缩放：deltaY 是滚动增量
+                let factor = 1.0 + Double(deltaY) * 0.01
+                let newZoom = max(0.1, min(10, zoom * factor))
+                applyZoom(newZoom: newZoom, center: center)
+            }
+        } else {
+            // 平移
+            offset.width += Double(deltaX)
+            offset.height += Double(deltaY)
+        }
     }
     
     // MARK: - Canvas 渲染（高性能）
@@ -402,25 +475,28 @@ struct WhiteboardCanvasView: View {
         }
     }
     
-    // MARK: - 范围擦除
+    // MARK: - 范围擦除（基于线段与橡皮圆相交裁剪）
     
     private func handleErase(worldPoint: WhiteboardPoint, radius: Double) {
         guard let doc = service.currentDocument else { return }
         let worldRadius = radius / zoom
-        let tolerance = worldRadius + 5
+        // 让橡皮的有效宽度至少覆盖笔划本身的粗细 + 一点缓冲
+        let effectiveRadius = max(worldRadius, 4.0)
         
         var toRemoveIds: Set<UUID> = []
-        var modifiedStrokes: [(id: UUID, stroke: StrokeShape)] = []
+        var strokeReplacements: [(id: UUID, newStrokes: [StrokeShape])] = []
         
         for obj in doc.objects {
             switch obj {
             case .stroke(let s):
-                if let modified = eraseStrokeRange(s, at: worldPoint, tolerance: tolerance) {
-                    if modified.points.isEmpty {
-                        toRemoveIds.insert(s.id)
-                    } else {
-                        modifiedStrokes.append((s.id, modified))
-                    }
+                let newStrokes = eraseStroke(s, at: worldPoint, radius: effectiveRadius)
+                if newStrokes.isEmpty {
+                    toRemoveIds.insert(s.id)
+                } else if newStrokes.count == 1 && newStrokes[0].points.count == s.points.count {
+                    // 笔划未变，跳过
+                    continue
+                } else {
+                    strokeReplacements.append((s.id, newStrokes))
                 }
             case .rectangle, .ellipse, .triangle, .line, .arrow:
                 if obj.contains(worldPoint) {
@@ -429,40 +505,124 @@ struct WhiteboardCanvasView: View {
             }
         }
         
-        if !toRemoveIds.isEmpty || !modifiedStrokes.isEmpty {
+        if !toRemoveIds.isEmpty || !strokeReplacements.isEmpty {
             service.eraseAndReplace(
                 removeIds: toRemoveIds,
-                modifiedStrokes: modifiedStrokes
+                strokeReplacements: strokeReplacements
             )
         }
     }
     
-    private func eraseStrokeRange(_ stroke: StrokeShape, at point: WhiteboardPoint, tolerance: Double) -> StrokeShape? {
+    /// 用线段与橡皮圆相交的方式擦除笔划。
+    /// 返回擦除后剩余的笔划列表（空 = 全部擦除，1 = 替换，2+ = 拆分）
+    private func eraseStroke(_ stroke: StrokeShape, at eraserPoint: WhiteboardPoint, radius: Double) -> [StrokeShape] {
         let points = stroke.points
-        guard !points.isEmpty else { return nil }
+        guard !points.isEmpty else { return [] }
+        let radiusSq = radius * radius
         
-        var erasedIndices = Set<Int>()
-        for (i, p) in points.enumerated() {
-            let dx = p.x - point.x
-            let dy = p.y - point.y
-            if dx * dx + dy * dy <= tolerance * tolerance {
-                erasedIndices.insert(i)
-            }
+        func isInside(_ p: WhiteboardPoint) -> Bool {
+            let dx = p.x - eraserPoint.x
+            let dy = p.y - eraserPoint.y
+            return dx * dx + dy * dy <= radiusSq
         }
         
-        if erasedIndices.isEmpty { return nil }
-        
-        // 保留未擦除的点
-        var keptPoints: [WhiteboardPoint] = []
-        for (i, p) in points.enumerated() {
-            if !erasedIndices.contains(i) {
-                keptPoints.append(p)
+        /// 求线段 (p1, p2) 与橡皮圆的交点（t ∈ [0, 1]）
+        func lineCircleIntersections(p1: WhiteboardPoint, p2: WhiteboardPoint) -> [WhiteboardPoint] {
+            let dx = p2.x - p1.x
+            let dy = p2.y - p1.y
+            let a = dx * dx + dy * dy
+            if a < 1e-9 { return [] } // 退化为点
+            let fx = p1.x - eraserPoint.x
+            let fy = p1.y - eraserPoint.y
+            let b = 2 * (fx * dx + fy * dy)
+            let c = fx * fx + fy * fy - radiusSq
+            
+            let discriminant = b * b - 4 * a * c
+            if discriminant < 0 { return [] }
+            
+            var result: [WhiteboardPoint] = []
+            if discriminant < 1e-9 {
+                // 相切：忽略
+                return []
             }
+            let sqrtD = sqrt(discriminant)
+            let t1 = (-b - sqrtD) / (2 * a)
+            let t2 = (-b + sqrtD) / (2 * a)
+            if t1 >= 0 && t1 <= 1 {
+                result.append(WhiteboardPoint(x: p1.x + t1 * dx, y: p1.y + t1 * dy))
+            }
+            if t2 >= 0 && t2 <= 1 {
+                result.append(WhiteboardPoint(x: p1.x + t2 * dx, y: p1.y + t2 * dy))
+            }
+            return result
         }
         
-        var newStroke = stroke
-        newStroke.points = keptPoints
-        return newStroke
+        // 单点笔划
+        if points.count == 1 {
+            return isInside(points[0]) ? [] : [stroke]
+        }
+        
+        var segments: [[WhiteboardPoint]] = []
+        var current: [WhiteboardPoint] = []
+        
+        // 处理第一个点
+        if !isInside(points[0]) {
+            current.append(points[0])
+        }
+        
+        for i in 0..<(points.count - 1) {
+            let p1 = points[i]
+            let p2 = points[i + 1]
+            let p1In = isInside(p1)
+            let p2In = isInside(p2)
+            
+            if !p1In && !p2In {
+                // 两端都在外：检查线段是否穿过橡皮
+                let xs = lineCircleIntersections(p1: p1, p2: p2)
+                if xs.count == 2 {
+                    // 线段穿过橡皮 - 在两个交点处拆分
+                    current.append(xs[0])
+                    segments.append(current)
+                    current = [xs[1], p2]
+                } else {
+                    // 不穿过，直接添加 p2
+                    current.append(p2)
+                }
+            } else if !p1In && p2In {
+                // 进入橡皮
+                let xs = lineCircleIntersections(p1: p1, p2: p2)
+                if let entry = xs.first {
+                    current.append(entry)
+                }
+                if !current.isEmpty {
+                    segments.append(current)
+                    current = []
+                }
+            } else if p1In && !p2In {
+                // 离开橡皮
+                let xs = lineCircleIntersections(p1: p1, p2: p2)
+                if let exit = xs.last {
+                    current = [exit, p2]
+                } else {
+                    current = [p2]
+                }
+            }
+            // p1In && p2In: 两端都在橡皮内，跳过
+        }
+        
+        if !current.isEmpty {
+            segments.append(current)
+        }
+        
+        // 避免产生只有 1 个点或 0 个点的笔划
+        let validSegments = segments.filter { $0.count >= 2 }
+        
+        return validSegments.map { seg -> StrokeShape in
+            var s = stroke
+            s.points = seg
+            s.id = UUID() // 分配新 ID 以避免冲突
+            return s
+        }
     }
     
     private func handleLineDrawing(worldPoint: WhiteboardPoint, start: WhiteboardPoint) {
@@ -581,5 +741,84 @@ struct GridBackground: View {
             centerY.addLine(to: CGPoint(x: size.width, y: size.height / 2))
             context.stroke(centerY, with: .color(Color(white: 0.85)), lineWidth: 0.5)
         }
+    }
+}
+
+// MARK: - 画布事件监听（鼠标滚轮 / 触控板手势）
+
+/// 监听鼠标滚轮（鼠标 / 触控板两指滑动）与触控板捏合（magnify）事件。
+/// 通过闭包回调把事件转换为画布的缩放/平移量。
+struct CanvasEventMonitor: NSViewRepresentable {
+    /// 事件回调：deltaX, deltaY, isZoom（true=缩放，false=平移）, isMagnify（true=捏合事件，false=滚轮事件）
+    let onEvent: (CGFloat, CGFloat, Bool, Bool) -> Void
+    
+    func makeNSView(context: Context) -> NSView {
+        let view = EventMonitorNSView()
+        view.onEvent = onEvent
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSView, context: Context) {
+        (nsView as? EventMonitorNSView)?.onEvent = onEvent
+    }
+}
+
+final class EventMonitorNSView: NSView {
+    var onEvent: ((CGFloat, CGFloat, Bool, Bool) -> Void)?
+    private var monitors: [Any] = []
+    
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window != nil {
+            startMonitoring()
+        } else {
+            stopMonitoring()
+        }
+    }
+    
+    private func startMonitoring() {
+        stopMonitoring()
+        
+        // 鼠标滚轮 / 触控板两指滑动
+        let scrollClosure: (NSEvent) -> NSEvent? = { [weak self] event in
+            guard let self = self, let onEvent = self.onEvent else { return event }
+            // 只有当事件的目标窗口是当前窗口时才处理
+            if event.window == self.window {
+                if event.modifierFlags.contains(.command) {
+                    // Cmd + 滚轮 = 缩放
+                    onEvent(0, event.scrollingDeltaY, true, false)
+                } else {
+                    // 普通滚轮 = 平移
+                    onEvent(event.scrollingDeltaX, event.scrollingDeltaY, false, false)
+                }
+            }
+            return event
+        }
+        if let m = NSEvent.addLocalMonitorForEvents(matching: [.scrollWheel], handler: scrollClosure) {
+            monitors.append(m)
+        }
+        
+        // 触控板捏合
+        let magnifyClosure: (NSEvent) -> NSEvent? = { [weak self] event in
+            guard let self = self, let onEvent = self.onEvent else { return event }
+            if event.window == self.window {
+                onEvent(0, event.magnification, true, true)
+            }
+            return event
+        }
+        if let m = NSEvent.addLocalMonitorForEvents(matching: .magnify, handler: magnifyClosure) {
+            monitors.append(m)
+        }
+    }
+    
+    private func stopMonitoring() {
+        for m in monitors {
+            NSEvent.removeMonitor(m)
+        }
+        monitors.removeAll()
+    }
+    
+    deinit {
+        stopMonitoring()
     }
 }

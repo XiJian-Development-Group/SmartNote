@@ -129,25 +129,45 @@ class WhiteboardService: ObservableObject {
     }
     
     /// 擦除：删除部分对象 + 修改部分笔划（不记录撤销）
-    func eraseAndReplace(removeIds: Set<UUID>, modifiedStrokes: [(id: UUID, stroke: StrokeShape)]) {
+    /// - Parameters:
+    ///   - removeIds: 要完全移除的对象 ID
+    ///   - strokeReplacements: 原笔划 ID -> 擦除后生成的笔划列表（0 个 = 移除，1 个 = 替换，2+ 个 = 拆分）
+    func eraseAndReplace(removeIds: Set<UUID>, strokeReplacements: [(id: UUID, newStrokes: [StrokeShape])]) {
         guard var doc = currentDocument else { return }
-        if removeIds.isEmpty && modifiedStrokes.isEmpty { return }
+        if removeIds.isEmpty && strokeReplacements.isEmpty { return }
         
         // 不在每次拖动时记录撤销，避免撤销栈爆满
         // 撤销时按最终状态回退即可
         
-        var newObjects = doc.objects
+        var workingRemoveIds = removeIds
         
-        // 应用笔划修改
-        for (id, newStroke) in modifiedStrokes {
-            if let index = newObjects.firstIndex(where: { $0.id == id }) {
-                newObjects[index] = .stroke(newStroke)
+        // 1) 计算需要替换的 ID 集合
+        var replaceIds = Set<UUID>()
+        for (id, newStrokes) in strokeReplacements {
+            replaceIds.insert(id)
+            // 新的笔划数量为 0，等价于删除
+            if newStrokes.isEmpty {
+                workingRemoveIds.insert(id)
             }
         }
         
-        // 应用删除
-        if !removeIds.isEmpty {
-            newObjects.removeAll { removeIds.contains($0.id) }
+        // 2) 构建新的对象列表
+        var newObjects: [WhiteboardObject] = []
+        for obj in doc.objects {
+            if workingRemoveIds.contains(obj.id) {
+                continue
+            }
+            if replaceIds.contains(obj.id) {
+                // 找到替换笔划
+                if let replacement = strokeReplacements.first(where: { $0.id == obj.id }) {
+                    for s in replacement.newStrokes {
+                        newObjects.append(.stroke(s))
+                    }
+                }
+                // 如果没找到或 newStrokes 为空，则跳过（删除）
+            } else {
+                newObjects.append(obj)
+            }
         }
         
         doc.objects = newObjects
