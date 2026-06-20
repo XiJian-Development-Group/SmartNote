@@ -1,4 +1,6 @@
 import SwiftUI
+import AppKit
+import UniformTypeIdentifiers
 
 struct DiaryListView: View {
     @StateObject private var diaryService = DiaryService.shared
@@ -12,8 +14,41 @@ struct DiaryListView: View {
     @State private var showDeleteConfirmation = false
     @State private var entriesToDelete: [UUID] = []
     
+    // 分类筛选
+    @State private var selectedCategory: String? = nil  // nil = 全部
+    @State private var showCategoryFilter = false
+    
+    // 统计视图
+    @State private var showStatistics = false
+    
     var filteredEntries: [DiaryEntry] {
-        diaryService.searchEntries(query: searchText, date: showDatePicker ? selectedDate : nil)
+        var results = diaryService.entries
+        
+        // 分类筛选
+        if let cat = selectedCategory {
+            results = results.filter { $0.category == cat }
+        }
+        
+        // 日期筛选
+        if showDatePicker {
+            let calendar = Calendar.current
+            results = results.filter { calendar.isDate($0.createdAt, inSameDayAs: selectedDate) }
+        }
+        
+        // 搜索
+        if !searchText.isEmpty {
+            results = results.filter { 
+                $0.title.localizedCaseInsensitiveContains(searchText) ||
+                $0.content.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        return results.sorted { entry1, entry2 in
+            if entry1.isPinned != entry2.isPinned {
+                return entry1.isPinned
+            }
+            return entry1.createdAt > entry2.createdAt
+        }
     }
     
     var body: some View {
@@ -29,13 +64,11 @@ struct DiaryListView: View {
             }
         }
         .sheet(isPresented: $showEditor) {
-            // 关键修复：使用 .id() 强制 SwiftUI 每次打开 sheet 都创建新的 view 实例
-            // 否则 SwiftUI 会复用上次的 view，导致 entry / isNewEntry 状态污染
             DiaryEditorView(entry: editingEntry)
                 .id(editingEntry?.id ?? UUID())
-                .onAppear {
-                    print("[DiaryListView] Sheet opened with entry: \(editingEntry?.id.uuidString ?? "nil") title: \(editingEntry?.title ?? "nil")")
-                }
+        }
+        .sheet(isPresented: $showStatistics) {
+            DiaryStatisticsView()
         }
         .alert("确认删除", isPresented: $showDeleteConfirmation) {
             Button("取消", role: .cancel) {}
@@ -80,6 +113,14 @@ struct DiaryListView: View {
                     .buttonStyle(.bordered)
                 } else {
                     Button {
+                        showStatistics = true
+                    } label: {
+                        Image(systemName: "chart.bar.xaxis")
+                    }
+                    .buttonStyle(.bordered)
+                    .help("日记统计")
+                    
+                    Button {
                         isSelectionMode = true
                     } label: {
                         Image(systemName: "checkmark.circle")
@@ -96,11 +137,12 @@ struct DiaryListView: View {
                 .buttonStyle(.borderedProminent)
             }
             
+            // 搜索栏
             HStack(spacing: 12) {
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.secondary)
-                    TextField("搜索标题...", text: $searchText)
+                    TextField("搜索标题或内容...", text: $searchText)
                         .textFieldStyle(.plain)
                 }
                 .padding(8)
@@ -112,10 +154,33 @@ struct DiaryListView: View {
                 } label: {
                     HStack {
                         Image(systemName: "calendar")
-                        Text(showDatePicker ? "取消日期" : "按日期筛选")
+                        Text(showDatePicker ? "取消日期" : "日期")
                     }
                 }
                 .buttonStyle(.bordered)
+                .background(showDatePicker ? Color.accentColor.opacity(0.2) : Color.clear)
+            }
+            
+            // 分类筛选
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    CategoryFilterChip(
+                        name: "全部",
+                        color: Color.gray,
+                        isSelected: selectedCategory == nil,
+                        action: { selectedCategory = nil }
+                    )
+                    
+                    ForEach(diaryService.categories) { cat in
+                        CategoryFilterChip(
+                            name: cat.name,
+                            color: Color(hex: cat.color) ?? .blue,
+                            isSelected: selectedCategory == cat.name,
+                            action: { selectedCategory = cat.name }
+                        )
+                    }
+                }
+                .padding(.vertical, 2)
             }
             
             if showDatePicker {
@@ -138,7 +203,7 @@ struct DiaryListView: View {
                 .font(.headline)
                 .foregroundColor(.secondary)
             
-            Text("点击上方按钮开始写日记")
+            Text("点击右上角 + 开始写日记")
                 .font(.caption)
                 .foregroundColor(.secondary)
             
@@ -147,29 +212,34 @@ struct DiaryListView: View {
     }
     
     private var diaryListContent: some View {
-        List(filteredEntries) { entry in
-            DiaryRowView(
-                entry: entry,
-                isSelected: selectedEntries.contains(entry.id),
-                isSelectionMode: isSelectionMode,
-                onTap: {
-                    if isSelectionMode {
-                        toggleSelection(entry.id)
-                    } else {
-                        editingEntry = entry
-                        showEditor = true
-                    }
-                },
-                onPin: {
-                    diaryService.pinEntry(entry.id)
-                },
-                onLongPress: {
-                    isSelectionMode = true
-                    selectedEntries.insert(entry.id)
+        ScrollView {
+            LazyVStack(spacing: 4) {
+                ForEach(filteredEntries) { entry in
+                    DiaryRowView(
+                        entry: entry,
+                        isSelected: selectedEntries.contains(entry.id),
+                        isSelectionMode: isSelectionMode,
+                        onTap: {
+                            if isSelectionMode {
+                                toggleSelection(entry.id)
+                            } else {
+                                editingEntry = entry
+                                showEditor = true
+                            }
+                        },
+                        onPin: {
+                            diaryService.pinEntry(entry.id)
+                        },
+                        onLongPress: {
+                            isSelectionMode = true
+                            selectedEntries.insert(entry.id)
+                        }
+                    )
                 }
-            )
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
         }
-        .listStyle(.inset)
     }
     
     private func toggleSelection(_ id: UUID) {
@@ -180,6 +250,39 @@ struct DiaryListView: View {
         }
     }
 }
+
+// MARK: - 分类筛选 Chip
+
+struct CategoryFilterChip: View {
+    let name: String
+    let color: Color
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(color)
+                    .frame(width: 8, height: 8)
+                Text(name)
+                    .font(.caption)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(isSelected ? color.opacity(0.25) : Color(nsColor: .controlBackgroundColor))
+            .foregroundColor(isSelected ? color : .primary)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected ? color : Color.clear, lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - 日记行
 
 struct DiaryRowView: View {
     let entry: DiaryEntry
@@ -194,6 +297,7 @@ struct DiaryRowView: View {
             if isSelectionMode {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(isSelected ? .accentColor : .secondary)
+                    .font(.title3)
             }
             
             VStack(alignment: .leading, spacing: 4) {
@@ -207,9 +311,23 @@ struct DiaryRowView: View {
                     Text(entry.title.isEmpty ? "无标题" : entry.title)
                         .font(.headline)
                         .lineLimit(1)
+                    
+                    Spacer()
+                    
+                    // 标识
+                    if !entry.imagePaths.isEmpty {
+                        Image(systemName: "photo")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
+                    if entry.whiteboardID != nil {
+                        Image(systemName: "scribble.variable")
+                            .font(.caption)
+                            .foregroundColor(.purple)
+                    }
                 }
                 
-                HStack {
+                HStack(spacing: 8) {
                     Text(formatDate(entry.createdAt))
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -217,35 +335,47 @@ struct DiaryRowView: View {
                     Text("•")
                         .foregroundColor(.secondary)
                     
-                    Text("\(entry.wordCount) 字")
+                    Text("\(entry.chineseWordCount) 字")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                }
-                
-                if !entry.category.isEmpty && entry.category != "默认" {
-                    Text(entry.category)
-                        .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.accentColor.opacity(0.2))
-                        .cornerRadius(4)
+                    
+                    if !entry.category.isEmpty {
+                        Text(entry.category)
+                            .font(.caption2)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.accentColor.opacity(0.2))
+                            .cornerRadius(4)
+                    }
                 }
             }
             
             Spacer()
             
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            if !isSelectionMode {
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
-        .padding(.vertical, 4)
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(isSelected ? Color.accentColor.opacity(0.1) : Color(nsColor: .controlBackgroundColor))
+        )
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
+        .onLongPressGesture(minimumDuration: 0.5, perform: onLongPress)
         .contextMenu {
             Button {
                 onPin()
             } label: {
                 Label(entry.isPinned ? "取消置顶" : "置顶", systemImage: "pin")
+            }
+            Button {
+                onTap()
+            } label: {
+                Label("编辑", systemImage: "pencil")
             }
         }
     }

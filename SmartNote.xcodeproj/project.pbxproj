@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		01278A3F060B847D549DDE83 /* LLMSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F332C2BF2D9E8D571CB00EFA /* LLMSettingsView.swift */; };
 		06DDF901E2848FD484DD0C57 /* FocusModeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC170FA87CD834A81E9A4CC8 /* FocusModeService.swift */; };
+		06E37348180920D3401A9DB1 /* DiaryStatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFF31A424BF91F803292D395 /* DiaryStatisticsView.swift */; };
 		0CB88EC66EFF82034EC22064 /* P2PService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35933360A6AA6EE2A69BEFD4 /* P2PService.swift */; };
 		0D3AA91BBAC72021E2F85522 /* TodoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B4D9C3200C34A11A49F9FD4 /* TodoService.swift */; };
 		137C3BB73D6E4E4BBFCBFD50 /* DuplicateScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84839B0FC350C553762798B0 /* DuplicateScannerView.swift */; };
@@ -146,6 +147,7 @@
 		D54F87F628B7AE589BEFF23D /* StudyMaterial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyMaterial.swift; sourceTree = "<group>"; };
 		D5A56F3D9C89D292DF37A1E7 /* SmartNoteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartNoteApp.swift; sourceTree = "<group>"; };
 		DB2A1ABC3F53C6BD569E7B9A /* FlashCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlashCardView.swift; sourceTree = "<group>"; };
+		DFF31A424BF91F803292D395 /* DiaryStatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryStatisticsView.swift; sourceTree = "<group>"; };
 		E16F5008A6E6C57E3DCF9CC0 /* FlashCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlashCard.swift; sourceTree = "<group>"; };
 		E52D5CE99C2649DE472BDD06 /* PDFAnnotationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFAnnotationView.swift; sourceTree = "<group>"; };
 		EC14ECD3A7BAB1809B071A70 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -270,6 +272,7 @@
 				F4575EE9184B750B4B671582 /* CreateMaterialView.swift */,
 				F26CA084D90A23CA66459BF9 /* DiaryEditorView.swift */,
 				F8D8BD98EC7FF3BD5FD28E14 /* DiaryListView.swift */,
+				DFF31A424BF91F803292D395 /* DiaryStatisticsView.swift */,
 				84839B0FC350C553762798B0 /* DuplicateScannerView.swift */,
 				20D77772B153256013321672 /* ExamCountdownView.swift */,
 				270C3E3C779EA0B469949129 /* FileImportView.swift */,
@@ -462,6 +465,7 @@
 				268DDF1724C0158B44778F82 /* DiaryEncryptionService.swift in Sources */,
 				66B59954535C5BF449686A57 /* DiaryListView.swift in Sources */,
 				89E322B839246189D7DC2772 /* DiaryService.swift in Sources */,
+				06E37348180920D3401A9DB1 /* DiaryStatisticsView.swift in Sources */,
 				A8DC49BD20C525E43FE77C09 /* DuplicateScanner.swift in Sources */,
 				137C3BB73D6E4E4BBFCBFD50 /* DuplicateScannerView.swift in Sources */,
 				D3AF9A33FA1E726319056CEC /* ExamCountdown.swift in Sources */,

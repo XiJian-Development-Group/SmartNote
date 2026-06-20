@@ -128,6 +128,61 @@ class WhiteboardService: ObservableObject {
         updateCurrentDocument(doc)
     }
     
+    /// 擦除：删除部分对象 + 修改部分笔划（不记录撤销）
+    func eraseAndReplace(removeIds: Set<UUID>, modifiedStrokes: [(id: UUID, stroke: StrokeShape)]) {
+        guard var doc = currentDocument else { return }
+        if removeIds.isEmpty && modifiedStrokes.isEmpty { return }
+        
+        // 不在每次拖动时记录撤销，避免撤销栈爆满
+        // 撤销时按最终状态回退即可
+        
+        var newObjects = doc.objects
+        
+        // 应用笔划修改
+        for (id, newStroke) in modifiedStrokes {
+            if let index = newObjects.firstIndex(where: { $0.id == id }) {
+                newObjects[index] = .stroke(newStroke)
+            }
+        }
+        
+        // 应用删除
+        if !removeIds.isEmpty {
+            newObjects.removeAll { removeIds.contains($0.id) }
+        }
+        
+        doc.objects = newObjects
+        doc.updatedAt = Date()
+        updateCurrentDocument(doc)
+    }
+    
+    /// 移动多个对象（实时拖动用）
+    func moveObjects(_ objects: [WhiteboardObject], by offset: WhiteboardPoint, recordUndo: Bool = false) {
+        guard var doc = currentDocument, !objects.isEmpty else { return }
+        if recordUndo {
+            pushUndoState(doc.objects)
+        }
+        
+        for origObj in objects {
+            guard let newObj = translateObject(origObj, by: offset) else { continue }
+            if let index = doc.objects.firstIndex(where: { $0.id == origObj.id }) {
+                doc.objects[index] = newObj
+            }
+        }
+        doc.updatedAt = Date()
+        updateCurrentDocument(doc)
+    }
+    
+    private func translateObject(_ object: WhiteboardObject, by offset: WhiteboardPoint) -> WhiteboardObject? {
+        switch object {
+        case .stroke(let s): return .stroke(s.translated(by: offset))
+        case .rectangle(let r): return .rectangle(r.translated(by: offset))
+        case .ellipse(let e): return .ellipse(e.translated(by: offset))
+        case .triangle(let t): return .triangle(t.translated(by: offset))
+        case .line(let l): return .line(l.translated(by: offset))
+        case .arrow(let a): return .arrow(a.translated(by: offset))
+        }
+    }
+    
     /// 更新单个对象
     func updateObject(_ object: WhiteboardObject) {
         guard var doc = currentDocument,
@@ -218,6 +273,7 @@ class WhiteboardService: ObservableObject {
             documents[index] = doc
         }
         currentDocument = doc
+        // 3 秒后自动保存（已经在 scheduleAutoSave 中做了 debounce）
         scheduleAutoSave()
     }
     

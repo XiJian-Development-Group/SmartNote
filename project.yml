@@ -2,7 +2,7 @@ name: SmartNote
 options:
   bundleIdPrefix: com.skyc8266
   deploymentTarget:
-    macOS: "13.0"
+    macOS: "15.0"
   xcodeVersion: "15.0"
   generateEmptyDirectories: true
 
@@ -14,7 +14,7 @@ packages:
 settings:
   base:
     SWIFT_VERSION: "5.9"
-    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
     CODE_SIGN_STYLE: Automatic
     ENABLE_HARDENED_RUNTIME: YES
     COMBINE_HIDPI_IMAGES: YES
@@ -43,19 +43,19 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_EMIT_LOC_STRINGS: YES
         GENERATE_INFOPLIST_FILE: NO
-        MARKETING_VERSION: "1.5.3"
-        CURRENT_PROJECT_VERSION: "76"
+        MARKETING_VERSION: "1.5.5"
+        CURRENT_PROJECT_VERSION: "81"
     info:
       path: SmartNote/Resources/Info.plist
       properties:
         CFBundleName: SmartNote
         CFBundleDisplayName: 智学笔记
         CFBundleIdentifier: com.skyc8266.smartnote
-        CFBundleVersion: "76"
-        CFBundleShortVersionString: "1.5.3"
+        CFBundleVersion: "81"
+        CFBundleShortVersionString: "1.5.5"
         CFBundlePackageType: APPL
         CFBundleExecutable: SmartNote
-        LSMinimumSystemVersion: "13.0"
+        LSMinimumSystemVersion: "15.0"
         LSApplicationCategoryType: public.app-category.education
         NSHumanReadableCopyright: "Copyright 2026 Skyc8266"
         NSPrincipalClass: NSApplication
