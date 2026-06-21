@@ -85,10 +85,6 @@ struct SidebarView: View {
                     Label("考试倒计时", systemImage: "calendar.badge.exclamationmark")
                 }
                 
-                NavigationLink(value: 14) {
-                    Label("重复清理", systemImage: "doc.on.doc")
-                }
-                
                 NavigationLink(value: 6) {
                     Label("复习计划", systemImage: "calendar.badge.clock")
                 }
@@ -114,6 +110,10 @@ struct SidebarView: View {
                 
                 NavigationLink(value: 18) {
                     Label("日记", systemImage: "book.fill")
+                }
+                
+                NavigationLink(value: 14) {
+                    Label("重复清理", systemImage: "doc.on.doc")
                 }
             }
         }
