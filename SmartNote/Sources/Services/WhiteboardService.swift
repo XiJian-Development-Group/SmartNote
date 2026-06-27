@@ -200,6 +200,7 @@ class WhiteboardService: ObservableObject {
         case .triangle(let t): return .triangle(t.translated(by: offset))
         case .line(let l): return .line(l.translated(by: offset))
         case .arrow(let a): return .arrow(a.translated(by: offset))
+        case .text(let t): return .text(t.translated(by: offset))
         }
     }
     
@@ -238,6 +239,9 @@ class WhiteboardService: ObservableObject {
             case .arrow(var s):
                 s.id = UUID()
                 copied.append(.arrow(s.translated(by: offset)))
+            case .text(var s):
+                s.id = UUID()
+                copied.append(.text(s.translated(by: offset)))
             }
         }
         addObjects(copied)

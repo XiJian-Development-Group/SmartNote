@@ -6,6 +6,7 @@ struct WhiteboardView: View {
     @StateObject private var service = WhiteboardService.shared
     @State private var tool: WhiteboardTool = .pen
     @State private var currentColor: WhiteboardColor = .black
+    @State private var fillColor: WhiteboardColor = .blue
     @State private var strokeWidth: Double = 3.0
     @State private var fillStyle: FillStyle = .none
     @State private var zoom: Double = 1.0
@@ -36,6 +37,7 @@ struct WhiteboardView: View {
                             service: service,
                             tool: $tool,
                             currentColor: $currentColor,
+                            fillColor: $fillColor,
                             strokeWidth: $strokeWidth,
                             fillStyle: $fillStyle,
                             zoom: $zoom,
@@ -189,6 +191,7 @@ struct WhiteboardView: View {
         switch tool {
         case .pen: return "画笔模式"
         case .select: return "选择模式"
+        case .text: return "文字模式（点击放置）"
         default: return "\(tool.displayName)模式"
         }
     }
@@ -255,8 +258,8 @@ struct WhiteboardView: View {
                 }
             }
             
-            // 颜色选择
-            propertySection(title: "颜色", icon: "paintpalette") {
+            // 颜色选择（笔划色）
+            propertySection(title: "笔划色", icon: "paintpalette") {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 28))], spacing: 6) {
                     ForEach(WhiteboardColor.palette, id: \.self) { color in
                         Button {
@@ -271,6 +274,28 @@ struct WhiteboardView: View {
                                 )
                         }
                         .buttonStyle(.plain)
+                    }
+                }
+            }
+            
+            // 填充色（仅在有填充样式时显示）
+            if fillStyle.isVisible {
+                propertySection(title: "填充色", icon: "drop.fill") {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 28))], spacing: 6) {
+                        ForEach(WhiteboardColor.palette, id: \.self) { color in
+                            Button {
+                                fillColor = color
+                            } label: {
+                                Circle()
+                                    .fill(color.color)
+                                    .frame(width: 24, height: 24)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(fillColor == color ? Color.accentColor : Color.gray.opacity(0.3), lineWidth: fillColor == color ? 2 : 1)
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                 }
             }

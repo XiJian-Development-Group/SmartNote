@@ -67,6 +67,7 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
     case triangle(TriangleShape)
     case line(LineShape)
     case arrow(ArrowShape)
+    case text(TextShape)
     
     var id: UUID {
         switch self {
@@ -76,6 +77,7 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .triangle(let s): return s.id
         case .line(let s): return s.id
         case .arrow(let s): return s.id
+        case .text(let s): return s.id
         }
     }
     
@@ -87,6 +89,7 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .triangle(let s): return s.boundingRect
         case .line(let s): return s.boundingRect
         case .arrow(let s): return s.boundingRect
+        case .text(let s): return s.boundingRect
         }
     }
     
@@ -98,6 +101,7 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .triangle(let s): return s.zIndex
         case .line(let s): return s.zIndex
         case .arrow(let s): return s.zIndex
+        case .text(let s): return s.zIndex
         }
     }
     
@@ -109,6 +113,7 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .triangle(let s): return s.color
         case .line(let s): return s.color
         case .arrow(let s): return s.color
+        case .text(let s): return s.color
         }
     }
     
@@ -120,6 +125,7 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .triangle(let s): return s.strokeWidth
         case .line(let s): return s.strokeWidth
         case .arrow(let s): return s.strokeWidth
+        case .text: return 0
         }
     }
     
@@ -131,6 +137,17 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .triangle(let s): return s.fillStyle
         case .line: return .none
         case .arrow: return .none
+        case .text: return .none
+        }
+    }
+    
+    /// 该形状的独立填充色（nil = 使用笔划色）
+    var fillColor: WhiteboardColor? {
+        switch self {
+        case .rectangle(let s): return s.fillColor
+        case .ellipse(let s): return s.fillColor
+        case .triangle(let s): return s.fillColor
+        default: return nil
         }
     }
     
@@ -142,6 +159,7 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .triangle(let s): return s.contains(point)
         case .line(let s): return s.contains(point)
         case .arrow(let s): return s.contains(point)
+        case .text(let s): return s.contains(point)
         }
     }
 }
@@ -303,15 +321,17 @@ struct RectangleShape: WhiteboardShape, Codable, Hashable, Identifiable {
     var color: WhiteboardColor
     var strokeWidth: Double
     var fillStyle: FillStyle
+    var fillColor: WhiteboardColor?
     var rotation: Double  // 围绕中心
     
-    init(id: UUID = UUID(), rect: WhiteboardRect, color: WhiteboardColor = .black, strokeWidth: Double = 2.0, fillStyle: FillStyle = .none) {
+    init(id: UUID = UUID(), rect: WhiteboardRect, color: WhiteboardColor = .black, strokeWidth: Double = 2.0, fillStyle: FillStyle = .none, fillColor: WhiteboardColor? = nil) {
         self.id = id
         self.rect = rect
         self.zIndex = 0
         self.color = color
         self.strokeWidth = strokeWidth
         self.fillStyle = fillStyle
+        self.fillColor = fillColor
         self.rotation = 0
     }
     
@@ -368,15 +388,17 @@ struct EllipseShape: WhiteboardShape, Codable, Hashable, Identifiable {
     var color: WhiteboardColor
     var strokeWidth: Double
     var fillStyle: FillStyle
+    var fillColor: WhiteboardColor?
     var rotation: Double
     
-    init(id: UUID = UUID(), rect: WhiteboardRect, color: WhiteboardColor = .black, strokeWidth: Double = 2.0, fillStyle: FillStyle = .none) {
+    init(id: UUID = UUID(), rect: WhiteboardRect, color: WhiteboardColor = .black, strokeWidth: Double = 2.0, fillStyle: FillStyle = .none, fillColor: WhiteboardColor? = nil) {
         self.id = id
         self.rect = rect
         self.zIndex = 0
         self.color = color
         self.strokeWidth = strokeWidth
         self.fillStyle = fillStyle
+        self.fillColor = fillColor
         self.rotation = 0
     }
     
@@ -436,15 +458,17 @@ struct TriangleShape: WhiteboardShape, Codable, Hashable, Identifiable {
     var color: WhiteboardColor
     var strokeWidth: Double
     var fillStyle: FillStyle
+    var fillColor: WhiteboardColor?
     var rotation: Double
     
-    init(id: UUID = UUID(), rect: WhiteboardRect, color: WhiteboardColor = .black, strokeWidth: Double = 2.0, fillStyle: FillStyle = .none) {
+    init(id: UUID = UUID(), rect: WhiteboardRect, color: WhiteboardColor = .black, strokeWidth: Double = 2.0, fillStyle: FillStyle = .none, fillColor: WhiteboardColor? = nil) {
         self.id = id
         self.rect = rect
         self.zIndex = 0
         self.color = color
         self.strokeWidth = strokeWidth
         self.fillStyle = fillStyle
+        self.fillColor = fillColor
         self.rotation = 0
     }
     
@@ -718,6 +742,100 @@ struct ArrowShape: WhiteboardShape, Codable, Hashable, Identifiable {
     }
 }
 
+// MARK: - 文字
+
+struct TextShape: WhiteboardShape, Codable, Hashable, Identifiable {
+    var id: UUID
+    var rect: WhiteboardRect
+    var text: String
+    var zIndex: Int
+    var color: WhiteboardColor
+    var strokeWidth: Double
+    var fillStyle: FillStyle
+    var fillColor: WhiteboardColor?
+    var rotation: Double
+    var fontSize: Double
+    var isBold: Bool
+    var isItalic: Bool
+    
+    init(
+        id: UUID = UUID(),
+        position: WhiteboardPoint,
+        text: String,
+        color: WhiteboardColor = .black,
+        fontSize: Double = 18.0,
+        isBold: Bool = false,
+        isItalic: Bool = false
+    ) {
+        self.id = id
+        self.text = text
+        self.zIndex = 0
+        self.color = color
+        self.strokeWidth = 0
+        self.fillStyle = .none
+        self.fillColor = nil
+        self.rotation = 0
+        self.fontSize = fontSize
+        self.isBold = isBold
+        self.isItalic = isItalic
+        // 根据文本长度估算尺寸
+        let estimatedWidth = max(Double(text.count) * fontSize * 0.6, 60)
+        let estimatedHeight = fontSize * 1.5
+        self.rect = WhiteboardRect(
+            x: position.x,
+            y: position.y,
+            width: estimatedWidth,
+            height: estimatedHeight
+        )
+    }
+    
+    /// 用实际测量结果调整 rect（用于编辑后让框贴合文本）
+    mutating func fitRectToContent() {
+        let estimatedWidth = max(Double(text.count) * fontSize * 0.6, 60)
+        let estimatedHeight = fontSize * 1.5
+        rect = WhiteboardRect(
+            x: rect.x,
+            y: rect.y,
+            width: estimatedWidth,
+            height: estimatedHeight
+        )
+    }
+    
+    var boundingRect: WhiteboardRect { rect }
+    
+    func translated(by offset: WhiteboardPoint) -> TextShape {
+        var copy = self
+        copy.rect.x += offset.x
+        copy.rect.y += offset.y
+        return copy
+    }
+    
+    func scaled(by factor: Double, around center: WhiteboardPoint) -> TextShape {
+        var copy = self
+        let dx = copy.rect.center.x - center.x
+        let dy = copy.rect.center.y - center.y
+        copy.rect.x = center.x + dx * factor - copy.rect.width * factor / 2
+        copy.rect.y = center.y + dy * factor - copy.rect.height * factor / 2
+        copy.rect.width *= factor
+        copy.rect.height *= factor
+        copy.fontSize *= factor
+        return copy
+    }
+    
+    mutating func move(by offset: WhiteboardPoint) {
+        rect.x += offset.x
+        rect.y += offset.y
+    }
+    
+    mutating func resize(to newRect: WhiteboardRect) {
+        rect = newRect
+    }
+    
+    func contains(_ point: WhiteboardPoint) -> Bool {
+        return rect.contains(point)
+    }
+}
+
 // MARK: - 画板文档
 
 /// 一个画板文档
@@ -747,6 +865,7 @@ enum WhiteboardTool: String, CaseIterable, Identifiable, Codable {
     case ellipse
     case triangle
     case arrow
+    case text
     case eraser
     
     var id: String { rawValue }
@@ -760,6 +879,7 @@ enum WhiteboardTool: String, CaseIterable, Identifiable, Codable {
         case .ellipse: return "圆形"
         case .triangle: return "三角形"
         case .arrow: return "箭头"
+        case .text: return "文字"
         case .eraser: return "橡皮"
         }
     }
@@ -773,6 +893,7 @@ enum WhiteboardTool: String, CaseIterable, Identifiable, Codable {
         case .ellipse: return "circle"
         case .triangle: return "triangle"
         case .arrow: return "arrow.up.right"
+        case .text: return "textformat"
         case .eraser: return "eraser"
         }
     }

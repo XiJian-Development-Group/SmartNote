@@ -11,6 +11,7 @@ struct WhiteboardCanvasView: View {
     @ObservedObject var service: WhiteboardService
     @Binding var tool: WhiteboardTool
     @Binding var currentColor: WhiteboardColor
+    @Binding var fillColor: WhiteboardColor
     @Binding var strokeWidth: Double
     @Binding var fillStyle: FillStyle
     @Binding var zoom: Double
@@ -26,6 +27,14 @@ struct WhiteboardCanvasView: View {
     @State private var currentStroke: StrokeShape?
     @State private var hasMovedSignificantly: Bool = false
     @State private var dragStartedAt: Date = Date()
+    
+    // 文字输入
+    @State private var showTextInputSheet = false
+    @State private var textInputContent = ""
+    @State private var textInputPoint: WhiteboardPoint = WhiteboardPoint(x: 0, y: 0)
+    @State private var textInputFontSize: Double = 18.0
+    @State private var textInputIsBold: Bool = false
+    @State private var textInputIsItalic: Bool = false
     
     // 用于驱动 TimelineView 重绘
     @State private var renderTick: Int = 0
@@ -114,6 +123,111 @@ struct WhiteboardCanvasView: View {
             pinchStartZoom = zoom
             pinchStartOffset = offset
         }
+        .sheet(isPresented: $showTextInputSheet) {
+            textInputSheet
+        }
+    }
+    
+    // MARK: - 文字输入
+    
+    private func presentTextInput(at point: WhiteboardPoint) {
+        textInputPoint = point
+        textInputContent = ""
+        textInputFontSize = max(12, strokeWidth * 6) // 用笔划粗细估算字号
+        textInputIsBold = false
+        textInputIsItalic = false
+        showTextInputSheet = true
+    }
+    
+    private func commitTextInput() {
+        let trimmed = textInputContent.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            showTextInputSheet = false
+            return
+        }
+        var text = TextShape(
+            position: textInputPoint,
+            text: trimmed,
+            color: currentColor,
+            fontSize: textInputFontSize,
+            isBold: textInputIsBold,
+            isItalic: textInputIsItalic
+        )
+        text.fitRectToContent()
+        service.addObject(.text(text))
+        showTextInputSheet = false
+    }
+    
+    private var textInputSheet: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Button("取消") {
+                    showTextInputSheet = false
+                }
+                .buttonStyle(.bordered)
+                
+                Spacer()
+                
+                Text("添加文字")
+                    .font(.headline)
+                
+                Spacer()
+                
+                Button("确定") {
+                    commitTextInput()
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+            }
+            .padding()
+            
+            Divider()
+            
+            VStack(alignment: .leading, spacing: 12) {
+                // 文字内容
+                TextEditor(text: $textInputContent)
+                    .font(.system(size: 16))
+                    .frame(minHeight: 100)
+                    .padding(8)
+                    .background(Color(nsColor: .textBackgroundColor))
+                    .cornerRadius(6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    )
+                
+                // 字号
+                HStack {
+                    Text("字号")
+                        .font(.caption)
+                        .frame(width: 50, alignment: .leading)
+                    Slider(value: $textInputFontSize, in: 10...72, step: 1)
+                    Text("\(Int(textInputFontSize))")
+                        .font(.caption)
+                        .frame(width: 30, alignment: .trailing)
+                        .monospacedDigit()
+                }
+                
+                // 加粗/斜体
+                HStack(spacing: 12) {
+                    Toggle(isOn: $textInputIsBold) {
+                        Label("加粗", systemImage: "bold")
+                    }
+                    .toggleStyle(.button)
+                    
+                    Toggle(isOn: $textInputIsItalic) {
+                        Label("斜体", systemImage: "italic")
+                    }
+                    .toggleStyle(.button)
+                    
+                    Spacer()
+                }
+            }
+            .padding()
+            
+            Spacer()
+        }
+        .frame(width: 480, height: 340)
     }
     
     // MARK: - 缩放与平移
@@ -177,6 +291,8 @@ struct WhiteboardCanvasView: View {
             drawLine(l, context: context)
         case .arrow(let a):
             drawArrow(a, context: context)
+        case .text(let t):
+            drawText(t, context: context)
         }
     }
     
@@ -252,13 +368,15 @@ struct WhiteboardCanvasView: View {
         )
         
         if r.fillStyle.isVisible {
-            let fillColor: Color
+            // 优先使用 fillColor；为空时回退到笔划色
+            let fillColor = r.fillColor ?? r.color
+            let fillColorSwiftUI: Color
             switch r.fillStyle {
-            case .none: fillColor = .clear
-            case .solid: fillColor = r.color.color
-            case .semiTransparent: fillColor = r.color.color.opacity(0.4)
+            case .none: fillColorSwiftUI = .clear
+            case .solid: fillColorSwiftUI = fillColor.color
+            case .semiTransparent: fillColorSwiftUI = fillColor.color.opacity(0.4)
             }
-            context.fill(Path(rect), with: .color(fillColor))
+            context.fill(Path(rect), with: .color(fillColorSwiftUI))
         }
         
         context.stroke(
@@ -278,13 +396,14 @@ struct WhiteboardCanvasView: View {
         let path = Path(ellipseIn: rect)
         
         if e.fillStyle.isVisible {
-            let fillColor: Color
+            let fillColor = e.fillColor ?? e.color
+            let fillColorSwiftUI: Color
             switch e.fillStyle {
-            case .none: fillColor = .clear
-            case .solid: fillColor = e.color.color
-            case .semiTransparent: fillColor = e.color.color.opacity(0.4)
+            case .none: fillColorSwiftUI = .clear
+            case .solid: fillColorSwiftUI = fillColor.color
+            case .semiTransparent: fillColorSwiftUI = fillColor.color.opacity(0.4)
             }
-            context.fill(path, with: .color(fillColor))
+            context.fill(path, with: .color(fillColorSwiftUI))
         }
         
         context.stroke(
@@ -308,13 +427,14 @@ struct WhiteboardCanvasView: View {
         path.closeSubpath()
         
         if t.fillStyle.isVisible {
-            let fillColor: Color
+            let fillColor = t.fillColor ?? t.color
+            let fillColorSwiftUI: Color
             switch t.fillStyle {
-            case .none: fillColor = .clear
-            case .solid: fillColor = t.color.color
-            case .semiTransparent: fillColor = t.color.color.opacity(0.4)
+            case .none: fillColorSwiftUI = .clear
+            case .solid: fillColorSwiftUI = fillColor.color
+            case .semiTransparent: fillColorSwiftUI = fillColor.color.opacity(0.4)
             }
-            context.fill(path, with: .color(fillColor))
+            context.fill(path, with: .color(fillColorSwiftUI))
         }
         
         context.stroke(
@@ -322,6 +442,43 @@ struct WhiteboardCanvasView: View {
             with: .color(t.color.color),
             lineWidth: max(0.5, t.strokeWidth * zoom)
         )
+    }
+    
+    private func drawText(_ t: TextShape, context: GraphicsContext) {
+        let screenRect = CGRect(
+            x: t.rect.x * zoom + offset.width,
+            y: t.rect.y * zoom + offset.height,
+            width: max(1, t.rect.width * zoom),
+            height: max(1, t.rect.height * zoom)
+        )
+        let screenFontSize = t.fontSize * zoom
+        
+        // 文字基线
+        let baselineY = screenRect.minY + screenFontSize * 0.85
+        
+        var font: Font {
+            if t.isBold && t.isItalic {
+                return .system(size: screenFontSize, weight: .bold).italic()
+            } else if t.isBold {
+                return .system(size: screenFontSize, weight: .bold)
+            } else if t.isItalic {
+                return .system(size: screenFontSize, weight: .regular).italic()
+            } else {
+                return .system(size: screenFontSize, weight: .regular)
+            }
+        }
+        
+        // 逐行渲染，支持换行
+        let lines = t.text.components(separatedBy: "\n")
+        for (index, line) in lines.enumerated() {
+            let yOffset = CGFloat(index) * screenFontSize * 1.2
+            let resolved = context.resolve(
+                Text(line)
+                    .font(font)
+                    .foregroundColor(t.color.color)
+            )
+            context.draw(resolved, at: CGPoint(x: screenRect.minX, y: baselineY + yOffset), anchor: .leading)
+        }
     }
     
     private func drawLine(_ l: LineShape, context: GraphicsContext) {
@@ -430,6 +587,9 @@ struct WhiteboardCanvasView: View {
             handleRectDrawing(worldPoint: worldPoint, start: startWorld, isEllipse: true)
         case .triangle:
             handleTriangleDrawing(worldPoint: worldPoint, start: startWorld)
+        case .text:
+            // 文字工具：拖拽时不做任何事，由 onEnded 触发输入面板
+            break
         case .select:
             handleSelectDrag(worldPoint: worldPoint, start: startWorld)
         }
@@ -449,6 +609,12 @@ struct WhiteboardCanvasView: View {
                 service.addObject(drawing)
             }
             drawingObject = nil
+        case .text:
+            // 仅在单击（无明显拖动）时弹出输入面板
+            if !hasMovedSignificantly {
+                let worldPoint = screenToWorld(value.location)
+                presentTextInput(at: worldPoint)
+            }
         case .eraser:
             break
         case .select:
@@ -498,7 +664,7 @@ struct WhiteboardCanvasView: View {
                 } else {
                     strokeReplacements.append((s.id, newStrokes))
                 }
-            case .rectangle, .ellipse, .triangle, .line, .arrow:
+            case .rectangle, .ellipse, .triangle, .line, .arrow, .text:
                 if obj.contains(worldPoint) {
                     toRemoveIds.insert(obj.id)
                 }
@@ -650,9 +816,9 @@ struct WhiteboardCanvasView: View {
         let rect = WhiteboardRect(min: start, max: worldPoint)
         if drawingObject == nil {
             if isEllipse {
-                drawingObject = .ellipse(EllipseShape(rect: rect, color: currentColor, strokeWidth: strokeWidth, fillStyle: fillStyle))
+                drawingObject = .ellipse(EllipseShape(rect: rect, color: currentColor, strokeWidth: strokeWidth, fillStyle: fillStyle, fillColor: fillStyle.isVisible ? fillColor : nil))
             } else {
-                drawingObject = .rectangle(RectangleShape(rect: rect, color: currentColor, strokeWidth: strokeWidth, fillStyle: fillStyle))
+                drawingObject = .rectangle(RectangleShape(rect: rect, color: currentColor, strokeWidth: strokeWidth, fillStyle: fillStyle, fillColor: fillStyle.isVisible ? fillColor : nil))
             }
         } else {
             switch drawingObject {
@@ -671,7 +837,7 @@ struct WhiteboardCanvasView: View {
     private func handleTriangleDrawing(worldPoint: WhiteboardPoint, start: WhiteboardPoint) {
         let rect = WhiteboardRect(min: start, max: worldPoint)
         if drawingObject == nil {
-            drawingObject = .triangle(TriangleShape(rect: rect, color: currentColor, strokeWidth: strokeWidth, fillStyle: fillStyle))
+            drawingObject = .triangle(TriangleShape(rect: rect, color: currentColor, strokeWidth: strokeWidth, fillStyle: fillStyle, fillColor: fillStyle.isVisible ? fillColor : nil))
         } else {
             switch drawingObject {
             case .triangle(var t):
