@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -24,6 +24,7 @@
 		3A67E92D2163F2CB2D2AE96D /* Whiteboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 894FE930FEE63A60AD1A8934 /* Whiteboard.swift */; };
 		401FEEFEBD57E1CE1F49D5D8 /* WhiteboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C503288E45F021D992D5259D /* WhiteboardService.swift */; };
 		41B61849E433C92F3630126A /* LLMConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF8E19044ACFD37E7466B8F /* LLMConfiguration.swift */; };
+		460092FA7B2C9ACC7DBA3C3B /* HabitTrackerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6536CFEF783784FA9E9B460F /* HabitTrackerView.swift */; };
 		46304E5700729E5A7EA51398 /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D249E5C4EC6332AE451B8016 /* StatisticsView.swift */; };
 		560180335971D299A12416BE /* ReviewPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7882398FAA6EDA889F8A4A6 /* ReviewPlan.swift */; };
 		574B9D96A352982436D54469 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA20C8E3AFF5E8F5780261 /* AppState.swift */; };
@@ -37,6 +38,7 @@
 		6BEAC51EFE84A910F12692E9 /* CalendarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D50C4DEA6DDBE484CB505052 /* CalendarService.swift */; };
 		719E56A223EC013911943F9E /* P2PCryptoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0C0B9F554192EC67B33B58 /* P2PCryptoService.swift */; };
 		779CC755CC9ECB20892847C1 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6EE24BB16C4F533244DA72D /* StatusBarView.swift */; };
+		78869D9414CB1FFE8E0DA398 /* HabitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86654A145D30D6948855CF39 /* HabitService.swift */; };
 		7BBD0FACD5978D7ECF7703FE /* ExamCountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D77772B153256013321672 /* ExamCountdownView.swift */; };
 		7E21801EB2DB6F679E2C20F0 /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12987FCC65DCD2D306F5CCB3 /* StorageService.swift */; };
 		7E55A9BF32BD91003C73C3D6 /* KeyPointsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C67150FE8E22E2AEAC4C82 /* KeyPointsView.swift */; };
@@ -52,6 +54,7 @@
 		A6538E9AE726EB1B6A0A139A /* PDFAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E52D5CE99C2649DE472BDD06 /* PDFAnnotationView.swift */; };
 		A83592B1242E65D43DD45C35 /* CreateMaterialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4575EE9184B750B4B671582 /* CreateMaterialView.swift */; };
 		A8DC49BD20C525E43FE77C09 /* DuplicateScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83656D0505253324AD314B29 /* DuplicateScanner.swift */; };
+		AA896DAFCA3BCD7B8C1FB398 /* Habit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7073CBB84285BA6FACD1F5 /* Habit.swift */; };
 		AADD190F79B79514A050BD7B /* UserLearningProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 183A64BA18C98E763E093D8C /* UserLearningProfile.swift */; };
 		AF44A4684FCEFA9A9B8455E1 /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = 44E819ACF011BFB1CBCEC366 /* Markdown */; };
 		B1B05AFB264D51D621CB3350 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC14ECD3A7BAB1809B071A70 /* SettingsView.swift */; };
@@ -109,6 +112,7 @@
 		5B8C1B44A2A61CA79BD48879 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5FF0F9399D305DF370C71A6C /* WhiteBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiteBoardView.swift; sourceTree = "<group>"; };
 		63B827EA762FC4151DBAED5F /* Diary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diary.swift; sourceTree = "<group>"; };
+		6536CFEF783784FA9E9B460F /* HabitTrackerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitTrackerView.swift; sourceTree = "<group>"; };
 		677C192800FE87ECC35092EC /* DiaryEncryptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryEncryptionService.swift; sourceTree = "<group>"; };
 		6800551BD3F4E594202A9C63 /* FileScannerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileScannerService.swift; sourceTree = "<group>"; };
 		70EA20C8E3AFF5E8F5780261 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
@@ -119,8 +123,10 @@
 		83D3416A6F06F0A71B9E8C68 /* WrongQuestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongQuestion.swift; sourceTree = "<group>"; };
 		84839B0FC350C553762798B0 /* DuplicateScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateScannerView.swift; sourceTree = "<group>"; };
 		8589B9024F0431513B5331FE /* FlowLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowLayout.swift; sourceTree = "<group>"; };
+		86654A145D30D6948855CF39 /* HabitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitService.swift; sourceTree = "<group>"; };
 		894FE930FEE63A60AD1A8934 /* Whiteboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Whiteboard.swift; sourceTree = "<group>"; };
 		8CBFCF8E6360A6B9A44AAE27 /* TodoItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoItem.swift; sourceTree = "<group>"; };
+		8D7073CBB84285BA6FACD1F5 /* Habit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Habit.swift; sourceTree = "<group>"; };
 		9153CA3BAB1A98A91814C442 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		92C67150FE8E22E2AEAC4C82 /* KeyPointsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyPointsView.swift; sourceTree = "<group>"; };
 		A1BF99288F70ED636D3AAB01 /* AIChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatView.swift; sourceTree = "<group>"; };
@@ -228,6 +234,7 @@
 				CB5EFEE65AEF8F68B4C6D2F6 /* ExportService.swift */,
 				6800551BD3F4E594202A9C63 /* FileScannerService.swift */,
 				EC170FA87CD834A81E9A4CC8 /* FocusModeService.swift */,
+				86654A145D30D6948855CF39 /* HabitService.swift */,
 				C1CBA1BA3BF23D2680740DCD /* KeywordExtractionService.swift */,
 				EDECE7F741B10883BAD49248 /* LearningAnalysisService.swift */,
 				F3552CF8976544956A158CCD /* LLMService.swift */,
@@ -277,6 +284,7 @@
 				20D77772B153256013321672 /* ExamCountdownView.swift */,
 				270C3E3C779EA0B469949129 /* FileImportView.swift */,
 				DB2A1ABC3F53C6BD569E7B9A /* FlashCardView.swift */,
+				6536CFEF783784FA9E9B460F /* HabitTrackerView.swift */,
 				92C67150FE8E22E2AEAC4C82 /* KeyPointsView.swift */,
 				81E7459E7FE5DC39CDD074EA /* LearningProfileSettingsView.swift */,
 				F332C2BF2D9E8D571CB00EFA /* LLMSettingsView.swift */,
@@ -321,6 +329,7 @@
 				63B827EA762FC4151DBAED5F /* Diary.swift */,
 				BF69A8C2FBED9C695F7D3F91 /* ExamCountdown.swift */,
 				E16F5008A6E6C57E3DCF9CC0 /* FlashCard.swift */,
+				8D7073CBB84285BA6FACD1F5 /* Habit.swift */,
 				BEF8E19044ACFD37E7466B8F /* LLMConfiguration.swift */,
 				095FA7C50DFB7734ED797E8D /* P2PModels.swift */,
 				01B9E1AAB643D41A88EFF1E8 /* PDFAnnotation.swift */,
@@ -396,7 +405,6 @@
 				};
 			};
 			buildConfigurationList = 9A48A5B4734D245FBBE0D7E7 /* Build configuration list for PBXProject "SmartNote" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -408,6 +416,8 @@
 			packageReferences = (
 				CA9F344E819256EF08AB4AD4 /* XCRemoteSwiftPackageReference "swift-markdown" */,
 			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = DB91F87EFACDB75871C18F39 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -476,6 +486,9 @@
 				F50B5F6181F691E1DF61BDFA /* FlashCardView.swift in Sources */,
 				E5FE28187FFF047A3A7D2AFE /* FlowLayout.swift in Sources */,
 				06DDF901E2848FD484DD0C57 /* FocusModeService.swift in Sources */,
+				AA896DAFCA3BCD7B8C1FB398 /* Habit.swift in Sources */,
+				78869D9414CB1FFE8E0DA398 /* HabitService.swift in Sources */,
+				460092FA7B2C9ACC7DBA3C3B /* HabitTrackerView.swift in Sources */,
 				7E55A9BF32BD91003C73C3D6 /* KeyPointsView.swift in Sources */,
 				5C108930AB66F5F867A1918B /* KeywordExtractionService.swift in Sources */,
 				41B61849E433C92F3630126A /* LLMConfiguration.swift in Sources */,
@@ -600,8 +613,6 @@
 				CURRENT_PROJECT_VERSION = 83;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "智学笔记";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -623,8 +634,6 @@
 				CURRENT_PROJECT_VERSION = 83;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "智学笔记";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

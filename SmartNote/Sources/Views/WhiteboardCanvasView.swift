@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 
 /// 画板画布视图 - 负责绘制、交互、撤销等
-/// 
+///
 /// 性能优化要点：
 /// 1. 使用 Canvas + TimelineView 进行高频绘制，避免 ForEach 反复重建子 view
 /// 2. 笔划点直接追加到 @State 数组（value-type copy，但 SwiftUI 内部优化）
@@ -24,6 +24,7 @@ struct WhiteboardCanvasView: View {
     @State private var drawingObject: WhiteboardObject?
     @State private var dragStartPoint: WhiteboardPoint?
     @State private var dragOriginalObjects: [WhiteboardObject] = []
+    @State private var hasRecordedUndoForDrag: Bool = false
     @State private var currentStroke: StrokeShape?
     @State private var hasMovedSignificantly: Bool = false
     @State private var dragStartedAt: Date = Date()
@@ -43,6 +44,11 @@ struct WhiteboardCanvasView: View {
     @State private var pinchStartZoom: Double = 1.0
     @State private var pinchStartOffset: CGSize = .zero
     @State private var lastMouseLocation: CGPoint? = nil
+    // 供选择工具使用：框选起点/临时矩形（世界坐标）
+    @State private var marqueeStart: WhiteboardPoint? = nil
+    @State private var marqueeRect: WhiteboardRect? = nil
+    // 键盘事件监控句柄
+    @State private var keyDownMonitor: Any? = nil
     
     var body: some View {
         GeometryReader { geometry in
@@ -67,6 +73,20 @@ struct WhiteboardCanvasView: View {
                         if !selectedIDs.isEmpty && tool == .select {
                             drawSelectionBounds(context: context)
                         }
+                                // 绘制框选矩形（正在拖拽选择）
+                                if let m = marqueeRect {
+                                    drawMarquee(rect: m, context: context)
+                                }
+                    }
+                }
+            }
+            .contextMenu {
+                if !selectedIDs.isEmpty && tool == .select {
+                    Button(role: .destructive) {
+                        service.deleteObjects(ids: selectedIDs)
+                        selectedIDs.removeAll()
+                    } label: {
+                        Text("删除")
                     }
                 }
             }
@@ -122,6 +142,25 @@ struct WhiteboardCanvasView: View {
         .onAppear {
             pinchStartZoom = zoom
             pinchStartOffset = offset
+            // 监听删除键（Backspace / Delete）以便删除选中对象
+            keyDownMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown]) { ev in
+                guard let chars = ev.charactersIgnoringModifiers?.lowercased() else { return ev }
+                if (chars == "\u{8}" || chars == "\u{7f}") || ev.keyCode == 51 || ev.keyCode == 117 {
+                    // 删除键或 forward delete
+                    if !selectedIDs.isEmpty {
+                        service.deleteObjects(ids: selectedIDs)
+                        selectedIDs.removeAll()
+                        return nil
+                    }
+                }
+                return ev
+            }
+        }
+        .onDisappear {
+            if let m = keyDownMonitor {
+                NSEvent.removeMonitor(m)
+                keyDownMonitor = nil
+            }
         }
         .sheet(isPresented: $showTextInputSheet) {
             textInputSheet
@@ -591,7 +630,60 @@ struct WhiteboardCanvasView: View {
             // 文字工具：拖拽时不做任何事，由 onEnded 触发输入面板
             break
         case .select:
-            handleSelectDrag(worldPoint: worldPoint, start: startWorld)
+            // 如果尚未开始拖拽，决定是移动已选对象还是开始框选
+            guard let doc = service.currentDocument else { return }
+
+            if dragStartPoint == nil && marqueeStart == nil {
+                // 判断起点是否命中某个对象（以视觉上最上层对象为准）
+                if let hit = doc.objects.reversed().first(where: { $0.contains(startWorld) }) {
+                    // 命中对象：如果该对象已经被选中，则开始移动；否则选择它并开始移动
+                    if !selectedIDs.contains(hit.id) {
+                        if isOptionKeyPressed {
+                            // Option 键：切换选择
+                            if selectedIDs.contains(hit.id) { selectedIDs.remove(hit.id) } else { selectedIDs.insert(hit.id) }
+                        } else {
+                            selectedIDs = [hit.id]
+                        }
+                    }
+                    dragStartPoint = startWorld
+                    dragOriginalObjects = doc.objects.filter { selectedIDs.contains($0.id) }
+                    hasRecordedUndoForDrag = false
+                } else {
+                    // 未命中对象：开始框选
+                    marqueeStart = startWorld
+                    marqueeRect = WhiteboardRect(min: startWorld, max: startWorld)
+                    // 清空临时选择（用户按住 Option 可累加）
+                    if !isOptionKeyPressed {
+                        selectedIDs.removeAll()
+                    }
+                }
+            } else if let start = marqueeStart {
+                // 更新框选矩形
+                marqueeRect = WhiteboardRect(min: start, max: worldPoint)
+                // 实时更新选择（与 Option 键配合）
+                if let r = marqueeRect {
+                    var hits: Set<UUID> = isOptionKeyPressed ? selectedIDs : []
+                    for obj in doc.objects {
+                        let br = obj.boundingRect
+                        // 判断边界相交
+                        if !(br.x > r.x + r.width || br.x + br.width < r.x || br.y > r.y + r.height || br.y + br.height < r.y) {
+                            hits.insert(obj.id)
+                        }
+                    }
+                    selectedIDs = hits
+                }
+            } else if let _ = dragStartPoint {
+                // 计算偏移并在第一次移动时记录撤销状态
+                let dx = worldPoint.x - startWorld.x
+                let dy = worldPoint.y - startWorld.y
+                let offset2 = WhiteboardPoint(x: dx, y: dy)
+                if !hasRecordedUndoForDrag {
+                    service.moveObjects(dragOriginalObjects, by: offset2, recordUndo: true)
+                    hasRecordedUndoForDrag = true
+                } else {
+                    service.moveObjects(dragOriginalObjects, by: offset2, recordUndo: false)
+                }
+            }
         }
     }
     
@@ -618,13 +710,45 @@ struct WhiteboardCanvasView: View {
         case .eraser:
             break
         case .select:
+            // 结束移动或框选
+            // 已在首次移动时记录撤销，结束时仅清理状态
+            hasRecordedUndoForDrag = false
+            // 框选结束：marqueeRect -> 选择集
+            if let m = marqueeRect {
+                if let doc = service.currentDocument {
+                    var hits: Set<UUID> = isOptionKeyPressed ? selectedIDs : []
+                    for obj in doc.objects {
+                        let br = obj.boundingRect
+                        if !(br.x > m.x + m.width || br.x + br.width < m.x || br.y > m.y + m.height || br.y + br.height < m.y) {
+                            hits.insert(obj.id)
+                        }
+                    }
+                    selectedIDs = hits
+                }
+            }
+
             dragStartPoint = nil
             dragOriginalObjects = []
+            marqueeStart = nil
+            marqueeRect = nil
         }
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             self.hasMovedSignificantly = false
         }
+    }
+
+    // MARK: - 绘制框选矩形
+    private func drawMarquee(rect: WhiteboardRect, context: GraphicsContext) {
+        let screenRect = CGRect(
+            x: rect.x * zoom + offset.width,
+            y: rect.y * zoom + offset.height,
+            width: rect.width * zoom,
+            height: rect.height * zoom
+        )
+        let path = Path(roundedRect: screenRect, cornerRadius: 2)
+        context.fill(path, with: .color(Color.accentColor.opacity(0.08)))
+        context.stroke(path, with: .color(Color.accentColor), style: StrokeStyle(lineWidth: 1, dash: [6, 4]))
     }
     
     // MARK: - 绘画

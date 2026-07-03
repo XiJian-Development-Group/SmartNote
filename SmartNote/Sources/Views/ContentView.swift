@@ -92,6 +92,10 @@ struct SidebarView: View {
                 NavigationLink(value: 20) {
                     Label("待办清单", systemImage: "checklist")
                 }
+
+                NavigationLink(value: 21) {
+                    Label("习惯养成打卡", systemImage: "checkmark.square")
+                }
                 // Value 15 Removed
             }
             
@@ -168,6 +172,8 @@ struct DetailView: View {
                 WhiteboardView()
             case 20:
                 TodoListView()
+            case 21:
+                HabitTrackerView()
             default:
                 MaterialsListView()
             }

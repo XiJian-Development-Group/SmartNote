@@ -197,6 +197,10 @@ class StorageService {
     private var todoItemsFileURL: URL {
         appSupportDirectory.appendingPathComponent("todoItems.json")
     }
+
+    private var habitsFileURL: URL {
+        appSupportDirectory.appendingPathComponent("habits.json")
+    }
     
     private var todoCategoriesFileURL: URL {
         appSupportDirectory.appendingPathComponent("todoCategories.json")
@@ -216,6 +220,14 @@ class StorageService {
     
     func loadTodoCategories() -> [TodoCategory] {
         return load(from: todoCategoriesFileURL) ?? []
+    }
+
+    func saveHabits(_ habits: [Habit]) {
+        save(habits, to: habitsFileURL)
+    }
+
+    func loadHabits() -> [Habit] {
+        return load(from: habitsFileURL) ?? []
     }
     
     private func save<T: Encodable>(_ object: T, to url: URL) {
