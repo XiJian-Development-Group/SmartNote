@@ -3,6 +3,8 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @State private var settings = StorageService().loadSettings()
+    @State private var isCheckingUpdate: Bool = false
+    @State private var updateMessage: String = ""
     
     var body: some View {
         TabView {
@@ -27,8 +29,11 @@ struct SettingsView: View {
                 }
         }
         .frame(width: 500, height: 400)
-        .onChange(of: settings) { newValue in
+        .onChange(of: settings) { _old, newValue in
             appState.storageService.saveSettings(newValue)
+            // update update service repository and schedule when settings change
+            appState.updateUpdateServiceRepositoryIfNeeded(owner: newValue.updateRepoOwner, repo: newValue.updateRepoName)
+            appState.scheduleUpdateChecks(hoursInterval: newValue.updateCheckIntervalHours)
         }
     }
     
@@ -72,10 +77,214 @@ struct SettingsView: View {
                     )
                 }
                 
-                Stepper("默认学习时长: \(settings.defaultStudyMinutes) 分钟", 
+                Stepper("默认学习时长: \(settings.defaultStudyMinutes) 分钟",
                        value: $settings.defaultStudyMinutes,
                        in: 15...120,
                        step: 15)
+            }
+
+            Section("更新") {
+                Toggle("自动下载并安装更新", isOn: $settings.autoUpdateEnabled)
+                    .onChange(of: settings.autoUpdateEnabled) { _old, newValue in
+                        if newValue {
+                            Task {
+                                await appState.performAutoCheckIfEnabled()
+                            }
+                        }
+                    }
+                Stepper("检查间隔: \(settings.updateCheckIntervalHours) 小时", value: $settings.updateCheckIntervalHours, in: 1...168)
+                HStack {
+                    Text("Repo")
+                    TextField("Owner", text: $settings.updateRepoOwner)
+                    Text("/")
+                    TextField("Repo", text: $settings.updateRepoName)
+                }
+                Picker("更新渠道", selection: $settings.updateChannel) {
+                    Text("Latest").tag(AppSettings.UpdateChannel.latest)
+                    Text("Pre-release").tag(AppSettings.UpdateChannel.prerelease)
+                }
+                HStack {
+                    Button(action: {
+                        Task {
+                            isCheckingUpdate = true
+                            updateMessage = "正在检查..."
+                            do {
+                                // save repo/settings changes before checking
+                                appState.storageService.saveSettings(settings)
+                                // apply repo change immediately
+                                appState.updateUpdateServiceRepositoryIfNeeded(owner: settings.updateRepoOwner, repo: settings.updateRepoName)
+                                appState.scheduleUpdateChecks(hoursInterval: settings.updateCheckIntervalHours)
+                                let channel = settings.updateChannel
+                                let svcChannel: UpdateService.Channel = (channel == .prerelease) ? .prerelease : .latest
+                                // ensure updateService is configured with latest owner/repo
+                                // (AppState created UpdateService at init; for repo changes user must restart to apply to service instance)
+                                if let release = try await appState.updateService.checkForUpdate(channel: svcChannel) {
+                                    updateMessage = "找到更新: \(release.name ?? release.tag_name ?? "无名")"
+                                    // send notification to user that an update is available
+                                    Task {
+                                        await appState.updateService.notifyUserUpdateFound(release)
+                                    }
+                                    // persist last check
+                                    var s = appState.storageService.loadSettings()
+                                    s.lastUpdateCheckDate = Date()
+                                    s.lastFoundReleaseName = release.name ?? release.tag_name
+                                    appState.storageService.saveSettings(s)
+                                } else {
+                                    updateMessage = "未找到符合条件的更新"
+                                    var s = appState.storageService.loadSettings()
+                                    s.lastUpdateCheckDate = Date()
+                                    appState.storageService.saveSettings(s)
+                                }
+                            } catch {
+                                updateMessage = "检查失败: \(error.localizedDescription)"
+                            }
+                            isCheckingUpdate = false
+                        }
+                    }) {
+                        if isCheckingUpdate {
+                            ProgressView()
+                        } else {
+                            Text("检查更新")
+                        }
+                    }
+                    // show progress and logs (with auto-scroll and copy/clear controls)
+                    VStack(alignment: .leading) {
+                        if let p = appState.updateService.downloadProgress, appState.updateService.isDownloading {
+                            ProgressView(value: p) {
+                                Text("下载中：\(Int((p * 100).rounded()))%")
+                            }
+                            .progressViewStyle(.linear)
+                        } else if appState.updateService.isDownloading {
+                            ProgressView()
+                        }
+
+                        if !appState.updateService.logs.isEmpty {
+                            HStack(spacing: 8) {
+                                Text("更新日志:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Button(action: {
+                                    // copy logs to clipboard
+                                    let joined = appState.updateService.logs.joined(separator: "\n")
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString(joined, forType: .string)
+                                }) {
+                                    Image(systemName: "doc.on.clipboard")
+                                }
+                                .buttonStyle(.bordered)
+
+                                Button(action: {
+                                    // clear logs on main actor
+                                    Task { @MainActor in
+                                        appState.updateService.logs.removeAll()
+                                    }
+                                }) {
+                                    Image(systemName: "trash")
+                                }
+                                .buttonStyle(.bordered)
+                            }
+
+                            ScrollViewReader { proxy in
+                                ScrollView(.vertical) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        ForEach(Array(appState.updateService.logs.enumerated()), id: \.0) { idx, line in
+                                            HStack(alignment: .top, spacing: 8) {
+                                                Text("\(idx + 1)")
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                                    .frame(width: 28, alignment: .trailing)
+                                                Text(line)
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .id(idx)
+                                            }
+                                        }
+                                    }
+                                    .padding(.vertical, 2)
+                                }
+                                .frame(maxHeight: 140)
+                                .onChange(of: appState.updateService.logs.count) { _ in
+                                    // scroll to bottom when logs change
+                                    if let last = appState.updateService.logs.indices.last {
+                                        withAnimation(.easeOut) {
+                                            proxy.scrollTo(last, anchor: .bottom)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding(.top, 6)
+
+                    // Install & Relaunch button when an installed app is available
+                    if let installed = appState.updateService.lastInstalledURL {
+                        HStack {
+                            Button("安装并重启") {
+                                Task {
+                                    do {
+                                        try appState.updateService.installAndRelaunchApp(at: installed)
+                                    } catch {
+                                        updateMessage = "安装并重启失败: \(error.localizedDescription)"
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.top, 6)
+                    }
+                    // Download & Install button
+                    if let found = appState.updateService.latestCheckedRelease {
+                        Button("下载并安装") {
+                            Task {
+                                updateMessage = "开始下载..."
+                                do {
+                                    let installed = try await appState.updateService.performDownloadAndInstall(release: found, autoInstall: settings.autoUpdateEnabled)
+                                    if let url = installed {
+                                        updateMessage = "已下载/安装: \(url.path)"
+                                    } else {
+                                        updateMessage = "下载完成，未找到可安装的 .app"
+                                    }
+                                    var s = appState.storageService.loadSettings()
+                                    s.lastUpdateCheckDate = Date()
+                                    s.lastFoundReleaseName = found.name ?? found.tag_name
+                                    appState.storageService.saveSettings(s)
+                                } catch {
+                                    updateMessage = "下载或安装失败: \(error.localizedDescription)"
+                                }
+                            }
+                        }
+                    }
+                    Spacer()
+                    Text(updateMessage)
+                        .foregroundColor(.secondary)
+                }
+                if settings.autoUpdateEnabled {
+                    HStack {
+                        Text("下次计划检查:")
+                        Spacer()
+                        let last = appState.storageService.loadSettings().lastUpdateCheckDate ?? Date()
+                        let next = Calendar.current.date(byAdding: .hour, value: settings.updateCheckIntervalHours, to: last) ?? Date()
+                        Text(next, style: .date)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                if let last = appState.storageService.loadSettings().lastUpdateCheckDate {
+                    HStack {
+                        Text("上次检查:")
+                        Spacer()
+                        Text(last, style: .date)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                if let name = appState.storageService.loadSettings().lastFoundReleaseName {
+                    HStack {
+                        Text("上次发现:")
+                        Spacer()
+                        Text(name)
+                            .foregroundColor(.secondary)
+                    }
+                }
             }
             
             Section("文件扫描") {

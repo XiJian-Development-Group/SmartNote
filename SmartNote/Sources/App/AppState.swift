@@ -27,6 +27,8 @@ class AppState: ObservableObject {
     let speechService = SpeechService.shared
     let learningAnalysisService = LearningAnalysisService.shared
     let notificationService = NotificationService.shared
+    let updateService: UpdateService
+    var updateCheckCancellable: AnyCancellable? = nil
     var llmService: LLMService
     
     var llmConfiguration: LLMConfiguration {
@@ -40,9 +42,73 @@ class AppState: ObservableObject {
     }
     
     init() {
-        let config = StorageService().loadSettings().llmConfiguration
+        let settings = StorageService().loadSettings()
+        let config = settings.llmConfiguration
         self.llmService = LLMService(configuration: config)
+        // initialize update service with configured repo
+        self.updateService = UpdateService(owner: settings.updateRepoOwner, repo: settings.updateRepoName)
         loadSavedData()
+
+        // perform initial auto-check if enabled
+        if settings.autoUpdateEnabled {
+            Task {
+                await performAutoCheckIfEnabled()
+            }
+        }
+
+        // schedule automatic checks according to saved interval
+        scheduleUpdateChecks(hoursInterval: settings.updateCheckIntervalHours)
+    }
+
+    func updateUpdateServiceRepositoryIfNeeded(owner: String, repo: String) {
+        // update the service repository so manual checks use latest values
+        updateService.updateRepository(owner: owner, repo: repo)
+    }
+
+    func scheduleUpdateChecks(hoursInterval: Int) {
+        updateCheckCancellable?.cancel()
+        let interval = max(1, hoursInterval)
+        updateCheckCancellable = Timer.publish(every: TimeInterval(interval * 3600), on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                Task {
+                    await self?.performAutoCheckIfEnabled()
+                }
+            }
+    }
+
+    func performAutoCheckIfEnabled() async {
+        let settings = storageService.loadSettings()
+        guard settings.autoUpdateEnabled else { return }
+        let channel: UpdateService.Channel = (settings.updateChannel == .prerelease) ? .prerelease : .latest
+        do {
+            if let release = try await updateService.checkForUpdate(channel: channel) {
+                var newSettings = settings
+                newSettings.lastUpdateCheckDate = Date()
+                newSettings.lastFoundReleaseName = release.name ?? release.tag_name
+                storageService.saveSettings(newSettings)
+
+                // auto download & install
+                // notify user that update was found
+                Task {
+                    await updateService.notifyUserUpdateFound(release)
+                }
+                if newSettings.autoUpdateEnabled {
+                    do {
+                        _ = try await updateService.performDownloadAndInstall(release: release, autoInstall: true)
+                    } catch {
+                        // installation failed; leave downloaded files for manual install
+                        print("Auto-install failed: \(error)")
+                    }
+                }
+            } else {
+                var newSettings = settings
+                newSettings.lastUpdateCheckDate = Date()
+                storageService.saveSettings(newSettings)
+            }
+        } catch {
+            print("update check failed: \(error)")
+        }
     }
     
     func loadSavedData() {
@@ -172,6 +238,12 @@ class AppState: ObservableObject {
     
     func deleteMaterial(_ material: StudyMaterial) {
         materials.removeAll { $0.id == material.id }
+        storageService.saveMaterials(materials)
+    }
+
+    // 删除多个资料（批量操作）
+    func deleteMaterials(withIDs ids: [UUID]) {
+        materials.removeAll { ids.contains($0.id) }
         storageService.saveMaterials(materials)
     }
     

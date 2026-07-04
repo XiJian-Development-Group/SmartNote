@@ -17,6 +17,8 @@ struct MaterialDetailView: View {
     @State private var editedCategory: MaterialCategory = .other
     @State private var editedKeywords: String = ""
     @State private var showExportMenu = false
+    @State private var showSaveToast: Bool = false
+    @State private var isExporting: Bool = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -108,12 +110,14 @@ struct MaterialDetailView: View {
                 } label: {
                     Label("导出为 PDF", systemImage: "doc.fill")
                 }
+                .disabled(isExporting)
                 
                 Button {
                     exportAsText()
                 } label: {
                     Label("导出为文本", systemImage: "doc.plaintext")
                 }
+                .disabled(isExporting)
                 
                 Divider()
                 
@@ -137,6 +141,11 @@ struct MaterialDetailView: View {
             }
             .menuStyle(.borderlessButton)
             
+            if isExporting {
+                ProgressView()
+                    .scaleEffect(0.8)
+                    .padding(.leading, 6)
+            }
             if material.isFavorite {
                 Button {
                     toggleFavorite()
@@ -148,6 +157,18 @@ struct MaterialDetailView: View {
             }
         }
         .padding()
+        .overlay(alignment: .topTrailing) {
+            if showSaveToast {
+                Text("已保存")
+                    .font(.caption)
+                    .padding(8)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(8)
+                    .shadow(radius: 6)
+                    .transition(.scale.combined(with: .opacity))
+                    .padding(10)
+            }
+        }
     }
     
     private var materialInfoSection: some View {
@@ -420,8 +441,11 @@ struct MaterialDetailView: View {
         .sheet(isPresented: $isEditingKeywords) {
             KeywordEditSheet(keywords: $editedKeywords) { newKeywords in
                 if let index = appState.materials.firstIndex(where: { $0.id == material.id }) {
-                    appState.materials[index].keywords = newKeywords
-                    appState.storageService.saveMaterials(appState.materials)
+                    withAnimation(.easeInOut) {
+                        appState.materials[index].keywords = newKeywords
+                        material = appState.materials[index]
+                        appState.storageService.saveMaterials(appState.materials)
+                    }
                 }
             }
         }
@@ -495,28 +519,36 @@ struct MaterialDetailView: View {
     
     private func exportAsPDF() {
         guard !extractedText.isEmpty else { return }
-        
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.pdf]
         savePanel.nameFieldStringValue = "\(material.name).pdf"
-        
+
         savePanel.begin { response in
             if response == .OK, let url = savePanel.url {
-                let pdfURL = PDFService.generateSummaryPDF(
-                    content: extractedText,
-                    title: material.name,
-                    subject: material.category.rawValue,
-                    keywords: material.keywords ?? []
-                )
-                
-                if let pdfURL = pdfURL {
-                    do {
-                        if FileManager.default.fileExists(atPath: url.path) {
-                            try FileManager.default.removeItem(at: url)
+                isExporting = true
+                Task {
+                    let pdfURL = PDFService.generateSummaryPDF(
+                        content: extractedText,
+                        title: material.name,
+                        subject: material.category.rawValue,
+                        keywords: material.keywords ?? []
+                    )
+
+                    if let pdfURL = pdfURL {
+                        do {
+                            if FileManager.default.fileExists(atPath: url.path) {
+                                try FileManager.default.removeItem(at: url)
+                            }
+                            try FileManager.default.copyItem(at: pdfURL, to: url)
+                        } catch {
+                            print("Error saving PDF: \(error)")
                         }
-                        try FileManager.default.copyItem(at: pdfURL, to: url)
-                    } catch {
-                        print("Error saving PDF: \(error)")
+                    }
+
+                    await MainActor.run {
+                        isExporting = false
+                        withAnimation(.easeOut) { showSaveToast = true }
+                        Task { try? await Task.sleep(nanoseconds: 800_000_000); withAnimation(.easeIn) { showSaveToast = false } }
                     }
                 }
             }
@@ -525,17 +557,24 @@ struct MaterialDetailView: View {
     
     private func exportAsText() {
         guard !extractedText.isEmpty else { return }
-        
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.plainText]
         savePanel.nameFieldStringValue = "\(material.name).txt"
-        
+
         savePanel.begin { response in
             if response == .OK, let url = savePanel.url {
-                do {
-                    try extractedText.write(to: url, atomically: true, encoding: .utf8)
-                } catch {
-                    print("Error saving text: \(error)")
+                isExporting = true
+                Task {
+                    do {
+                        try extractedText.write(to: url, atomically: true, encoding: .utf8)
+                    } catch {
+                        print("Error saving text: \(error)")
+                    }
+                    await MainActor.run {
+                        isExporting = false
+                        withAnimation(.easeOut) { showSaveToast = true }
+                        Task { try? await Task.sleep(nanoseconds: 800_000_000); withAnimation(.easeIn) { showSaveToast = false } }
+                    }
                 }
             }
         }

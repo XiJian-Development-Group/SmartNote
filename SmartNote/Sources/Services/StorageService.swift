@@ -304,12 +304,24 @@ struct AppSettings: Codable, Equatable {
     var pomodoroWorkDuration: Int = 25
     var pomodoroBreakDuration: Int = 5
     var examCountdowns: [ExamCountdown] = []
+    var autoUpdateEnabled: Bool = false
+    var updateChannel: UpdateChannel = .latest
+    var updateRepoOwner: String = "XiJian-Development-Group"
+    var updateRepoName: String = "SmartNote"
+    var updateCheckIntervalHours: Int = 24
+    var lastUpdateCheckDate: Date? = nil
+    var lastFoundReleaseName: String? = nil
     var p2pBackgroundEnabled: Bool = false
     
     enum DarkModePreference: String, Codable, Equatable {
         case system
         case light
         case dark
+    }
+
+    enum UpdateChannel: String, Codable, Equatable {
+        case latest
+        case prerelease
     }
     
     enum CodingKeys: String, CodingKey {
@@ -324,6 +336,13 @@ struct AppSettings: Codable, Equatable {
         case pomodoroWorkDuration
         case pomodoroBreakDuration
         case examCountdowns
+        case autoUpdateEnabled
+        case updateChannel
+        case updateRepoOwner
+        case updateRepoName
+        case updateCheckIntervalHours
+        case lastUpdateCheckDate
+        case lastFoundReleaseName
     }
     
     init() {
@@ -338,6 +357,8 @@ struct AppSettings: Codable, Equatable {
         pomodoroWorkDuration = 25
         pomodoroBreakDuration = 5
         examCountdowns = []
+        autoUpdateEnabled = false
+        updateChannel = .latest
     }
     
     init(from decoder: Decoder) throws {
@@ -354,6 +375,13 @@ struct AppSettings: Codable, Equatable {
         pomodoroWorkDuration = try container.decodeIfPresent(Int.self, forKey: .pomodoroWorkDuration) ?? 25
         pomodoroBreakDuration = try container.decodeIfPresent(Int.self, forKey: .pomodoroBreakDuration) ?? 5
         examCountdowns = try container.decodeIfPresent([ExamCountdown].self, forKey: .examCountdowns) ?? []
+        autoUpdateEnabled = try container.decodeIfPresent(Bool.self, forKey: .autoUpdateEnabled) ?? false
+        updateChannel = try container.decodeIfPresent(UpdateChannel.self, forKey: .updateChannel) ?? .latest
+        updateRepoOwner = try container.decodeIfPresent(String.self, forKey: .updateRepoOwner) ?? "XiJian-Development-Group"
+        updateRepoName = try container.decodeIfPresent(String.self, forKey: .updateRepoName) ?? "SmartNote"
+        updateCheckIntervalHours = try container.decodeIfPresent(Int.self, forKey: .updateCheckIntervalHours) ?? 24
+        lastUpdateCheckDate = try container.decodeIfPresent(Date.self, forKey: .lastUpdateCheckDate)
+        lastFoundReleaseName = try container.decodeIfPresent(String.self, forKey: .lastFoundReleaseName)
     }
     
     func encode(to encoder: Encoder) throws {
@@ -370,6 +398,13 @@ struct AppSettings: Codable, Equatable {
         try container.encode(pomodoroWorkDuration, forKey: .pomodoroWorkDuration)
         try container.encode(pomodoroBreakDuration, forKey: .pomodoroBreakDuration)
         try container.encode(examCountdowns, forKey: .examCountdowns)
+        try container.encode(autoUpdateEnabled, forKey: .autoUpdateEnabled)
+        try container.encode(updateChannel, forKey: .updateChannel)
+        try container.encode(updateRepoOwner, forKey: .updateRepoOwner)
+        try container.encode(updateRepoName, forKey: .updateRepoName)
+        try container.encode(updateCheckIntervalHours, forKey: .updateCheckIntervalHours)
+        try container.encodeIfPresent(lastUpdateCheckDate, forKey: .lastUpdateCheckDate)
+        try container.encodeIfPresent(lastFoundReleaseName, forKey: .lastFoundReleaseName)
     }
 }
 
