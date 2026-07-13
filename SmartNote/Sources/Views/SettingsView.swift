@@ -3,7 +3,6 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
-    @State private var settings = StorageService().loadSettings()
     @State private var isCheckingUpdate: Bool = false
     @State private var updateMessage: String = ""
     @State private var showImagePicker: Bool = false
@@ -38,7 +37,7 @@ struct SettingsView: View {
                 }
         }
         .frame(width: 500, height: 400)
-        .onChange(of: settings) { _old, newValue in
+        .onChange(of: appState.appSettings) { _old, newValue in
             appState.storageService.saveSettings(newValue)
             // update update service repository and schedule when settings change
             appState.updateUpdateServiceRepositoryIfNeeded(owner: newValue.updateRepoOwner, repo: newValue.updateRepoName)
@@ -68,9 +67,9 @@ struct SettingsView: View {
             let fileName = UUID().uuidString + ".png"
             
             if let savedURL = appState.storageService.saveBackgroundImage(imageData, fileName: fileName) {
-                settings.backgroundImageEnabled = true
-                settings.backgroundImageName = fileName
-                appState.storageService.saveSettings(settings)
+                appState.appSettings.backgroundImageEnabled = true
+                appState.appSettings.backgroundImageName = fileName
+                appState.storageService.saveSettings(appState.appSettings)
                 selectedImageData = imageData
                 selectedImageName = fileName
             }
@@ -82,8 +81,8 @@ struct SettingsView: View {
     private var generalSection: some View {
         Form {
             Section("日历与提醒") {
-                Toggle("启用日历同步", isOn: $settings.calendarIntegrationEnabled)
-                Toggle("启用提醒事项", isOn: $settings.reminderEnabled)
+                Toggle("启用日历同步", isOn: $appState.appSettings.calendarIntegrationEnabled)
+                Toggle("启用提醒事项", isOn: $appState.appSettings.reminderEnabled)
                 
                 Toggle("每日学习通知", isOn: Binding(
                     get: { appState.notificationService.dailyNotificationEnabled },
@@ -109,29 +108,29 @@ struct SettingsView: View {
                     )
                 }
                 
-                Stepper("默认学习时长: \(settings.defaultStudyMinutes) 分钟",
-                       value: $settings.defaultStudyMinutes,
+                Stepper("默认学习时长: \(appState.appSettings.defaultStudyMinutes) 分钟",
+                       value: $appState.appSettings.defaultStudyMinutes,
                        in: 15...120,
                        step: 15)
             }
 
             Section("更新") {
-                Toggle("自动下载并安装更新", isOn: $settings.autoUpdateEnabled)
-                    .onChange(of: settings.autoUpdateEnabled) { _old, newValue in
+                Toggle("自动下载并安装更新", isOn: $appState.appSettings.autoUpdateEnabled)
+                    .onChange(of: appState.appSettings.autoUpdateEnabled) { _old, newValue in
                         if newValue {
                             Task {
                                 await appState.performAutoCheckIfEnabled()
                             }
                         }
                     }
-                Stepper("检查间隔: \(settings.updateCheckIntervalHours) 小时", value: $settings.updateCheckIntervalHours, in: 1...168)
+                Stepper("检查间隔: \(appState.appSettings.updateCheckIntervalHours) 小时", value: $appState.appSettings.updateCheckIntervalHours, in: 1...168)
                 HStack {
                     Text("Repo")
-                    TextField("Owner", text: $settings.updateRepoOwner)
+                    TextField("Owner", text: $appState.appSettings.updateRepoOwner)
                     Text("/")
-                    TextField("Repo", text: $settings.updateRepoName)
+                    TextField("Repo", text: $appState.appSettings.updateRepoName)
                 }
-                Picker("更新渠道", selection: $settings.updateChannel) {
+                Picker("更新渠道", selection: $appState.appSettings.updateChannel) {
                     Text("Latest").tag(AppSettings.UpdateChannel.latest)
                     Text("Pre-release").tag(AppSettings.UpdateChannel.prerelease)
                 }
@@ -142,11 +141,11 @@ struct SettingsView: View {
                             updateMessage = "正在检查..."
                             do {
                                 // save repo/settings changes before checking
-                                appState.storageService.saveSettings(settings)
+                                appState.storageService.saveSettings(appState.appSettings)
                                 // apply repo change immediately
-                                appState.updateUpdateServiceRepositoryIfNeeded(owner: settings.updateRepoOwner, repo: settings.updateRepoName)
-                                appState.scheduleUpdateChecks(hoursInterval: settings.updateCheckIntervalHours)
-                                let channel = settings.updateChannel
+                                appState.updateUpdateServiceRepositoryIfNeeded(owner: appState.appSettings.updateRepoOwner, repo: appState.appSettings.updateRepoName)
+                                appState.scheduleUpdateChecks(hoursInterval: appState.appSettings.updateCheckIntervalHours)
+                                let channel = appState.appSettings.updateChannel
                                 let svcChannel: UpdateService.Channel = (channel == .prerelease) ? .prerelease : .latest
                                 // ensure updateService is configured with latest owner/repo
                                 // (AppState created UpdateService at init; for repo changes user must restart to apply to service instance)
@@ -271,7 +270,7 @@ struct SettingsView: View {
                             Task {
                                 updateMessage = "开始下载..."
                                 do {
-                                    let installed = try await appState.updateService.performDownloadAndInstall(release: found, autoInstall: settings.autoUpdateEnabled)
+                                    let installed = try await appState.updateService.performDownloadAndInstall(release: found, autoInstall: appState.appSettings.autoUpdateEnabled)
                                     if let url = installed {
                                         updateMessage = "已下载/安装: \(url.path)"
                                     } else {
@@ -291,12 +290,12 @@ struct SettingsView: View {
                     Text(updateMessage)
                         .foregroundColor(.secondary)
                 }
-                if settings.autoUpdateEnabled {
+                if appState.appSettings.autoUpdateEnabled {
                     HStack {
                         Text("下次计划检查:")
                         Spacer()
                         let last = appState.storageService.loadSettings().lastUpdateCheckDate ?? Date()
-                        let next = Calendar.current.date(byAdding: .hour, value: settings.updateCheckIntervalHours, to: last) ?? Date()
+                        let next = Calendar.current.date(byAdding: .hour, value: appState.appSettings.updateCheckIntervalHours, to: last) ?? Date()
                         Text(next, style: .date)
                             .foregroundColor(.secondary)
                     }
@@ -320,7 +319,7 @@ struct SettingsView: View {
             }
             
             Section("文件扫描") {
-                Toggle("启动时自动扫描", isOn: $settings.autoScanDirectories)
+                Toggle("启动时自动扫描", isOn: $appState.appSettings.autoScanDirectories)
             }
         }
         .formStyle(.grouped)
@@ -330,16 +329,16 @@ struct SettingsView: View {
     private var appearanceSection: some View {
         Form {
             Section("背景图片") {
-                Toggle("启用背景图片", isOn: $settings.backgroundImageEnabled)
+                Toggle("启用背景图片", isOn: $appState.appSettings.backgroundImageEnabled)
                 
-                if settings.backgroundImageEnabled {
+                if appState.appSettings.backgroundImageEnabled {
                     HStack {
                         Button("选择图片") {
                             showImagePicker = true
                         }
                         .buttonStyle(.bordered)
                         
-                        if let imageName = settings.backgroundImageName {
+                        if let imageName = appState.appSettings.backgroundImageName {
                             let imageURL = appState.storageService.getBackgroundImageURL(named: imageName)
                             if FileManager.default.fileExists(atPath: imageURL.path),
                                let image = NSImage(contentsOf: imageURL) {
@@ -352,51 +351,51 @@ struct SettingsView: View {
                         }
                     }
                     
-                    if settings.backgroundImageName != nil {
+                    if appState.appSettings.backgroundImageName != nil {
                         Button("移除背景图片", role: .destructive) {
-                            if let imageName = settings.backgroundImageName {
+                            if let imageName = appState.appSettings.backgroundImageName {
                                 appState.storageService.deleteBackgroundImage(named: imageName)
                             }
-                            settings.backgroundImageEnabled = false
-                            settings.backgroundImageName = nil
-                            appState.storageService.saveSettings(settings)
+                            appState.appSettings.backgroundImageEnabled = false
+                            appState.appSettings.backgroundImageName = nil
+                            appState.storageService.saveSettings(appState.appSettings)
                         }
                     }
                 }
             }
             
-            if settings.backgroundImageEnabled {
+            if appState.appSettings.backgroundImageEnabled {
                 Section("背景效果") {
-                    Toggle("启用模糊效果", isOn: $settings.backgroundBlurEnabled)
+                    Toggle("启用模糊效果", isOn: $appState.appSettings.backgroundBlurEnabled)
                     
-                    if settings.backgroundBlurEnabled {
+                    if appState.appSettings.backgroundBlurEnabled {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("模糊半径: \(settings.backgroundBlurRadius, specifier: "%.0f")")
+                            Text("模糊半径: \(appState.appSettings.backgroundBlurRadius, specifier: "%.0f")")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            Slider(value: $settings.backgroundBlurRadius, in: 0...100, step: 1)
+                            Slider(value: $appState.appSettings.backgroundBlurRadius, in: 0...100, step: 1)
                         }
                         .padding(.vertical, 4)
                     }
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("背景透明度: \(settings.backgroundOpacity, specifier: "%.2f")")
+                        Text("背景透明度: \(appState.appSettings.backgroundOpacity, specifier: "%.2f")")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Slider(value: $settings.backgroundOpacity, in: 0...1, step: 0.05)
+                        Slider(value: $appState.appSettings.backgroundOpacity, in: 0...1, step: 0.05)
                     }
                     .padding(.vertical, 4)
                 }
             }
             
             Section("显示") {
-                Picker("外观", selection: $settings.darkModePreference) {
+                Picker("外观", selection: $appState.appSettings.darkModePreference) {
                     Text("跟随系统").tag(AppSettings.DarkModePreference.system)
                     Text("浅色").tag(AppSettings.DarkModePreference.light)
                     Text("深色").tag(AppSettings.DarkModePreference.dark)
                 }
                 
-                Toggle("显示文件扩展名", isOn: $settings.showFileExtensions)
+                Toggle("显示文件扩展名", isOn: $appState.appSettings.showFileExtensions)
             }
         }
         .formStyle(.grouped)

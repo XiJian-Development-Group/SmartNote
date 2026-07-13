@@ -1,10 +1,38 @@
 import SwiftUI
 
+struct ContentView: View {
+    @EnvironmentObject var appState: AppState
+    
+    var body: some View {
+        ZStack {
+            BackgroundImageView()
+            
+            NavigationSplitView {
+                SidebarView()
+            } detail: {
+                DetailView()
+            }
+            .navigationSplitViewStyle(.balanced)
+            .frame(minWidth: 900, minHeight: 600)
+            .background(Color.clear)
+        }
+        .sheet(isPresented: $appState.showFileImporter) {
+            FileImportView()
+                .environmentObject(appState)
+        }
+        .alert("错误", isPresented: $appState.showError) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            Text(appState.errorMessage ?? "发生未知错误")
+        }
+    }
+}
+
 struct BackgroundImageView: View {
     @EnvironmentObject var appState: AppState
     
     var body: some View {
-        let settings = appState.storageService.loadSettings()
+        let settings = appState.appSettings
         
         if settings.backgroundImageEnabled,
            let imageName = settings.backgroundImageName {
@@ -16,11 +44,7 @@ struct BackgroundImageView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .overlay(blurOverlay(settings: settings))
                     .opacity(settings.backgroundOpacity)
-            } else {
-                Color.clear
             }
-        } else {
-            Color.clear
         }
     }
     
@@ -30,32 +54,6 @@ struct BackgroundImageView: View {
             Color.clear
                 .background(.ultraThinMaterial)
                 .blur(radius: settings.backgroundBlurRadius)
-        } else {
-            Color.clear
-        }
-    }
-}
-
-struct ContentView: View {
-    @EnvironmentObject var appState: AppState
-    
-    var body: some View {
-        NavigationSplitView {
-            SidebarView()
-        } detail: {
-            DetailView()
-        }
-        .navigationSplitViewStyle(.balanced)
-        .frame(minWidth: 900, minHeight: 600)
-        .background(BackgroundImageView())
-        .sheet(isPresented: $appState.showFileImporter) {
-            FileImportView()
-                .environmentObject(appState)
-        }
-        .alert("错误", isPresented: $appState.showError) {
-            Button("确定", role: .cancel) {}
-        } message: {
-            Text(appState.errorMessage ?? "发生未知错误")
         }
     }
 }
@@ -129,7 +127,7 @@ struct SidebarView: View {
                 NavigationLink(value: 20) {
                     Label("待办清单", systemImage: "checklist")
                 }
-
+ 
                 NavigationLink(value: 21) {
                     Label("习惯养成打卡", systemImage: "checkmark.square")
                 }
@@ -161,6 +159,7 @@ struct SidebarView: View {
         .listStyle(.sidebar)
         .frame(minWidth: 200)
         .navigationTitle("智学笔记")
+        .background(Color.clear)
     }
 }
 
@@ -168,6 +167,7 @@ struct DetailView: View {
     @EnvironmentObject var appState: AppState
     
     var body: some View {
+        Group {
             switch appState.selectedTab {
             case 0:
                 MaterialsListView(filter: nil)
@@ -214,5 +214,7 @@ struct DetailView: View {
             default:
                 MaterialsListView()
             }
+        }
+        .background(Color.clear)
     }
 }

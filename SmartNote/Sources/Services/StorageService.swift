@@ -342,33 +342,60 @@ class StorageService {
     }
 }
 
-struct AppSettings: Codable, Equatable {
-    var autoScanDirectories: Bool = true
-    var scanPaths: [String] = []
-    var darkModePreference: DarkModePreference = .system
-    var calendarIntegrationEnabled: Bool = true
-    var reminderEnabled: Bool = true
-    var defaultStudyMinutes: Int = 30
-    var showFileExtensions: Bool = true
-    var llmConfiguration: LLMConfiguration = LLMConfiguration()
-    var pomodoroWorkDuration: Int = 25
-    var pomodoroBreakDuration: Int = 5
-    var examCountdowns: [ExamCountdown] = []
-    var autoUpdateEnabled: Bool = false
-    var updateChannel: UpdateChannel = .latest
-    var updateRepoOwner: String = "XiJian-Development-Group"
-    var updateRepoName: String = "SmartNote"
-    var updateCheckIntervalHours: Int = 24
-    var lastUpdateCheckDate: Date? = nil
-    var lastFoundReleaseName: String? = nil
-    var p2pBackgroundEnabled: Bool = false
+class AppSettings: ObservableObject, Codable, Equatable {
+    @Published var autoScanDirectories: Bool = true
+    @Published var scanPaths: [String] = []
+    @Published var darkModePreference: DarkModePreference = .system
+    @Published var calendarIntegrationEnabled: Bool = true
+    @Published var reminderEnabled: Bool = true
+    @Published var defaultStudyMinutes: Int = 30
+    @Published var showFileExtensions: Bool = true
+    @Published var llmConfiguration: LLMConfiguration = LLMConfiguration()
+    @Published var pomodoroWorkDuration: Int = 25
+    @Published var pomodoroBreakDuration: Int = 5
+    @Published var examCountdowns: [ExamCountdown] = []
+    @Published var autoUpdateEnabled: Bool = false
+    @Published var updateChannel: UpdateChannel = .latest
+    @Published var updateRepoOwner: String = "XiJian-Development-Group"
+    @Published var updateRepoName: String = "SmartNote"
+    @Published var updateCheckIntervalHours: Int = 24
+    @Published var lastUpdateCheckDate: Date? = nil
+    @Published var lastFoundReleaseName: String? = nil
+    @Published var p2pBackgroundEnabled: Bool = false
     
     // Background image settings
-    var backgroundImageEnabled: Bool = false
-    var backgroundImageName: String? = nil
-    var backgroundBlurEnabled: Bool = true
-    var backgroundBlurRadius: Double = 20.0
-    var backgroundOpacity: Double = 0.3
+    @Published var backgroundImageEnabled: Bool = false
+    @Published var backgroundImageName: String? = nil
+    @Published var backgroundBlurEnabled: Bool = true
+    @Published var backgroundBlurRadius: Double = 20.0
+    @Published var backgroundOpacity: Double = 0.3
+    
+    static func == (lhs: AppSettings, rhs: AppSettings) -> Bool {
+        lhs.autoScanDirectories == rhs.autoScanDirectories &&
+        lhs.scanPaths == rhs.scanPaths &&
+        lhs.darkModePreference == rhs.darkModePreference &&
+        lhs.calendarIntegrationEnabled == rhs.calendarIntegrationEnabled &&
+        lhs.reminderEnabled == rhs.reminderEnabled &&
+        lhs.defaultStudyMinutes == rhs.defaultStudyMinutes &&
+        lhs.showFileExtensions == rhs.showFileExtensions &&
+        lhs.llmConfiguration == rhs.llmConfiguration &&
+        lhs.pomodoroWorkDuration == rhs.pomodoroWorkDuration &&
+        lhs.pomodoroBreakDuration == rhs.pomodoroBreakDuration &&
+        lhs.examCountdowns == rhs.examCountdowns &&
+        lhs.autoUpdateEnabled == rhs.autoUpdateEnabled &&
+        lhs.updateChannel == rhs.updateChannel &&
+        lhs.updateRepoOwner == rhs.updateRepoOwner &&
+        lhs.updateRepoName == rhs.updateRepoName &&
+        lhs.updateCheckIntervalHours == rhs.updateCheckIntervalHours &&
+        lhs.lastUpdateCheckDate == rhs.lastUpdateCheckDate &&
+        lhs.lastFoundReleaseName == rhs.lastFoundReleaseName &&
+        lhs.p2pBackgroundEnabled == rhs.p2pBackgroundEnabled &&
+        lhs.backgroundImageEnabled == rhs.backgroundImageEnabled &&
+        lhs.backgroundImageName == rhs.backgroundImageName &&
+        lhs.backgroundBlurEnabled == rhs.backgroundBlurEnabled &&
+        lhs.backgroundBlurRadius == rhs.backgroundBlurRadius &&
+        lhs.backgroundOpacity == rhs.backgroundOpacity
+    }
     
     enum DarkModePreference: String, Codable, Equatable {
         case system
@@ -428,7 +455,7 @@ struct AppSettings: Codable, Equatable {
         backgroundOpacity = 0.3
     }
     
-    init(from decoder: Decoder) throws {
+    required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
         autoScanDirectories = try container.decodeIfPresent(Bool.self, forKey: .autoScanDirectories) ?? true

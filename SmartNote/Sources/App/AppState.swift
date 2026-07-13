@@ -18,6 +18,20 @@ class AppState: ObservableObject {
     @Published var searchText: String = ""
     @Published var errorMessage: String?
     @Published var showError: Bool = false
+    @Published var appSettings: AppSettings = AppSettings()
+    
+    var colorScheme: ColorScheme? {
+        appSettings.darkModePreference.colorScheme
+    }
+    
+    var llmConfiguration: LLMConfiguration {
+        get { appSettings.llmConfiguration }
+        set {
+            appSettings.llmConfiguration = newValue
+            storageService.saveSettings(appSettings)
+            llmService.updateConfiguration(newValue)
+        }
+    }
     
     let fileScanner = FileScannerService()
     let ocrService = OCRService()
@@ -31,22 +45,13 @@ class AppState: ObservableObject {
     var updateCheckCancellable: AnyCancellable? = nil
     var llmService: LLMService
     
-    var llmConfiguration: LLMConfiguration {
-        get { storageService.loadSettings().llmConfiguration }
-        set {
-            var settings = storageService.loadSettings()
-            settings.llmConfiguration = newValue
-            storageService.saveSettings(settings)
-            llmService.updateConfiguration(newValue)
-        }
-    }
-    
     init() {
         let settings = StorageService().loadSettings()
         let config = settings.llmConfiguration
         self.llmService = LLMService(configuration: config)
         // initialize update service with configured repo
         self.updateService = UpdateService(owner: settings.updateRepoOwner, repo: settings.updateRepoName)
+        self.appSettings = settings
         loadSavedData()
 
         // perform initial auto-check if enabled
@@ -58,6 +63,10 @@ class AppState: ObservableObject {
 
         // schedule automatic checks according to saved interval
         scheduleUpdateChecks(hoursInterval: settings.updateCheckIntervalHours)
+    }
+    
+    func refreshSettings() {
+        self.appSettings = storageService.loadSettings()
     }
 
     func updateUpdateServiceRepositoryIfNeeded(owner: String, repo: String) {
@@ -171,7 +180,7 @@ class AppState: ObservableObject {
             return
         }
         
-        guard llmConfiguration.enabled else {
+        guard appSettings.llmConfiguration.enabled else {
             errorMessage = "请先在设置中启用 AI 分析功能"
             showError = true
             return
@@ -200,7 +209,7 @@ class AppState: ObservableObject {
     func generateSummaryWithAI(for material: StudyMaterial) {
         let text = material.extractedText ?? material.content
         guard !text.isEmpty else { return }
-        guard llmConfiguration.enabled else { return }
+        guard appSettings.llmConfiguration.enabled else { return }
         
         isAnalyzingWithAI = true
         aiAnalysisResult = ""

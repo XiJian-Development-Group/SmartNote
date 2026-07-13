@@ -39,6 +39,7 @@ struct MaterialsListView: View {
                 materialsList
             }
         }
+        .background(Color.clear)
         .sheet(item: $editingMaterial) { material in
             MaterialDetailView(material: material)
                 .environmentObject(appState)
@@ -127,7 +128,7 @@ struct MaterialsListView: View {
             .frame(width: 80)
         }
         .padding()
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(Color.clear)
     }
     
     private var emptyStateView: some View {
@@ -236,7 +237,7 @@ struct MaterialsListView: View {
                 }
         }
         }
-        .listStyle(.inset(alternatesRowBackgrounds: true))
+        .listStyle(.inset)
         .sheet(isPresented: $showBatchKeywordSheet) {
             KeywordEditSheet(keywords: $batchKeywordInput) { newKeywords in
                 // apply keywords to all selected

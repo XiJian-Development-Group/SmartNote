@@ -9,6 +9,7 @@ struct SmartNoteApp: App {
             ContentView()
                 .environmentObject(appState)
                 .frame(minWidth: 900, minHeight: 600)
+                .preferredColorScheme(appState.colorScheme)
         }
         .windowStyle(.automatic)
         .windowResizability(.contentMinSize)
@@ -40,12 +41,23 @@ struct SmartNoteApp: App {
             DiaryEditorView(entryID: entryID)
                 .environmentObject(appState)
                 .frame(minWidth: 700, minHeight: 600)
+                .preferredColorScheme(appState.colorScheme)
         }
         .windowResizability(.contentMinSize)
         
         Settings {
             SettingsView()
                 .environmentObject(appState)
+        }
+    }
+}
+
+extension AppSettings.DarkModePreference {
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
         }
     }
 }
