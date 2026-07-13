@@ -1,5 +1,41 @@
 import SwiftUI
 
+struct BackgroundImageView: View {
+    @EnvironmentObject var appState: AppState
+    
+    var body: some View {
+        let settings = appState.storageService.loadSettings()
+        
+        if settings.backgroundImageEnabled,
+           let imageName = settings.backgroundImageName {
+            let imageURL = appState.storageService.getBackgroundImageURL(named: imageName)
+            if let nsImage = NSImage(contentsOf: imageURL) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .overlay(blurOverlay(settings: settings))
+                    .opacity(settings.backgroundOpacity)
+            } else {
+                Color.clear
+            }
+        } else {
+            Color.clear
+        }
+    }
+    
+    @ViewBuilder
+    private func blurOverlay(settings: AppSettings) -> some View {
+        if settings.backgroundBlurEnabled {
+            Color.clear
+                .background(.ultraThinMaterial)
+                .blur(radius: settings.backgroundBlurRadius)
+        } else {
+            Color.clear
+        }
+    }
+}
+
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
     
@@ -11,6 +47,7 @@ struct ContentView: View {
         }
         .navigationSplitViewStyle(.balanced)
         .frame(minWidth: 900, minHeight: 600)
+        .background(BackgroundImageView())
         .sheet(isPresented: $appState.showFileImporter) {
             FileImportView()
                 .environmentObject(appState)

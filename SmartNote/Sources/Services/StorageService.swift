@@ -36,6 +36,14 @@ class StorageService {
         appSupportDirectory.appendingPathComponent("flashCards.json")
     }
     
+    private var backgroundImagesDirectory: URL {
+        let dir = appSupportDirectory.appendingPathComponent("BackgroundImages", isDirectory: true)
+        if !fileManager.fileExists(atPath: dir.path) {
+            try? fileManager.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        return dir
+    }
+    
     init() {
         let paths = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
         appSupportDirectory = paths.first!.appendingPathComponent("SmartNote")
@@ -230,6 +238,48 @@ class StorageService {
         return load(from: habitsFileURL) ?? []
     }
     
+    // MARK: - Background Images
+    
+    func saveBackgroundImage(_ imageData: Data, fileName: String) -> URL? {
+        let destinationURL = backgroundImagesDirectory.appendingPathComponent(fileName)
+        do {
+            try imageData.write(to: destinationURL, options: .atomic)
+            return destinationURL
+        } catch {
+            print("Error saving background image: \(error)")
+            return nil
+        }
+    }
+    
+    func loadBackgroundImage(named fileName: String) -> Data? {
+        let fileURL = backgroundImagesDirectory.appendingPathComponent(fileName)
+        guard fileManager.fileExists(atPath: fileURL.path) else { return nil }
+        return try? Data(contentsOf: fileURL)
+    }
+    
+    func deleteBackgroundImage(named fileName: String) {
+        let fileURL = backgroundImagesDirectory.appendingPathComponent(fileName)
+        try? fileManager.removeItem(at: fileURL)
+    }
+    
+    func listBackgroundImages() -> [String] {
+        do {
+            let files = try fileManager.contentsOfDirectory(atPath: backgroundImagesDirectory.path)
+            return files.filter { !$0.hasPrefix(".") }
+        } catch {
+            print("Error listing background images: \(error)")
+            return []
+        }
+    }
+    
+    func getBackgroundImagesDirectory() -> URL {
+        return backgroundImagesDirectory
+    }
+    
+    func getBackgroundImageURL(named fileName: String) -> URL {
+        return backgroundImagesDirectory.appendingPathComponent(fileName)
+    }
+    
     private func save<T: Encodable>(_ object: T, to url: URL) {
         do {
             let encoder = JSONEncoder()
@@ -313,6 +363,13 @@ struct AppSettings: Codable, Equatable {
     var lastFoundReleaseName: String? = nil
     var p2pBackgroundEnabled: Bool = false
     
+    // Background image settings
+    var backgroundImageEnabled: Bool = false
+    var backgroundImageName: String? = nil
+    var backgroundBlurEnabled: Bool = true
+    var backgroundBlurRadius: Double = 20.0
+    var backgroundOpacity: Double = 0.3
+    
     enum DarkModePreference: String, Codable, Equatable {
         case system
         case light
@@ -343,6 +400,11 @@ struct AppSettings: Codable, Equatable {
         case updateCheckIntervalHours
         case lastUpdateCheckDate
         case lastFoundReleaseName
+        case backgroundImageEnabled
+        case backgroundImageName
+        case backgroundBlurEnabled
+        case backgroundBlurRadius
+        case backgroundOpacity
     }
     
     init() {
@@ -359,6 +421,11 @@ struct AppSettings: Codable, Equatable {
         examCountdowns = []
         autoUpdateEnabled = false
         updateChannel = .latest
+        backgroundImageEnabled = false
+        backgroundImageName = nil
+        backgroundBlurEnabled = true
+        backgroundBlurRadius = 20.0
+        backgroundOpacity = 0.3
     }
     
     init(from decoder: Decoder) throws {
@@ -382,6 +449,11 @@ struct AppSettings: Codable, Equatable {
         updateCheckIntervalHours = try container.decodeIfPresent(Int.self, forKey: .updateCheckIntervalHours) ?? 24
         lastUpdateCheckDate = try container.decodeIfPresent(Date.self, forKey: .lastUpdateCheckDate)
         lastFoundReleaseName = try container.decodeIfPresent(String.self, forKey: .lastFoundReleaseName)
+        backgroundImageEnabled = try container.decodeIfPresent(Bool.self, forKey: .backgroundImageEnabled) ?? false
+        backgroundImageName = try container.decodeIfPresent(String.self, forKey: .backgroundImageName)
+        backgroundBlurEnabled = try container.decodeIfPresent(Bool.self, forKey: .backgroundBlurEnabled) ?? true
+        backgroundBlurRadius = try container.decodeIfPresent(Double.self, forKey: .backgroundBlurRadius) ?? 20.0
+        backgroundOpacity = try container.decodeIfPresent(Double.self, forKey: .backgroundOpacity) ?? 0.3
     }
     
     func encode(to encoder: Encoder) throws {
@@ -405,6 +477,11 @@ struct AppSettings: Codable, Equatable {
         try container.encode(updateCheckIntervalHours, forKey: .updateCheckIntervalHours)
         try container.encodeIfPresent(lastUpdateCheckDate, forKey: .lastUpdateCheckDate)
         try container.encodeIfPresent(lastFoundReleaseName, forKey: .lastFoundReleaseName)
+        try container.encode(backgroundImageEnabled, forKey: .backgroundImageEnabled)
+        try container.encodeIfPresent(backgroundImageName, forKey: .backgroundImageName)
+        try container.encode(backgroundBlurEnabled, forKey: .backgroundBlurEnabled)
+        try container.encode(backgroundBlurRadius, forKey: .backgroundBlurRadius)
+        try container.encode(backgroundOpacity, forKey: .backgroundOpacity)
     }
 }
 

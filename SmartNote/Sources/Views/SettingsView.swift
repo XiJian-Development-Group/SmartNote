@@ -1,16 +1,25 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @State private var settings = StorageService().loadSettings()
     @State private var isCheckingUpdate: Bool = false
     @State private var updateMessage: String = ""
+    @State private var showImagePicker: Bool = false
+    @State private var selectedImageData: Data? = nil
+    @State private var selectedImageName: String? = nil
     
     var body: some View {
         TabView {
             generalSection
                 .tabItem {
                     Label("通用", systemImage: "gear")
+                }
+            
+            appearanceSection
+                .tabItem {
+                    Label("外观", systemImage: "paintbrush")
                 }
             
             learningProfileSection
@@ -35,20 +44,43 @@ struct SettingsView: View {
             appState.updateUpdateServiceRepositoryIfNeeded(owner: newValue.updateRepoOwner, repo: newValue.updateRepoName)
             appState.scheduleUpdateChecks(hoursInterval: newValue.updateCheckIntervalHours)
         }
+        .fileImporter(
+            isPresented: $showImagePicker,
+            allowedContentTypes: [.image],
+            allowsMultipleSelection: false
+        ) { result in
+            handleImageSelection(result)
+        }
+    }
+    
+    private func handleImageSelection(_ result: Result<[URL], Error>) {
+        guard let urls = try? result.get(), let url = urls.first else { return }
+        
+        // Start accessing the security-scoped resource
+        guard url.startAccessingSecurityScopedResource() else {
+            print("Failed to access security-scoped resource")
+            return
+        }
+        defer { url.stopAccessingSecurityScopedResource() }
+        
+        do {
+            let imageData = try Data(contentsOf: url)
+            let fileName = UUID().uuidString + ".png"
+            
+            if let savedURL = appState.storageService.saveBackgroundImage(imageData, fileName: fileName) {
+                settings.backgroundImageEnabled = true
+                settings.backgroundImageName = fileName
+                appState.storageService.saveSettings(settings)
+                selectedImageData = imageData
+                selectedImageName = fileName
+            }
+        } catch {
+            print("Error loading image: \(error)")
+        }
     }
     
     private var generalSection: some View {
         Form {
-            Section("显示") {
-                Picker("外观", selection: $settings.darkModePreference) {
-                    Text("跟随系统").tag(AppSettings.DarkModePreference.system)
-                    Text("浅色").tag(AppSettings.DarkModePreference.light)
-                    Text("深色").tag(AppSettings.DarkModePreference.dark)
-                }
-                
-                Toggle("显示文件扩展名", isOn: $settings.showFileExtensions)
-            }
-            
             Section("日历与提醒") {
                 Toggle("启用日历同步", isOn: $settings.calendarIntegrationEnabled)
                 Toggle("启用提醒事项", isOn: $settings.reminderEnabled)
@@ -289,6 +321,82 @@ struct SettingsView: View {
             
             Section("文件扫描") {
                 Toggle("启动时自动扫描", isOn: $settings.autoScanDirectories)
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+    
+    private var appearanceSection: some View {
+        Form {
+            Section("背景图片") {
+                Toggle("启用背景图片", isOn: $settings.backgroundImageEnabled)
+                
+                if settings.backgroundImageEnabled {
+                    HStack {
+                        Button("选择图片") {
+                            showImagePicker = true
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        if let imageName = settings.backgroundImageName {
+                            let imageURL = appState.storageService.getBackgroundImageURL(named: imageName)
+                            if FileManager.default.fileExists(atPath: imageURL.path),
+                               let image = NSImage(contentsOf: imageURL) {
+                                Image(nsImage: image)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 60, height: 60)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                        }
+                    }
+                    
+                    if settings.backgroundImageName != nil {
+                        Button("移除背景图片", role: .destructive) {
+                            if let imageName = settings.backgroundImageName {
+                                appState.storageService.deleteBackgroundImage(named: imageName)
+                            }
+                            settings.backgroundImageEnabled = false
+                            settings.backgroundImageName = nil
+                            appState.storageService.saveSettings(settings)
+                        }
+                    }
+                }
+            }
+            
+            if settings.backgroundImageEnabled {
+                Section("背景效果") {
+                    Toggle("启用模糊效果", isOn: $settings.backgroundBlurEnabled)
+                    
+                    if settings.backgroundBlurEnabled {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("模糊半径: \(settings.backgroundBlurRadius, specifier: "%.0f")")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Slider(value: $settings.backgroundBlurRadius, in: 0...100, step: 1)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("背景透明度: \(settings.backgroundOpacity, specifier: "%.2f")")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Slider(value: $settings.backgroundOpacity, in: 0...1, step: 0.05)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            
+            Section("显示") {
+                Picker("外观", selection: $settings.darkModePreference) {
+                    Text("跟随系统").tag(AppSettings.DarkModePreference.system)
+                    Text("浅色").tag(AppSettings.DarkModePreference.light)
+                    Text("深色").tag(AppSettings.DarkModePreference.dark)
+                }
+                
+                Toggle("显示文件扩展名", isOn: $settings.showFileExtensions)
             }
         }
         .formStyle(.grouped)
