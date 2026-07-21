@@ -33,9 +33,29 @@ final class UpdateService: ObservableObject {
     @Published var logs: [String] = []
     @Published var lastInstalledURL: URL? = nil
 
+    var currentAppVersion: String {
+        (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "0.0.0"
+    }
+
     init(owner: String = "XiJian-Development-Group", repo: String = "SmartNote") {
         self.owner = owner
         self.repo = repo
+    }
+
+    func isUpdateAvailable(_ release: ReleaseInfo) -> Bool {
+        guard let tag = release.tag_name else { return false }
+        let releaseVersion = tag.trimmingCharacters(in: CharacterSet(charactersIn: "vV"))
+        let currentVersion = currentAppVersion
+        guard !releaseVersion.isEmpty else { return false }
+        let releaseComponents = releaseVersion.split(separator: ".").compactMap { Int($0) }
+        let currentComponents = currentVersion.split(separator: ".").compactMap { Int($0) }
+        for i in 0..<max(releaseComponents.count, currentComponents.count) {
+            let r = i < releaseComponents.count ? releaseComponents[i] : 0
+            let c = i < currentComponents.count ? currentComponents[i] : 0
+            if r > c { return true }
+            if r < c { return false }
+        }
+        return false
     }
 
     /// Update the target repository used for checks/downloads.

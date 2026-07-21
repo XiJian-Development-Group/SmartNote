@@ -7,13 +7,11 @@ struct P2PChatView: View {
     @State private var messageText = ""
     @State private var messages: [P2PChatMessage] = []
     @State private var isConnected = false
-    
+
     var body: some View {
         VStack(spacing: 0) {
             chatHeader
-            
             Divider()
-            
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 8) {
@@ -32,16 +30,23 @@ struct P2PChatView: View {
                     }
                 }
             }
-            
             Divider()
-            
             messageInput
         }
         .onAppear {
             loadMessages()
+            if !isConnected {
+                _ = p2pService.reconnectToFriend(friend)
+            }
+        }
+        .onReceive(p2pService.$chatMessages) { _ in
+            loadMessages()
+        }
+        .onReceive(p2pService.$connectionStatus) { _ in
+            isConnected = p2pService.connectionStatus[friend.id] == .online
         }
     }
-    
+
     private var chatHeader: some View {
         HStack {
             if let avatarData = friend.avatarData,
@@ -56,11 +61,10 @@ struct P2PChatView: View {
                     .frame(width: 40, height: 40)
                     .foregroundColor(.accentColor)
             }
-            
+
             VStack(alignment: .leading) {
                 Text(friend.nickname)
                     .font(.headline)
-                
                 HStack(spacing: 4) {
                     Circle()
                         .fill(isConnected ? Color.green : Color.gray)
@@ -70,9 +74,9 @@ struct P2PChatView: View {
                         .foregroundColor(.secondary)
                 }
             }
-            
+
             Spacer()
-            
+
             Button {
                 dismiss()
             } label: {
@@ -82,18 +86,14 @@ struct P2PChatView: View {
         }
         .padding()
     }
-    
+
     private var messageInput: some View {
         HStack(spacing: 12) {
             TextField("输入消息...", text: $messageText)
                 .textFieldStyle(.roundedBorder)
-                .onSubmit {
-                    sendMessage()
-                }
-            
-            Button {
-                sendMessage()
-            } label: {
+                .onSubmit(sendMessage)
+
+            Button(action: sendMessage) {
                 Image(systemName: "paperplane.fill")
             }
             .buttonStyle(.borderedProminent)
@@ -101,55 +101,59 @@ struct P2PChatView: View {
         }
         .padding()
     }
-    
+
     private func loadMessages() {
+        messages = p2pService.chatMessages[friend.id] ?? []
         isConnected = p2pService.connectionStatus[friend.id] == .online
     }
-    
+
     private func sendMessage() {
         guard !messageText.isEmpty else { return }
-        
-        if let message = p2pService.sendMessage(messageText, to: friend.id) {
-            messages.append(message)
-            messageText = ""
-        }
+        p2pService.sendMessage(messageText, to: friend.id)
+        messageText = ""
     }
 }
 
 struct MessageBubble: View {
     let message: P2PChatMessage
-    
+
     var body: some View {
         HStack {
             if message.isSent {
                 Spacer()
             }
-            
+
             VStack(alignment: message.isSent ? .trailing : .leading, spacing: 2) {
                 Text(message.content)
                     .padding(10)
-                    .background(message.isSent ? Color.accentColor.opacity(0.2) : Color.gray.opacity(0.1))
+                    .background(message.type == .system
+                        ? Color.clear
+                        : message.isSent ? Color.accentColor.opacity(0.2) : Color.gray.opacity(0.1))
                     .cornerRadius(12)
-                
-                HStack(spacing: 4) {
-                    Text(formatTime(message.timestamp))
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                    
-                    if message.isSent {
-                        Image(systemName: statusIcon)
+                    .font(message.type == .system ? .caption : .body)
+                    .foregroundColor(message.type == .system ? .secondary : .primary)
+
+                if message.type != .system {
+                    HStack(spacing: 4) {
+                        Text(formatTime(message.timestamp))
                             .font(.caption2)
                             .foregroundColor(.secondary)
+
+                        if message.isSent {
+                            Image(systemName: statusIcon)
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
             }
-            
+
             if !message.isSent {
                 Spacer()
             }
         }
     }
-    
+
     private var statusIcon: String {
         switch message.status {
         case .sending: return "clock"
@@ -158,7 +162,7 @@ struct MessageBubble: View {
         case .failed: return "exclamationmark.circle"
         }
     }
-    
+
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short

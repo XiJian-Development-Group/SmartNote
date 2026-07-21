@@ -202,6 +202,39 @@ class StorageService {
         try? FileManager.default.removeItem(at: p2pBlackListFileURL)
     }
     
+    private var p2pGroupsFileURL: URL {
+        appSupportDirectory.appendingPathComponent("p2pGroups.json")
+    }
+    
+    var p2pGroupMessagesFileURL: URL {
+        appSupportDirectory.appendingPathComponent("p2pGroupMessages.enc")
+    }
+    
+    var p2pMessagesFileURL: URL {
+        appSupportDirectory.appendingPathComponent("p2pMessages.enc")
+    }
+    
+    func saveP2PGroups(_ groups: [P2PGroup]) {
+        save(groups, to: p2pGroupsFileURL)
+    }
+    
+    func loadP2PGroups() -> [P2PGroup] {
+        load(from: p2pGroupsFileURL) ?? []
+    }
+    
+    func deleteAllP2PGroups() {
+        try? FileManager.default.removeItem(at: p2pGroupsFileURL)
+        try? FileManager.default.removeItem(at: p2pGroupMessagesFileURL)
+    }
+    
+    func deleteP2PMessages(for friendID: UUID) {
+        try? FileManager.default.removeItem(at: p2pMessagesFileURL)
+    }
+
+    func deleteP2PGroupMessages(for groupID: UUID) {
+        try? FileManager.default.removeItem(at: p2pGroupMessagesFileURL)
+    }
+    
     private var todoItemsFileURL: URL {
         appSupportDirectory.appendingPathComponent("todoItems.json")
     }

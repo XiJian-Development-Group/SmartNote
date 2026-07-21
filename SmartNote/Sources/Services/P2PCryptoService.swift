@@ -1,6 +1,7 @@
 import Foundation
 import Security
 import CommonCrypto
+import CryptoKit
 
 class P2PCryptoService {
     static let shared = P2PCryptoService()
@@ -68,13 +69,13 @@ class P2PCryptoService {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: "P2PPrivateKey_\(identifier)",
-            kSecReturnRef as String: true
+            kSecReturnData as String: true
         ]
         
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
         
-        guard status == errSecSuccess else {
+        guard status == errSecSuccess, let keyData = item as? Data else {
             return nil
         }
         
@@ -83,7 +84,7 @@ class P2PCryptoService {
             kSecAttrKeyClass as String: kSecAttrKeyClassPrivate
         ]
         
-        return SecKeyCreateWithData(item as! Data as CFData, attributes as CFDictionary, nil)
+        return SecKeyCreateWithData(keyData as CFData, attributes as CFDictionary, nil)
     }
     
     func encryptWithPublicKey(_ data: Data, publicKeyString: String) -> Data? {
@@ -220,5 +221,70 @@ class P2PCryptoService {
             kSecAttrAccount as String: "P2PPrivateKey_\(identifier)"
         ]
         SecItemDelete(query as CFDictionary)
+    }
+
+    // MARK: - Local Storage Encryption
+
+    private let localStorageKeychainAccount = "P2PLocalStorageKey"
+
+    func getOrCreateLocalStorageKey() -> SymmetricKey {
+        if let existing = loadLocalStorageKey() { return existing }
+        let newKey = SymmetricKey(size: .bits256)
+        saveLocalStorageKey(newKey)
+        return newKey
+    }
+
+    private func loadLocalStorageKey() -> SymmetricKey? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: localStorageKeychainAccount,
+            kSecReturnData as String: true
+        ]
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
+              let data = item as? Data else { return nil }
+        return SymmetricKey(data: data)
+    }
+
+    private func saveLocalStorageKey(_ key: SymmetricKey) {
+        let keyData = key.withUnsafeBytes { Data($0) }
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: localStorageKeychainAccount,
+            kSecValueData as String: keyData,
+            kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        ]
+        SecItemDelete(query as CFDictionary)
+        SecItemAdd(query as CFDictionary, nil)
+    }
+
+    func deleteLocalStorageKey() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: localStorageKeychainAccount
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
+
+    func encryptLocalData(_ data: Data) -> Data? {
+        let key = getOrCreateLocalStorageKey()
+        do {
+            let sealedBox = try AES.GCM.seal(data, using: key)
+            return sealedBox.combined
+        } catch {
+            print("[Crypto] Local encrypt failed: \(error)")
+            return nil
+        }
+    }
+
+    func decryptLocalData(_ data: Data) -> Data? {
+        let key = getOrCreateLocalStorageKey()
+        do {
+            let sealedBox = try AES.GCM.SealedBox(combined: data)
+            return try AES.GCM.open(sealedBox, using: key)
+        } catch {
+            print("[Crypto] Local decrypt failed: \(error)")
+            return nil
+        }
     }
 }

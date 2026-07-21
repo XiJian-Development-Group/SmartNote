@@ -97,26 +97,27 @@ class AppState: ObservableObject {
                 newSettings.lastFoundReleaseName = release.name ?? release.tag_name
                 storageService.saveSettings(newSettings)
 
-                // auto download & install
-                // notify user that update was found
-                Task {
-                    await updateService.notifyUserUpdateFound(release)
-                }
-                if newSettings.autoUpdateEnabled {
+                let isNewer = updateService.isUpdateAvailable(release)
+                if isNewer {
+                    Task {
+                        await updateService.notifyUserUpdateFound(release)
+                    }
                     do {
                         _ = try await updateService.performDownloadAndInstall(release: release, autoInstall: true)
                     } catch {
-                        // installation failed; leave downloaded files for manual install
-                        print("Auto-install failed: \(error)")
+                        updateService.logs.append("自动安装失败：\(error.localizedDescription)")
                     }
+                } else {
+                    updateService.logs.append("当前版本 (\(updateService.currentAppVersion)) 已是最新")
                 }
             } else {
                 var newSettings = settings
                 newSettings.lastUpdateCheckDate = Date()
                 storageService.saveSettings(newSettings)
+                updateService.logs.append("未找到符合条件的更新")
             }
         } catch {
-            print("update check failed: \(error)")
+            updateService.logs.append("更新检查失败：\(error.localizedDescription)")
         }
     }
     

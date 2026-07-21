@@ -35,6 +35,11 @@ struct SettingsView: View {
                 .tabItem {
                     Label("存储", systemImage: "internaldrive")
                 }
+            
+            aboutSection
+                .tabItem {
+                    Label("关于", systemImage: "info.circle")
+                }
         }
         .frame(width: 500, height: 400)
         .onChange(of: appState.appSettings) { _old, newValue in
@@ -150,10 +155,17 @@ struct SettingsView: View {
                                 // ensure updateService is configured with latest owner/repo
                                 // (AppState created UpdateService at init; for repo changes user must restart to apply to service instance)
                                 if let release = try await appState.updateService.checkForUpdate(channel: svcChannel) {
-                                    updateMessage = "找到更新: \(release.name ?? release.tag_name ?? "无名")"
+                                    let isNewer = appState.updateService.isUpdateAvailable(release)
+                                    if isNewer {
+                                        updateMessage = "找到更新: \(release.name ?? release.tag_name ?? "无名")"
+                                    } else {
+                                        updateMessage = "当前版本 (\(appState.updateService.currentAppVersion)) 已是最新"
+                                    }
                                     // send notification to user that an update is available
-                                    Task {
-                                        await appState.updateService.notifyUserUpdateFound(release)
+                                    if isNewer {
+                                        Task {
+                                            await appState.updateService.notifyUserUpdateFound(release)
+                                        }
                                     }
                                     // persist last check
                                     var s = appState.storageService.loadSettings()
@@ -458,16 +470,18 @@ struct SettingsView: View {
                 .font(.title)
                 .fontWeight(.bold)
             
-            Text("版本 1.3.0")
+            let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?."
+            let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+            Text("版本 \(version) (\(build))")
                 .font(.caption)
                 .foregroundColor(.secondary)
             
-            Text("AI智能复习工具")
+            Text("AI 智能复习工具")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
             
-            Text("By skyc8266")
+            Text("© 2026 skyc8266")
                 .font(.caption2)
                 .foregroundColor(.secondary)
             

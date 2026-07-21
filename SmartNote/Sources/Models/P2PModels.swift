@@ -12,7 +12,7 @@ struct P2PUserIdentity: Codable, Identifiable {
     var port: Int
     var createdAt: Date
     var updatedAt: Date
-    
+
     init(
         id: UUID = UUID(),
         nickname: String,
@@ -52,19 +52,19 @@ struct P2PFriend: Codable, Identifiable {
     var addedAt: Date
     var lastMessageAt: Date?
     var lastMessagePreview: String?
-    
+
     enum FriendStatus: String, Codable {
         case online
         case offline
         case focusing
     }
-    
+
     init(
         id: UUID = UUID(),
         nickname: String,
         remark: String = "",
-        ipv6Address: String,
-        port: Int,
+        ipv6Address: String = "",
+        port: Int = 0,
         publicKey: String,
         avatarData: Data? = nil,
         status: FriendStatus = .offline,
@@ -94,21 +94,21 @@ struct P2PChatMessage: Codable, Identifiable {
     var status: MessageStatus
     var timestamp: Date
     var type: MessageType
-    
+
     enum MessageStatus: String, Codable {
         case sending
         case sent
         case delivered
         case failed
     }
-    
+
     enum MessageType: String, Codable {
         case text
         case file
         case status
         case system
     }
-    
+
     init(
         id: UUID = UUID(),
         friendID: UUID,
@@ -128,6 +128,72 @@ struct P2PChatMessage: Codable, Identifiable {
     }
 }
 
+struct P2PGroup: Codable, Identifiable {
+    let id: UUID
+    var name: String
+    var memberIDs: [UUID]
+    var createdAt: Date
+
+    init(
+        id: UUID = UUID(),
+        name: String,
+        memberIDs: [UUID],
+        createdAt: Date = Date()
+    ) {
+        self.id = id
+        self.name = name
+        self.memberIDs = memberIDs
+        self.createdAt = createdAt
+    }
+}
+
+struct P2PGroupMessage: Codable, Identifiable {
+    let id: UUID
+    let groupID: UUID
+    let senderNickname: String
+    var content: String
+    var timestamp: Date
+
+    init(
+        id: UUID = UUID(),
+        groupID: UUID,
+        senderNickname: String,
+        content: String,
+        timestamp: Date = Date()
+    ) {
+        self.id = id
+        self.groupID = groupID
+        self.senderNickname = senderNickname
+        self.content = content
+        self.timestamp = timestamp
+    }
+}
+
+struct P2PPendingConnection: Identifiable {
+    let id: UUID
+    let nickname: String
+    let publicKey: String
+    let ipv6Address: String
+    let port: Int
+    let timestamp: Date
+
+    init(
+        id: UUID,
+        nickname: String,
+        publicKey: String,
+        ipv6Address: String,
+        port: Int,
+        timestamp: Date = Date()
+    ) {
+        self.id = id
+        self.nickname = nickname
+        self.publicKey = publicKey
+        self.ipv6Address = ipv6Address
+        self.port = port
+        self.timestamp = timestamp
+    }
+}
+
 struct P2PFileTransfer: Codable, Identifiable {
     let id: UUID
     var friendID: UUID
@@ -140,7 +206,7 @@ struct P2PFileTransfer: Codable, Identifiable {
     var progress: Double
     var startedAt: Date
     var completedAt: Date?
-    
+
     enum TransferStatus: String, Codable {
         case pending
         case transferring
@@ -149,7 +215,7 @@ struct P2PFileTransfer: Codable, Identifiable {
         case failed
         case cancelled
     }
-    
+
     init(
         id: UUID = UUID(),
         friendID: UUID,
@@ -182,7 +248,7 @@ struct P2PBlackIP: Codable, Identifiable {
     var ipv6Address: String
     var reason: String
     var blockedAt: Date
-    
+
     init(
         id: UUID = UUID(),
         ipv6Address: String,
@@ -200,4 +266,12 @@ enum UserStatus: String, Codable {
     case online
     case focusing
     case offline
+}
+
+enum P2PPacketType: UInt8 {
+    case chatMessage = 0x01
+    case statusMessage = 0x02
+    case groupMessage = 0x03
+    case handshake = 0x10
+    case handshakeAck = 0x11
 }
