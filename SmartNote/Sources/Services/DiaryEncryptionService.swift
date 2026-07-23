@@ -73,20 +73,23 @@ class DiaryEncryptionService {
         do {
             let sealedBox = try AES.GCM.seal(data, using: key)
             guard let combined = sealedBox.combined else { return nil }
-            return combined.base64EncodedString()
+            let saltData = withUnsafeBytes(of: salt) { Data($0) }
+            return (saltData + combined).base64EncodedString()
         } catch {
             return nil
         }
     }
     
     private func decrypt(_ encryptedText: String, password: String) -> String? {
-        guard let data = Data(base64Encoded: encryptedText) else { return nil }
+        guard let data = Data(base64Encoded: encryptedText), data.count > 32 else { return nil }
         
-        let salt = SymmetricKey(size: .bits256)
+        let saltData = data.prefix(32)
+        let ciphertext = data.suffix(from: 32)
+        let salt = SymmetricKey(data: saltData)
         let key = deriveKey(from: password, salt: salt)
         
         do {
-            let sealedBox = try AES.GCM.SealedBox(combined: data)
+            let sealedBox = try AES.GCM.SealedBox(combined: ciphertext)
             let decryptedData = try AES.GCM.open(sealedBox, using: key)
             return String(data: decryptedData, encoding: .utf8)
         } catch {

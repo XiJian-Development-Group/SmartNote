@@ -78,7 +78,7 @@ class LLMService {
     
     private func buildEnhancedPrompt(_ prompt: String) -> String {
         let profile = LearningAnalysisService.shared.currentProfile
-        guard profile.isEnabled else { return prompt }
+        guard profile.isEnabled else { return prompt + customSystemPromptSuffix() }
         
         let prefs = profile.preferences
         var enhanced = prompt + "\n\n"
@@ -97,7 +97,13 @@ class LLMService {
             enhanced += "- 薄弱科目：\(prefs.weakSubjects.joined(separator: "、"))（需要更多解释）\n"
         }
         
-        return enhanced
+        return enhanced + customSystemPromptSuffix()
+    }
+    
+    private func customSystemPromptSuffix() -> String {
+        let suffix = configuration.customSystemPromptSuffix.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !suffix.isEmpty else { return "" }
+        return "\n\n【用户自定义指令】\n" + suffix
     }
     
     func sendMessageStreaming(system: String, user: String, onChunk: @escaping (String) -> Void) async throws {

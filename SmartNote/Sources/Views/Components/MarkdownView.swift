@@ -178,7 +178,9 @@ struct MarkdownText: View {
                 }
             }
             
-            ForEach(Array(table.body.rows.enumerated()), id: \.offset) { _, row in
+            Divider()
+            
+            ForEach(Array(table.body.rows.enumerated()), id: \.offset) { index, row in
                 HStack(spacing: 0) {
                     ForEach(Array(row.cells.enumerated()), id: \.offset) { _, cell in
                         Text(cell.plainText)
@@ -186,12 +188,14 @@ struct MarkdownText: View {
                             .padding(8)
                     }
                 }
+                .background(index % 2 == 1 ? Color(nsColor: .controlBackgroundColor).opacity(0.5) : Color.clear)
             }
         }
         .overlay(
             RoundedRectangle(cornerRadius: 4)
                 .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
         )
+        .clipShape(RoundedRectangle(cornerRadius: 4))
     }
     
     @ViewBuilder

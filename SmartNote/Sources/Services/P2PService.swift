@@ -228,7 +228,7 @@ class P2PService: ObservableObject {
         groups.removeAll { $0.id == group.id }
         groupMessages.removeValue(forKey: group.id)
         storageService.saveP2PGroups(groups)
-        storageService.saveP2PGroupMessages(groupMessages)
+        saveGroupMessages()
     }
 
     func addMemberToGroup(groupID: UUID, friendID: UUID) {

@@ -9,6 +9,7 @@ struct LLMConfiguration: Codable, Equatable {
     var temperature: Double = 0.7
     var maxTokens: Int = 2048
     var supportsImageUnderstanding: Bool = false
+    var customSystemPromptSuffix: String = ""
     
     var displayName: String {
         switch provider {

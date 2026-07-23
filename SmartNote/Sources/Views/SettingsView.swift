@@ -159,6 +159,7 @@ struct SettingsView: View {
                                     if isNewer {
                                         updateMessage = "找到更新: \(release.name ?? release.tag_name ?? "无名")"
                                     } else {
+                                        appState.updateService.latestCheckedRelease = nil
                                         updateMessage = "当前版本 (\(appState.updateService.currentAppVersion)) 已是最新"
                                     }
                                     // send notification to user that an update is available
@@ -277,7 +278,8 @@ struct SettingsView: View {
                         .padding(.top, 6)
                     }
                     // Download & Install button
-                    if let found = appState.updateService.latestCheckedRelease {
+                    if let found = appState.updateService.latestCheckedRelease,
+                       appState.updateService.isUpdateAvailable(found) {
                         Button("下载并安装") {
                             Task {
                                 updateMessage = "开始下载..."

@@ -194,55 +194,6 @@ struct P2PPendingConnection: Identifiable {
     }
 }
 
-struct P2PFileTransfer: Codable, Identifiable {
-    let id: UUID
-    var friendID: UUID
-    var fileName: String
-    var fileSize: Int64
-    var fileType: String
-    var localPath: String?
-    var isOutgoing: Bool
-    var status: TransferStatus
-    var progress: Double
-    var startedAt: Date
-    var completedAt: Date?
-
-    enum TransferStatus: String, Codable {
-        case pending
-        case transferring
-        case paused
-        case completed
-        case failed
-        case cancelled
-    }
-
-    init(
-        id: UUID = UUID(),
-        friendID: UUID,
-        fileName: String,
-        fileSize: Int64,
-        fileType: String,
-        localPath: String? = nil,
-        isOutgoing: Bool,
-        status: TransferStatus = .pending,
-        progress: Double = 0,
-        startedAt: Date = Date(),
-        completedAt: Date? = nil
-    ) {
-        self.id = id
-        self.friendID = friendID
-        self.fileName = fileName
-        self.fileSize = fileSize
-        self.fileType = fileType
-        self.localPath = localPath
-        self.isOutgoing = isOutgoing
-        self.status = status
-        self.progress = progress
-        self.startedAt = startedAt
-        self.completedAt = completedAt
-    }
-}
-
 struct P2PBlackIP: Codable, Identifiable {
     let id: UUID
     var ipv6Address: String

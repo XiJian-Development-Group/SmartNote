@@ -27,6 +27,7 @@
 		41B61849E433C92F3630126A /* LLMConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF8E19044ACFD37E7466B8F /* LLMConfiguration.swift */; };
 		460092FA7B2C9ACC7DBA3C3B /* HabitTrackerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6536CFEF783784FA9E9B460F /* HabitTrackerView.swift */; };
 		46304E5700729E5A7EA51398 /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D249E5C4EC6332AE451B8016 /* StatisticsView.swift */; };
+		55B477D0E5CC9109D0EA1F08 /* P2PCreateGroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CD5397EAC76AC3AFFCD94CB /* P2PCreateGroupView.swift */; };
 		560180335971D299A12416BE /* ReviewPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7882398FAA6EDA889F8A4A6 /* ReviewPlan.swift */; };
 		574B9D96A352982436D54469 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA20C8E3AFF5E8F5780261 /* AppState.swift */; };
 		5A11D0F9260737C7E1A00140 /* PDFService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1E56D223E7A85D761A70BA /* PDFService.swift */; };
@@ -51,6 +52,7 @@
 		9212FED957EB7BE89CB44D96 /* Diary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63B827EA762FC4151DBAED5F /* Diary.swift */; };
 		96E3AA1638583660A537C17C /* SmartNoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A56F3D9C89D292DF37A1E7 /* SmartNoteApp.swift */; };
 		9CAE744DBC6BBC7B711611D4 /* UpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17FB5AE9239188D987DDB2EC /* UpdateService.swift */; };
+		9EAAEA806753371A2E8B9F45 /* P2PGroupChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 724DA84529F331AACFD369EA /* P2PGroupChatView.swift */; };
 		9FD3F4890BD41A5194537223 /* TodoStatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F77F9236E0D091628720FB7A /* TodoStatisticsView.swift */; };
 		A04052BAA18BF67F53334614 /* PDFAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01B9E1AAB643D41A88EFF1E8 /* PDFAnnotation.swift */; };
 		A6538E9AE726EB1B6A0A139A /* PDFAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E52D5CE99C2649DE472BDD06 /* PDFAnnotationView.swift */; };
@@ -110,6 +112,7 @@
 		3E90171FD20FC35D9B433345 /* P2PChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PChatView.swift; sourceTree = "<group>"; };
 		41D0E79C54C3F1A34CD32B6E /* P2PSocialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PSocialView.swift; sourceTree = "<group>"; };
 		48DD289F04C084C67319D15A /* SmartNote.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmartNote.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4CD5397EAC76AC3AFFCD94CB /* P2PCreateGroupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PCreateGroupView.swift; sourceTree = "<group>"; };
 		52DB2C22BCC415B73BF84A48 /* PomodoroTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroTimer.swift; sourceTree = "<group>"; };
 		59AD75CCE073CFD5DDE5346A /* P2PNetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PNetworkService.swift; sourceTree = "<group>"; };
 		5B8C1B44A2A61CA79BD48879 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -119,6 +122,7 @@
 		677C192800FE87ECC35092EC /* DiaryEncryptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryEncryptionService.swift; sourceTree = "<group>"; };
 		6800551BD3F4E594202A9C63 /* FileScannerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileScannerService.swift; sourceTree = "<group>"; };
 		70EA20C8E3AFF5E8F5780261 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		724DA84529F331AACFD369EA /* P2PGroupChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PGroupChatView.swift; sourceTree = "<group>"; };
 		73DA60CFB77A276CCCB9BCD1 /* SmartNote.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SmartNote.entitlements; sourceTree = "<group>"; };
 		75B7484EF8E90D3649A6A5FA /* MaterialsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialsListView.swift; sourceTree = "<group>"; };
 		81E7459E7FE5DC39CDD074EA /* LearningProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningProfileSettingsView.swift; sourceTree = "<group>"; };
@@ -298,7 +302,9 @@
 				75B7484EF8E90D3649A6A5FA /* MaterialsListView.swift */,
 				B9CD2DA9C12FD47108F0A6DC /* P2PAddFriendView.swift */,
 				3E90171FD20FC35D9B433345 /* P2PChatView.swift */,
+				4CD5397EAC76AC3AFFCD94CB /* P2PCreateGroupView.swift */,
 				FCE4AC128765C446DF922DCB /* P2PCreateIdentityView.swift */,
+				724DA84529F331AACFD369EA /* P2PGroupChatView.swift */,
 				BB8A0D5710EFF14D4DCAEDD9 /* P2PSettingsView.swift */,
 				41D0E79C54C3F1A34CD32B6E /* P2PSocialView.swift */,
 				E52D5CE99C2649DE472BDD06 /* PDFAnnotationView.swift */,
@@ -509,8 +515,10 @@
 				BDE72A44A8EEA5D1556594A4 /* OCRService.swift in Sources */,
 				CFE3C567BC505E93A8FA5E4A /* P2PAddFriendView.swift in Sources */,
 				E80FE8723B16A857F3991A5D /* P2PChatView.swift in Sources */,
+				55B477D0E5CC9109D0EA1F08 /* P2PCreateGroupView.swift in Sources */,
 				8A18D613355C9D48767099C6 /* P2PCreateIdentityView.swift in Sources */,
 				719E56A223EC013911943F9E /* P2PCryptoService.swift in Sources */,
+				9EAAEA806753371A2E8B9F45 /* P2PGroupChatView.swift in Sources */,
 				BFA43AC7E399FE8ADFB72357 /* P2PModels.swift in Sources */,
 				C8E9BAE70F67DE4856F1BC45 /* P2PNetworkService.swift in Sources */,
 				0CB88EC66EFF82034EC22064 /* P2PService.swift in Sources */,
@@ -621,8 +629,6 @@
 				CURRENT_PROJECT_VERSION = 87;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "智学笔记";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -644,8 +650,6 @@
 				CURRENT_PROJECT_VERSION = 87;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "智学笔记";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

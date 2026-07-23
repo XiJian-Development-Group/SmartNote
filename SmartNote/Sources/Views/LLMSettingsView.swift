@@ -80,6 +80,23 @@ struct LLMSettingsView: View {
                 }
             }
             
+            Section("自定义系统提示词后缀") {
+                Text("该内容将追加到每次 AI 请求的系统提示词末尾，可用于指定回复风格、格式要求等。")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                TextEditor(text: $config.customSystemPromptSuffix)
+                    .font(.system(.body, design: .monospaced))
+                    .frame(minHeight: 100)
+                    .padding(4)
+                    .background(Color(nsColor: .textBackgroundColor))
+                    .cornerRadius(8)
+                
+                Text("示例：\"请始终用中文回复\" 或 \"请使用简短直接的回答\"")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
             Section {
                 HStack {
                     Button("测试连接") {

@@ -562,7 +562,7 @@ struct SmartGradingView: View {
         extractedTexts = []
         
         for markedFile in markedFiles {
-            if let text = extractTextFromFile(markedFile.url) {
+            if let text = await extractTextFromFile(markedFile.url) {
                 extractedTexts.append((text, markedFile.markings))
             }
         }
@@ -575,14 +575,20 @@ struct SmartGradingView: View {
         }
     }
     
-    private func extractTextFromFile(_ url: URL) -> String? {
+    private func extractTextFromFile(_ url: URL) async -> String? {
         let fileExtension = url.pathExtension.lowercased()
         
         switch fileExtension {
         case "txt", "md", "markdown":
             return try? String(contentsOf: url, encoding: .utf8)
+        case "pdf":
+            let pdfService = PDFService()
+            return pdfService.extractText(from: url)
         case "png", "jpg", "jpeg", "webp", "bmp":
-            return nil
+            let text = await OCRService().recognizeText(from: url)
+            return text.isEmpty ? nil : text
+        case "docx":
+            return try? String(contentsOf: url, encoding: .utf8)
         default:
             return nil
         }

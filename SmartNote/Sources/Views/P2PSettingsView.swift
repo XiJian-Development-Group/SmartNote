@@ -89,7 +89,8 @@ struct P2PSettingsView: View {
                     HStack {
                         Text("版本")
                         Spacer()
-                        Text("1.0.0")
+                        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+                        Text(version)
                             .foregroundColor(.secondary)
                     }
                     
