@@ -138,19 +138,23 @@ struct SidebarView: View {
                 NavigationLink(value: 7) {
                     Label("学习统计", systemImage: "chart.bar.fill")
                 }
-                
+
                 NavigationLink(value: 16) {
                     Label("社交", systemImage: "bubble.left.and.bubble.right.fill")
                 }
-                
+
                 NavigationLink(value: 17) {
                     Label("放松亿下", systemImage: "gamecontroller")
                 }
-                
+
                 NavigationLink(value: 18) {
                     Label("日记", systemImage: "book.fill")
                 }
-                
+
+                NavigationLink(value: 22) {
+                    Label("文件加密", systemImage: "lock.doc.fill")
+                }
+
                 NavigationLink(value: 14) {
                     Label("重复清理", systemImage: "doc.on.doc")
                 }
@@ -211,6 +215,8 @@ struct DetailView: View {
                 TodoListView()
             case 21:
                 HabitTrackerView()
+            case 22:
+                FileCryptoView()
             default:
                 MaterialsListView()
             }

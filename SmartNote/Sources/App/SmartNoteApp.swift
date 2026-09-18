@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct SmartNoteApp: App {
     @StateObject private var appState = AppState()
-    
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -20,20 +20,20 @@ struct SmartNoteApp: App {
                 }
                 .keyboardShortcut("i", modifiers: .command)
             }
-            
+
             CommandMenu("复习") {
                 Button("开始复习计划") {
                     appState.selectedTab = 2
                 }
                 .keyboardShortcut("r", modifiers: [.command, .shift])
-                
+
                 Button("提取考点") {
                     appState.selectedTab = 1
                 }
                 .keyboardShortcut("k", modifiers: [.command, .shift])
             }
         }
-        
+
         // 日记编辑器独立窗口
         // - openWindow(id: "diary-editor")            → 新建（无 value）
         // - openWindow(id: "diary-editor", value: id)  → 编辑对应日记
@@ -44,11 +44,19 @@ struct SmartNoteApp: App {
                 .preferredColorScheme(appState.colorScheme)
         }
         .windowResizability(.contentMinSize)
-        
+
         Settings {
             SettingsView()
                 .environmentObject(appState)
         }
+
+        // 菜单栏 App（macOS 13+ 原生 MenuBarExtra）。首次启动带 toggle 控制；
+        // 设置页可关闭。关闭时不显示菜单栏图标。
+        MenuBarExtra("智学笔记", systemImage: "book.fill") {
+            MenuBarContentView()
+                .environmentObject(appState)
+        }
+        .menuBarExtraStyle(.menu)
     }
 }
 

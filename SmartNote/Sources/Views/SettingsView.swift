@@ -8,6 +8,13 @@ struct SettingsView: View {
     @State private var showImagePicker: Bool = false
     @State private var selectedImageData: Data? = nil
     @State private var selectedImageName: String? = nil
+
+    // 备份与恢复面板
+    @State private var backupLabel: String = ""
+    @State private var isMakingBackup: Bool = false
+    @State private var backupStatus: String = ""
+    @State private var showRestoreConfirmation: Bool = false
+    @State private var pendingRestoreURL: URL?
     
     var body: some View {
         TabView {
@@ -35,13 +42,18 @@ struct SettingsView: View {
                 .tabItem {
                     Label("存储", systemImage: "internaldrive")
                 }
-            
+
+            backupSection
+                .tabItem {
+                    Label("备份与恢复", systemImage: "externaldrive.badge.checkmark")
+                }
+
             aboutSection
                 .tabItem {
                     Label("关于", systemImage: "info.circle")
                 }
         }
-        .frame(width: 500, height: 400)
+        .frame(width: 600, height: 480)
         .onChange(of: appState.appSettings) { _old, newValue in
             appState.storageService.saveSettings(newValue)
             // update update service repository and schedule when settings change
@@ -117,6 +129,39 @@ struct SettingsView: View {
                        value: $appState.appSettings.defaultStudyMinutes,
                        in: 15...120,
                        step: 15)
+            }
+
+            Section("系统集成") {
+                HStack {
+                    Image(systemName: "menubar.dock.rectangle")
+                        .foregroundColor(.secondary)
+                    Text("菜单栏")
+                    Spacer()
+                    Text("已启用")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .help("菜单栏图标显示在屏幕右上角，提供快速入口。")
+
+                HStack {
+                    Image(systemName: "power")
+                        .foregroundColor(.secondary)
+                    Text("开机自启动")
+                    Spacer()
+                    Toggle("", isOn: Binding(
+                        get: { appState.launchAtLoginService.enabledByUser },
+                        set: { newVal in appState.launchAtLoginService.setEnabled(newVal) }
+                    ))
+                    .labelsHidden()
+                }
+                if let err = appState.launchAtLoginService.lastError {
+                    Text(err)
+                        .font(.caption2)
+                        .foregroundColor(.orange)
+                }
+                Text("通过 macOS 原生 SMAppService 注册；首次启用需在系统弹窗中允许。")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
 
             Section("更新") {
@@ -460,6 +505,193 @@ struct SettingsView: View {
         .padding()
     }
     
+    // MARK: - 备份与恢复
+
+    private var backupSection: some View {
+        Form {
+            Section("当前状态") {
+                HStack {
+                    Text("数据 schema 版本")
+                    Spacer()
+                    Text("v\(appState.appSettings.schemaVersion)")
+                        .foregroundColor(.secondary)
+                        .monospacedDigit()
+                }
+                HStack {
+                    Text("上次自动迁移")
+                    Spacer()
+                    if let d = appState.appSettings.lastMigrationDate {
+                        Text(d, style: .relative)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text("尚未迁移").foregroundColor(.secondary)
+                    }
+                }
+                if let mig = appState.lastStartupMigration, mig.didUpgrade {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                        Text("本次启动从 v\(mig.fromVersion) 升级到 v\(mig.toVersion)")
+                            .font(.caption)
+                    }
+                    if mig.didBackup, let url = mig.backupURL {
+                        Text("自动备份：\(url.lastPathComponent)")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    } else if let err = mig.backupError {
+                        Text("自动备份失败：\(err.localizedDescription)")
+                            .font(.caption2)
+                            .foregroundColor(.red)
+                    }
+                }
+            }
+
+            Section("新建备份") {
+                TextField("可选标签（留空则用时间戳）", text: $backupLabel)
+                HStack {
+                    Button {
+                        runManualBackup()
+                    } label: {
+                        if isMakingBackup {
+                            ProgressView().scaleEffect(0.7)
+                        } else {
+                            Label("立即备份", systemImage: "square.and.arrow.down")
+                        }
+                    }
+                    .disabled(isMakingBackup)
+                    .buttonStyle(.borderedProminent)
+
+                    Spacer()
+
+                    if !backupStatus.isEmpty {
+                        Text(backupStatus)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                Text("备份存储于：\(appState.backupService.backupsDirectoryURL.path)")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .textSelection(.enabled)
+            }
+
+            Section("历史备份") {
+                if backupList.isEmpty {
+                    Text("暂无备份").foregroundColor(.secondary)
+                } else {
+                    ForEach(backupList, id: \.path) { url in
+                        HStack(spacing: 8) {
+                            Image(systemName: "doc.zipper")
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(url.lastPathComponent)
+                                    .font(.caption)
+                                    .lineLimit(1)
+                                if let info = try? url.resourceValues(forKeys: [.creationDateKey, .fileSizeKey]),
+                                   let date = info.creationDate {
+                                    Text("\(date.formatted(date: .abbreviated, time: .shortened)) · \(ByteCountFormatter.string(fromByteCount: Int64(info.fileSize ?? 0), countStyle: .file))")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            Spacer()
+                            Button("恢复") {
+                                pendingRestoreURL = url
+                                showRestoreConfirmation = true
+                            }
+                            Button(role: .destructive) {
+                                try? appState.backupService.deleteBackup(url)
+                                refreshBackupList()
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+        .onAppear { refreshBackupList() }
+        .alert("确认恢复？", isPresented: $showRestoreConfirmation, presenting: pendingRestoreURL) { url in
+            Button("取消", role: .cancel) {}
+            Button("恢复", role: .destructive) {
+                restoreBackup(url)
+            }
+        } message: { url in
+            Text("从「\(url.lastPathComponent)」恢复会覆盖当前所有数据。请确保当前数据已另存备份。App 将在恢复完成后退出。")
+        }
+    }
+
+    @State private var backupList: [URL] = []
+
+    private func refreshBackupList() {
+        backupList = appState.backupService.listBackups()
+    }
+
+    private func runManualBackup() {
+        isMakingBackup = true
+        backupStatus = "正在打包…"
+        let labelToUse: String? = backupLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : backupLabel
+        Task.detached { [labelToUse] in
+            do {
+                let url = try appState.backupService.makeBackup(label: labelToUse)
+                await MainActor.run {
+                    backupStatus = "已生成：\(url.lastPathComponent)"
+                    backupLabel = ""
+                    refreshBackupList()
+                    isMakingBackup = false
+                }
+            } catch {
+                await MainActor.run {
+                    backupStatus = "失败：\(error.localizedDescription)"
+                    isMakingBackup = false
+                }
+            }
+        }
+    }
+
+    private func restoreBackup(_ url: URL) {
+        backupStatus = "正在解压临时目录…"
+        Task.detached {
+            do {
+                let tempDir = try appState.backupService.extractBackup(url)
+                await MainActor.run {
+                    backupStatus = "已解压到临时目录。App 即将退出以完成恢复。"
+                }
+                // 给一个短暂延迟让 UI 显示消息
+                try? await Task.sleep(nanoseconds: 800_000_000)
+                // 用 Process 重启 App：让 shell 把当前 process 退出后用 open 启动新 App
+                restartAppAfterRestore(tempDir: tempDir)
+            } catch {
+                await MainActor.run {
+                    backupStatus = "恢复失败：\(error.localizedDescription)"
+                }
+            }
+        }
+    }
+
+    /// 把解压目录的内容覆盖回 Application Support，然后退出当前进程。
+    /// 由于恢复涉及数据替换 + 清缓存，简洁做法是直接退出，让用户重新启动 app 触发 runStartupMigration 重读。
+    private func restartAppAfterRestore(tempDir: URL) {
+        let fm = FileManager.default
+        let target = appState.storageService.appSupportURL
+        do {
+            // 把解压目录下"唯一一个子目录"的内容（ditto 解 zip 第一层是 zip 内的顶层文件名）拷回 target
+            let children = (try fm.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil))
+            for child in children {
+                let dest = target.appendingPathComponent(child.lastPathComponent)
+                try? fm.removeItem(at: dest)
+                try fm.moveItem(at: child, to: dest)
+            }
+            try? fm.removeItem(at: tempDir)
+            // 退出当前进程
+            exit(0)
+        } catch {
+            DispatchQueue.main.async {
+                backupStatus = "恢复阶段失败：\(error.localizedDescription)"
+            }
+        }
+    }
+
     private var aboutSection: some View {
         VStack(spacing: 20) {
             Spacer()
