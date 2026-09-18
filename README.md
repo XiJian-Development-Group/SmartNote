@@ -21,6 +21,10 @@
 15. [设置与配置](#15-设置与配置)
 16. [自动更新](#16-自动更新)
 17. [快捷键](#17-快捷键)
+18. [v1.7 新增](#18-v17-新增)
+19. [菜单栏 App 与开机自启](#19-菜单栏-app-与开机自启)
+20. [文件加密](#20-文件加密)
+21. [Siri / Shortcuts](#21-siri--shortcuts)
 
 ---
 
@@ -374,8 +378,73 @@
 
 ---
 
+## 18. v1.7 新增
+
+v1.7 在 v1.6.2 之上扩展了 11 个功能，全部使用 macOS 系统原生接口实现（不引入第三方依赖）：
+
+- **几何画板**：基于 Foundation `NSExpression` 的代数求值，新增 8 种 Shape（点 / 圆 / 弧 / 多边形 / 函数图 / 参数方程 / 极坐标 / 测量标记），工具栏同时增加 8 项。
+- **AI 视觉**：OpenAI / Anthropic 多模态 endpoint 支持（图片 base64 内联）；AI 对话页支持粘贴/拖入图片。
+- **学习画像本地调优**：`LearningPreferenceAutoTuner` 在不调用 LLM 时也能从资料 / 错题 / 复习计划里给出"薄弱 / 擅长 / 错误模式 / 近期话题"建议。
+- **文件加密**：`CryptoKit AES-GCM-256` + PBKDF2-HMAC-SHA256 (100 k)；密码存 macOS Keychain（`kSecClassGenericPassword`）；支持任意 ≤2 GB 文件批量加密。
+- **平滑升级**：每次启动检测 `schemaVersion`；检测到需要升级时静默把 Application Support 整个打包成 `.zip` 放进 `Backups/`，然后再迁移字段。
+- **菜单栏 + 开机自启**：`MenuBarExtra` 内嵌主页 + 含快速记录；`SMAppService.mainApp` 注册到「登录项」。
+- **许愿 / 还愿**：本地星空背景，`TimelineView(.animation)` + `Canvas` 实时绘制闪烁的星与流星。
+- **倒数纪念日**：公历 / 每年 / 每月 三种重复，提前 0/1/3/7/14/30 天经 `UNUserNotificationCenter` 推送。
+- **白噪音**：`AVAudioEngine` + 程序生成 6 种声源（白 / 粉 / 棕 / 雨 / 海 / 林），同时支持从 Finder 导入 .mp3/.wav/.m4a。
+- **Siri / Shortcuts**：`AppIntents` + `AppShortcutsProvider`，说出"嘿 Siri，打开智学笔记白板"即可触发。
+- **高级计算器**：`NSExpression` 表达式求值 + 进制显示，三模式 标准 / 科学 / 程序员。
+
+详见 `docs/notes.md`。
+
+---
+
+## 19. 菜单栏 App 与开机自启
+
+App 启动后屏幕右上角常驻菜单栏图标，提供：
+- 资料 / 番茄钟 / 待办 / 文件加密等页面快捷入口
+- 快速记录（落到 `Application Support/QuickNotes/<日期>.md`）
+- 开机自启开关（在「设置 → 通用 → 系统集成」与菜单栏都能切换）
+
+启用开机自启会走 macOS 原生 `SMAppService.mainApp.register()`，第一次会弹系统对话框询问是否允许；批准后即生效，不需要重启。
+
+---
+
+## 20. 文件加密
+
+侧边栏「实用工具 → 文件加密」进入文件加密中心：
+
+- 拖拽或选择任意 ≤2 GB 文件
+- 一键加密为同名 `.snenc` 文件（默认与源同目录，可指定导出目录）
+- 一次性解压回原始目录（解密）
+- 「勾选」时把每个文件的密码按文件名维度存进系统钥匙串（macOS Keychain）
+- 解密时直接从钥匙串取密码，免输入
+
+技术栈：`CryptoKit AES.GCM` + `CommonCrypto CCKeyDerivationPBKDF2` + `Security` Keychain。`.snenc` 容器格式：
+```
+[4B magic 'SNEN'][1B version=1][16B salt][12B nonce][ct][16B GCM tag]
+```
+
+---
+
+## 21. Siri / Shortcuts
+
+macOS 13+ 原生 `AppIntents` 框架，已注册 8 个 Siri 短语：
+
+- "打开智学笔记资料库" → 切到 tab 0
+- "打开智学笔记番茄钟" / "开始番茄钟" → tab 10
+- "打开智学笔记待办" → tab 20
+- "打开智学笔记白板" → tab 19
+- "打开智学笔记文件加密" → tab 22
+- "打开智学笔记许愿" → tab 24
+- "打开智学笔记纪念日" → tab 25
+- "智学笔记记一笔" / "在智学笔记里记录" → 把内容追加到 QuickNotes
+
+实现上每个 `AppShortcut.phrases` 含 `\(.applicationName)` 占位符，触发后调用 `AppState.selectedTab` 切换并 `NSApp.activate(ignoringOtherApps: true)` 抢焦点；快速记录 Intent 直接写文件，不打开主窗口。
+
+---
+
 ## 帮助信息
 
 如有任何问题或建议，请发送邮件到 panmofan@icloud.com，或在 [GitHub Issues](https://github.com/XiJian-Development-Group/SmartNote/issues) 提交反馈。
 
-**本文档更新于版本: 1.6.2**
+**本文档更新于版本: 1.7.0**
