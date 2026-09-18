@@ -132,24 +132,8 @@ struct MenuBarContentView: View {
     }
 
     private func appendQuickNote() {
-        // 落地到 study sessions 的"日记" / notes 形式：当前简化写到本地文本
-        let notesDir = appState.storageService.appSupportURL.appendingPathComponent("QuickNotes", isDirectory: true)
-        try? FileManager.default.createDirectory(at: notesDir, withIntermediateDirectories: true)
-        let day = ISO8601DateFormatter().string(from: Date()).prefix(10)
-        let url = notesDir.appendingPathComponent("\(day).md")
-        let stamp = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .short)
-        let line = "## \(stamp)\n\n\(quickNoteText)\n\n"
-        if FileManager.default.fileExists(atPath: url.path) {
-            if let h = try? FileHandle(forWritingTo: url) {
-                h.seekToEndOfFile()
-                if let d = line.data(using: .utf8) { h.write(d) }
-                try? h.close()
-            }
-        } else {
-            try? line.data(using: .utf8)?.write(to: url, options: .atomic)
-        }
+        QuickNoteStore.append(text: quickNoteText, storage: appState.storageService)
         quickNoteText = ""
-        NSApp.sendAction(#selector(NSPasteboard.general.clearContents), to: nil, from: nil)
     }
 
     private func activateMainWindow(tab: Int) {

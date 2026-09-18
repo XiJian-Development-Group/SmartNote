@@ -70,6 +70,10 @@ class AppState: ObservableObject {
         self.appSettings = settings
         self.lastStartupMigration = migrationResult
         loadSavedData()
+        // 把自己桥给 Siri / Shortcuts intent 用
+        MainActor.assumeIsolated {
+            SharedAppStateProxy.shared.bind(self)
+        }
 
         // perform initial auto-check if enabled
         if settings.autoUpdateEnabled {
