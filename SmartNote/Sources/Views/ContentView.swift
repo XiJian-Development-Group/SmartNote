@@ -163,6 +163,10 @@ struct SidebarView: View {
                     Label("许愿", systemImage: "moon.stars.fill")
                 }
 
+                NavigationLink(value: 25) {
+                    Label("纪念日", systemImage: "calendar.badge.exclamationmark")
+                }
+
                 NavigationLink(value: 14) {
                     Label("重复清理", systemImage: "doc.on.doc")
                 }
@@ -229,6 +233,8 @@ struct DetailView: View {
                 WhiteNoiseView()
             case 24:
                 WishView()
+            case 25:
+                AnniversaryView()
             default:
                 MaterialsListView()
             }
