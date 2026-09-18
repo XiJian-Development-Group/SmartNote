@@ -38,20 +38,34 @@ class AppState: ObservableObject {
     let keywordService = KeywordExtractionService()
     let calendarService = CalendarService()
     let storageService = StorageService()
+    let backupService: BackupService
+    let fileCryptoService = FileCryptoService()
+    let keychainService = KeychainService()
+    let launchAtLoginService = LaunchAtLoginService()
     let speechService = SpeechService.shared
     let learningAnalysisService = LearningAnalysisService.shared
     let notificationService = NotificationService.shared
     let updateService: UpdateService
     var updateCheckCancellable: AnyCancellable? = nil
     var llmService: LLMService
-    
+
+    /// 最近一次启动期 schema 迁移结果（用于「备份与恢复」面板显示）
+    @Published var lastStartupMigration: StartupMigrationResult?
+
     init() {
-        let settings = StorageService().loadSettings()
+        let probeStorage = StorageService()
+        // 1. 启动期自动迁移：先备份再升级字段。同步执行——zip 整个 App Support 一般 < 100MB、几秒内。
+        let migrationResult = probeStorage.runStartupMigration()
+        // 2. 重新读一次以拿到被迁移后的最新 settings
+        let settings = probeStorage.loadSettings()
+
+        self.backupService = BackupService(sourceRoot: probeStorage.appSupportURL)
         let config = settings.llmConfiguration
         self.llmService = LLMService(configuration: config)
         // initialize update service with configured repo
         self.updateService = UpdateService(owner: settings.updateRepoOwner, repo: settings.updateRepoName)
         self.appSettings = settings
+        self.lastStartupMigration = migrationResult
         loadSavedData()
 
         // perform initial auto-check if enabled

@@ -3,7 +3,14 @@ import Foundation
 class StorageService {
     private let fileManager = FileManager.default
     private let appSupportDirectory: URL
-    
+
+    /// 当前 settings schema 版本。每次 storage JSON 字段有结构变化时递增。
+    /// 启动时若旧 settings.json < 此值，会先备份再迁移字段。
+    static let currentSchemaVersion: Int = 2
+
+    /// 应用支持目录 URL，供 BackupService 与「存储 → 备份与恢复」面板使用
+    var appSupportURL: URL { appSupportDirectory }
+
     private var materialsFileURL: URL {
         appSupportDirectory.appendingPathComponent("materials.json")
     }
@@ -56,10 +63,60 @@ class StorageService {
     func saveMaterials(_ materials: [StudyMaterial]) {
         save(materials, to: materialsFileURL)
     }
-    
+
     func loadMaterials() -> [StudyMaterial] {
         load(from: materialsFileURL) ?? []
     }
+
+    // MARK: - 启动期 schema 迁移
+
+    /// 启动时调用：检测 settings.json 缺字段或 schemaVersion 偏低，先静默备份再升级。
+    /// - Returns: 一个描述迁移结果的对象，供启动 banner / 日志展示
+    @discardableResult
+    func runStartupMigration() -> StartupMigrationResult {
+        let onDisk = loadSettings()
+        var working = onDisk
+
+        let now = Date()
+        let backupService = BackupService(sourceRoot: appSupportDirectory)
+        var createdBackupURL: URL?
+        var backupError: Error?
+
+        // 1. 仅当检测到"低于当前 schema"才备份一次
+        if working.schemaVersion < Self.currentSchemaVersion {
+            do {
+                createdBackupURL = try backupService.makeBackup(
+                    label: "pre-migration-v\(working.schemaVersion)-to-v\(Self.currentSchemaVersion)"
+                )
+            } catch {
+                backupError = error
+            }
+        }
+
+        // 2. 强制把 schemaVersion 写到当前值；decodeIfPresent 已为所有新字段补默认
+        //    （P0 阶段本身没有 destructive 字段变更；未来字段重命名时这一步改成显式 transform）
+        working.schemaVersion = Self.currentSchemaVersion
+        if working.lastMigrationDate == nil {
+            working.lastMigrationDate = now
+        }
+        // 每次启动都更新 lastMigrationCheckedAt，便于支持面板显示「上次迁移时间」
+        working.lastMigrationCheckedAt = now
+
+        // 3. 仅在真有变动时持久化（避免每次启动都写盘）
+        if working != onDisk {
+            saveSettings(working)
+        }
+
+        return StartupMigrationResult(
+            fromVersion: onDisk.schemaVersion,
+            toVersion: Self.currentSchemaVersion,
+            backupURL: createdBackupURL,
+            backupError: backupError,
+            checkedAt: now
+        )
+    }
+
+    // MARK: - Review Plans
     
     func saveReviewPlans(_ plans: [ReviewPlan]) {
         save(plans, to: reviewPlansFileURL)
@@ -375,7 +432,25 @@ class StorageService {
     }
 }
 
+/// 启动迁移结果。仅在 schema 升级或用户首次启动时才有实际内容。
+struct StartupMigrationResult {
+    let fromVersion: Int
+    let toVersion: Int
+    let backupURL: URL?
+    let backupError: Error?
+    let checkedAt: Date
+
+    var didUpgrade: Bool { fromVersion < toVersion }
+    var didBackup: Bool { backupURL != nil }
+}
+
 class AppSettings: ObservableObject, Codable, Equatable {
+    /// 持久化 schema 版本号。每当 settings.json 字段有破坏性变更时递增。
+    /// 由 StorageService.runStartupMigration() 管理；UI 不应直接修改。
+    @Published var schemaVersion: Int = StorageService.currentSchemaVersion
+    @Published var lastMigrationDate: Date? = nil
+    @Published var lastMigrationCheckedAt: Date? = nil
+
     @Published var autoScanDirectories: Bool = true
     @Published var scanPaths: [String] = []
     @Published var darkModePreference: DarkModePreference = .system
@@ -395,15 +470,18 @@ class AppSettings: ObservableObject, Codable, Equatable {
     @Published var lastUpdateCheckDate: Date? = nil
     @Published var lastFoundReleaseName: String? = nil
     @Published var p2pBackgroundEnabled: Bool = false
-    
+
     // Background image settings
     @Published var backgroundImageEnabled: Bool = false
     @Published var backgroundImageName: String? = nil
     @Published var backgroundBlurEnabled: Bool = true
     @Published var backgroundBlurRadius: Double = 20.0
     @Published var backgroundOpacity: Double = 0.3
-    
+
     static func == (lhs: AppSettings, rhs: AppSettings) -> Bool {
+        lhs.schemaVersion == rhs.schemaVersion &&
+        lhs.lastMigrationDate == rhs.lastMigrationDate &&
+        lhs.lastMigrationCheckedAt == rhs.lastMigrationCheckedAt &&
         lhs.autoScanDirectories == rhs.autoScanDirectories &&
         lhs.scanPaths == rhs.scanPaths &&
         lhs.darkModePreference == rhs.darkModePreference &&
@@ -442,6 +520,9 @@ class AppSettings: ObservableObject, Codable, Equatable {
     }
     
     enum CodingKeys: String, CodingKey {
+        case schemaVersion
+        case lastMigrationDate
+        case lastMigrationCheckedAt
         case autoScanDirectories
         case scanPaths
         case darkModePreference
@@ -466,8 +547,11 @@ class AppSettings: ObservableObject, Codable, Equatable {
         case backgroundBlurRadius
         case backgroundOpacity
     }
-    
+
     init() {
+        schemaVersion = StorageService.currentSchemaVersion
+        lastMigrationDate = nil
+        lastMigrationCheckedAt = nil
         autoScanDirectories = true
         scanPaths = []
         darkModePreference = .system
@@ -487,10 +571,14 @@ class AppSettings: ObservableObject, Codable, Equatable {
         backgroundBlurRadius = 20.0
         backgroundOpacity = 0.3
     }
-    
+
     required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        
+
+        // 老版本 settings.json 没有 schemaVersion → 视为 v1
+        schemaVersion = try container.decodeIfPresent(Int.self, forKey: .schemaVersion) ?? 1
+        lastMigrationDate = try container.decodeIfPresent(Date.self, forKey: .lastMigrationDate)
+        lastMigrationCheckedAt = try container.decodeIfPresent(Date.self, forKey: .lastMigrationCheckedAt)
         autoScanDirectories = try container.decodeIfPresent(Bool.self, forKey: .autoScanDirectories) ?? true
         scanPaths = try container.decodeIfPresent([String].self, forKey: .scanPaths) ?? []
         darkModePreference = try container.decodeIfPresent(DarkModePreference.self, forKey: .darkModePreference) ?? .system
@@ -515,10 +603,13 @@ class AppSettings: ObservableObject, Codable, Equatable {
         backgroundBlurRadius = try container.decodeIfPresent(Double.self, forKey: .backgroundBlurRadius) ?? 20.0
         backgroundOpacity = try container.decodeIfPresent(Double.self, forKey: .backgroundOpacity) ?? 0.3
     }
-    
+
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        
+
+        try container.encode(schemaVersion, forKey: .schemaVersion)
+        try container.encodeIfPresent(lastMigrationDate, forKey: .lastMigrationDate)
+        try container.encodeIfPresent(lastMigrationCheckedAt, forKey: .lastMigrationCheckedAt)
         try container.encode(autoScanDirectories, forKey: .autoScanDirectories)
         try container.encode(scanPaths, forKey: .scanPaths)
         try container.encode(darkModePreference, forKey: .darkModePreference)
