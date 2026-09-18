@@ -44,6 +44,7 @@
 		69247B994BB40400FEA18176 /* TodoEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B99E35DB7755156968804420 /* TodoEditorView.swift */; };
 		6BEAC51EFE84A910F12692E9 /* CalendarService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D50C4DEA6DDBE484CB505052 /* CalendarService.swift */; };
 		719E56A223EC013911943F9E /* P2PCryptoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0C0B9F554192EC67B33B58 /* P2PCryptoService.swift */; };
+		7293AEE96B617125F76D2670 /* WishService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7CE766764800A24D1EF1446 /* WishService.swift */; };
 		7552F0F047F504FF73B489EF /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7A7FCD6AE8A9178378E9E6 /* MenuBarContentView.swift */; };
 		779CC755CC9ECB20892847C1 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6EE24BB16C4F533244DA72D /* StatusBarView.swift */; };
 		78869D9414CB1FFE8E0DA398 /* HabitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86654A145D30D6948855CF39 /* HabitService.swift */; };
@@ -66,6 +67,7 @@
 		A2966072D593B09B5E5F57C9 /* LearningPreferenceAutoTuner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7C84D4C3172F01CA4E7215 /* LearningPreferenceAutoTuner.swift */; };
 		A6538E9AE726EB1B6A0A139A /* PDFAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E52D5CE99C2649DE472BDD06 /* PDFAnnotationView.swift */; };
 		A83592B1242E65D43DD45C35 /* CreateMaterialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4575EE9184B750B4B671582 /* CreateMaterialView.swift */; };
+		A84C48636F0867DA16E06229 /* WishModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0A2D50FCFB61851082B545 /* WishModel.swift */; };
 		A8DC49BD20C525E43FE77C09 /* DuplicateScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83656D0505253324AD314B29 /* DuplicateScanner.swift */; };
 		AA896DAFCA3BCD7B8C1FB398 /* Habit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7073CBB84285BA6FACD1F5 /* Habit.swift */; };
 		AADD190F79B79514A050BD7B /* UserLearningProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 183A64BA18C98E763E093D8C /* UserLearningProfile.swift */; };
@@ -79,6 +81,7 @@
 		C98C37D307D876D69A24A506 /* AmbientSoundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC4A5250B396E1FC820AA70 /* AmbientSoundService.swift */; };
 		CB2E8527A33C99E031379221 /* P2PSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB8A0D5710EFF14D4DCAEDD9 /* P2PSettingsView.swift */; };
 		CDCD8F44AA0129195F260CA0 /* FileScannerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6800551BD3F4E594202A9C63 /* FileScannerService.swift */; };
+		CFBC23D575D54A4644367C42 /* WishView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D90FE95074216C051D16377 /* WishView.swift */; };
 		CFE3C567BC505E93A8FA5E4A /* P2PAddFriendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9CD2DA9C12FD47108F0A6DC /* P2PAddFriendView.swift */; };
 		D2CFCA396F589555E60DBF67 /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5EFEE65AEF8F68B4C6D2F6 /* ExportService.swift */; };
 		D3AF9A33FA1E726319056CEC /* ExamCountdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF69A8C2FBED9C695F7D3F91 /* ExamCountdown.swift */; };
@@ -117,6 +120,7 @@
 		235D53B84549223D70F9128D /* RelaxGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelaxGameView.swift; sourceTree = "<group>"; };
 		270C3E3C779EA0B469949129 /* FileImportView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileImportView.swift; sourceTree = "<group>"; };
 		2A0C0B9F554192EC67B33B58 /* P2PCryptoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PCryptoService.swift; sourceTree = "<group>"; };
+		2D90FE95074216C051D16377 /* WishView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WishView.swift; sourceTree = "<group>"; };
 		3157E15A32FE4D1A505F6ED5 /* SpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechService.swift; sourceTree = "<group>"; };
 		35417BC62B272D7F6B24E2C7 /* PDFAnnotationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFAnnotationService.swift; sourceTree = "<group>"; };
 		35933360A6AA6EE2A69BEFD4 /* P2PService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PService.swift; sourceTree = "<group>"; };
@@ -151,6 +155,7 @@
 		894FE930FEE63A60AD1A8934 /* Whiteboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Whiteboard.swift; sourceTree = "<group>"; };
 		8CBFCF8E6360A6B9A44AAE27 /* TodoItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoItem.swift; sourceTree = "<group>"; };
 		8D7073CBB84285BA6FACD1F5 /* Habit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Habit.swift; sourceTree = "<group>"; };
+		8E0A2D50FCFB61851082B545 /* WishModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WishModel.swift; sourceTree = "<group>"; };
 		9153CA3BAB1A98A91814C442 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		92C67150FE8E22E2AEAC4C82 /* KeyPointsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyPointsView.swift; sourceTree = "<group>"; };
 		9464589DFE947D8322A0AD6B /* GeometryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryModel.swift; sourceTree = "<group>"; };
@@ -184,6 +189,7 @@
 		DFF31A424BF91F803292D395 /* DiaryStatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryStatisticsView.swift; sourceTree = "<group>"; };
 		E16F5008A6E6C57E3DCF9CC0 /* FlashCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlashCard.swift; sourceTree = "<group>"; };
 		E52D5CE99C2649DE472BDD06 /* PDFAnnotationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFAnnotationView.swift; sourceTree = "<group>"; };
+		E7CE766764800A24D1EF1446 /* WishService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WishService.swift; sourceTree = "<group>"; };
 		EC14ECD3A7BAB1809B071A70 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		EC170FA87CD834A81E9A4CC8 /* FocusModeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusModeService.swift; sourceTree = "<group>"; };
 		EDECE7F741B10883BAD49248 /* LearningAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningAnalysisService.swift; sourceTree = "<group>"; };
@@ -289,6 +295,7 @@
 				1B4D9C3200C34A11A49F9FD4 /* TodoService.swift */,
 				17FB5AE9239188D987DDB2EC /* UpdateService.swift */,
 				C503288E45F021D992D5259D /* WhiteboardService.swift */,
+				E7CE766764800A24D1EF1446 /* WishService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -352,6 +359,7 @@
 				1634AC2D5BD9559E116C4824 /* WhiteboardCanvasView.swift */,
 				5FF0F9399D305DF370C71A6C /* WhiteBoardView.swift */,
 				50F8DCA0FDB12D7B46B60FF1 /* WhiteNoiseView.swift */,
+				2D90FE95074216C051D16377 /* WishView.swift */,
 				C2679F36366EF4AB15F14DAD /* WrongQuestionView.swift */,
 				C96737D8EEF3BD72484731DB /* Components */,
 				27539AF4A4F7E9D89EFA5157 /* Social */,
@@ -383,6 +391,7 @@
 				8CBFCF8E6360A6B9A44AAE27 /* TodoItem.swift */,
 				183A64BA18C98E763E093D8C /* UserLearningProfile.swift */,
 				894FE930FEE63A60AD1A8934 /* Whiteboard.swift */,
+				8E0A2D50FCFB61851082B545 /* WishModel.swift */,
 				83D3416A6F06F0A71B9E8C68 /* WrongQuestion.swift */,
 			);
 			path = Models;
@@ -597,6 +606,9 @@
 				3A67E92D2163F2CB2D2AE96D /* Whiteboard.swift in Sources */,
 				FBDF823AB16E3F98FB9970D4 /* WhiteboardCanvasView.swift in Sources */,
 				401FEEFEBD57E1CE1F49D5D8 /* WhiteboardService.swift in Sources */,
+				A84C48636F0867DA16E06229 /* WishModel.swift in Sources */,
+				7293AEE96B617125F76D2670 /* WishService.swift in Sources */,
+				CFBC23D575D54A4644367C42 /* WishView.swift in Sources */,
 				36972F90F0E8E74A9A18AD47 /* WrongQuestion.swift in Sources */,
 				BB948A6D3AE4669685CE4F77 /* WrongQuestionView.swift in Sources */,
 			);

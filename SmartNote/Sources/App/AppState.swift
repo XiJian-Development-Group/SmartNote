@@ -43,6 +43,7 @@ class AppState: ObservableObject {
     let keychainService = KeychainService()
     let launchAtLoginService = LaunchAtLoginService()
     let ambientSoundService = AmbientSoundService()
+    let wishService = WishService()
     let speechService = SpeechService.shared
     let learningAnalysisService = LearningAnalysisService.shared
     let notificationService = NotificationService.shared

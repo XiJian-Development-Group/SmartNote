@@ -159,6 +159,10 @@ struct SidebarView: View {
                     Label("白噪音", systemImage: "speaker.wave.3.fill")
                 }
 
+                NavigationLink(value: 24) {
+                    Label("许愿", systemImage: "moon.stars.fill")
+                }
+
                 NavigationLink(value: 14) {
                     Label("重复清理", systemImage: "doc.on.doc")
                 }
@@ -223,6 +227,8 @@ struct DetailView: View {
                 FileCryptoView()
             case 23:
                 WhiteNoiseView()
+            case 24:
+                WishView()
             default:
                 MaterialsListView()
             }
