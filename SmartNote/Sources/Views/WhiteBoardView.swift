@@ -17,6 +17,22 @@ struct WhiteboardView: View {
     @State private var showRenameDialog: Bool = false
     @State private var newDocumentName: String = ""
     @State private var showAutoSaveStatus: Bool = false
+    @State private var showFunctionSheet: Bool = false
+    @State private var showParametricSheet: Bool = false
+    @State private var showPolarSheet: Bool = false
+
+    // 函数图输入面板的临时状态
+    @State private var functionFormula: String = "sin(x)"
+    @State private var functionXMin: Double = -10
+    @State private var functionXMax: Double = 10
+    @State private var parametricFx: String = "cos(t)"
+    @State private var parametricFy: String = "sin(t)"
+    @State private var parametricTMin: Double = 0
+    @State private var parametricTMax: Double = .pi * 2
+    @State private var polarFormula: String = "2 * sin(5*theta)"
+    @State private var polarThetaMin: Double = 0
+    @State private var polarThetaMax: Double = .pi * 2
+    @State private var plotInsertError: String?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -84,6 +100,15 @@ struct WhiteboardView: View {
                     service.renameDocument(doc, to: newDocumentName)
                 }
             }
+        }
+        .sheet(isPresented: $showFunctionSheet) {
+            functionInputSheet
+        }
+        .sheet(isPresented: $showParametricSheet) {
+            parametricInputSheet
+        }
+        .sheet(isPresented: $showPolarSheet) {
+            polarInputSheet
         }
     }
     
@@ -164,7 +189,22 @@ struct WhiteboardView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
+            Divider().frame(height: 20)
+
+            // 几何画板快捷：函数图 / 参数 / 极坐标
+            HStack(spacing: 8) {
+                Menu {
+                    Button("插入函数图 y = f(x)…") { showFunctionSheet = true }
+                    Button("插入参数方程 x(t), y(t)…") { showParametricSheet = true }
+                    Button("插入极坐标 r(θ)…") { showPolarSheet = true }
+                } label: {
+                    Label("插入", systemImage: "function")
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+            }
+
             Spacer()
             
             // 自动保存状态
@@ -482,6 +522,136 @@ struct WhiteboardView: View {
             }
             .buttonStyle(.borderedProminent)
         }
+    }
+
+    // MARK: - 函数图 / 参数 / 极坐标 输入面板
+
+    private var functionInputSheet: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("插入函数图").font(.headline)
+            Text("支持 + - * / ^、sin/cos/tan/log/ln/sqrt/abs/exp、常量 pi/e")
+                .font(.caption).foregroundColor(.secondary)
+            TextField("y = … 例如 sin(x)", text: $functionFormula)
+                .textFieldStyle(.roundedBorder)
+                .font(.system(.body, design: .monospaced))
+            HStack {
+                Text("x 区间")
+                Spacer()
+                TextField("min", value: $functionXMin, format: .number)
+                    .frame(width: 80)
+                    .textFieldStyle(.roundedBorder)
+                Text("≤ x ≤")
+                TextField("max", value: $functionXMax, format: .number)
+                    .frame(width: 80)
+                    .textFieldStyle(.roundedBorder)
+            }
+            if let err = plotInsertError {
+                Text(err).font(.caption).foregroundColor(.red)
+            }
+            HStack {
+                Spacer()
+                Button("取消", role: .cancel) { showFunctionSheet = false; plotInsertError = nil }
+                Button("插入") { insertFunctionPlot() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(functionFormula.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+        .padding(20)
+        .frame(width: 460)
+    }
+
+    private var parametricInputSheet: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("插入参数方程").font(.headline)
+            Text("x(t), y(t) 形如 cos(t), sin(t)")
+                .font(.caption).foregroundColor(.secondary)
+            HStack {
+                Text("x =").frame(width: 30)
+                TextField("cos(t)", text: $parametricFx).textFieldStyle(.roundedBorder)
+                    .font(.system(.body, design: .monospaced))
+            }
+            HStack {
+                Text("y =").frame(width: 30)
+                TextField("sin(t)", text: $parametricFy).textFieldStyle(.roundedBorder)
+                    .font(.system(.body, design: .monospaced))
+            }
+            HStack {
+                Text("t 区间")
+                Spacer()
+                TextField("min", value: $parametricTMin, format: .number).frame(width: 80).textFieldStyle(.roundedBorder)
+                Text("≤ t ≤")
+                TextField("max", value: $parametricTMax, format: .number).frame(width: 80).textFieldStyle(.roundedBorder)
+            }
+            if let err = plotInsertError {
+                Text(err).font(.caption).foregroundColor(.red)
+            }
+            HStack {
+                Spacer()
+                Button("取消", role: .cancel) { showParametricSheet = false; plotInsertError = nil }
+                Button("插入") { insertParametricPlot() }
+                    .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(20)
+        .frame(width: 460)
+    }
+
+    private var polarInputSheet: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("插入极坐标").font(.headline)
+            Text("r(θ) 形如 2 * sin(5*theta)")
+                .font(.caption).foregroundColor(.secondary)
+            TextField("r = …", text: $polarFormula)
+                .textFieldStyle(.roundedBorder)
+                .font(.system(.body, design: .monospaced))
+            HStack {
+                Text("θ 区间")
+                Spacer()
+                TextField("min", value: $polarThetaMin, format: .number).frame(width: 80).textFieldStyle(.roundedBorder)
+                Text("≤ θ ≤")
+                TextField("max", value: $polarThetaMax, format: .number).frame(width: 80).textFieldStyle(.roundedBorder)
+            }
+            if let err = plotInsertError {
+                Text(err).font(.caption).foregroundColor(.red)
+            }
+            HStack {
+                Spacer()
+                Button("取消", role: .cancel) { showPolarSheet = false; plotInsertError = nil }
+                Button("插入") { insertPolarPlot() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(polarFormula.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+        .padding(20)
+        .frame(width: 460)
+    }
+
+    private func insertFunctionPlot() {
+        let shape = FunctionPlotShape(formula: functionFormula, xMin: functionXMin, xMax: functionXMax, samples: 256, color: currentColor, strokeWidth: max(1.5, strokeWidth))
+        if (try? AlgebraEvaluator.evaluate(functionFormula, variables: ["x": 0])) == nil {
+            plotInsertError = "表达式解析失败，请检查语法"
+            return
+        }
+        _ = AlgebraEvaluator.sampleY(functionFormula, xRange: functionXMin...functionXMax, samples: 32)
+        service.addObject(.functionPlot(shape))
+        showFunctionSheet = false
+        plotInsertError = nil
+    }
+
+    private func insertParametricPlot() {
+        let shape = ParametricPlotShape(fx: parametricFx, fy: parametricFy, tMin: parametricTMin, tMax: parametricTMax, samples: 256, color: currentColor, strokeWidth: max(1.5, strokeWidth))
+        _ = AlgebraEvaluator.sampleParametric(fx: parametricFx, fy: parametricFy, tRange: parametricTMin...parametricTMax, samples: 16)
+        service.addObject(.parametricPlot(shape))
+        showParametricSheet = false
+        plotInsertError = nil
+    }
+
+    private func insertPolarPlot() {
+        let shape = PolarPlotShape(r: polarFormula, thetaMin: polarThetaMin, thetaMax: polarThetaMax, samples: 256, color: currentColor, strokeWidth: max(1.5, strokeWidth))
+        _ = AlgebraEvaluator.samplePolar(r: polarFormula, thetaRange: polarThetaMin...polarThetaMax, samples: 16)
+        service.addObject(.polarPlot(shape))
+        showPolarSheet = false
+        plotInsertError = nil
     }
 }
 

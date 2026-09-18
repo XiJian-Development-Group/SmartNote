@@ -332,6 +332,22 @@ struct WhiteboardCanvasView: View {
             drawArrow(a, context: context)
         case .text(let t):
             drawText(t, context: context)
+        case .point(let p):
+            drawPoint(p, context: context)
+        case .circle(let c):
+            drawCircle(c, context: context)
+        case .arc(let a):
+            drawArc(a, context: context)
+        case .polygon(let p):
+            drawPolygon(p, context: context)
+        case .functionPlot(let f):
+            drawFunctionPlot(f, context: context)
+        case .parametricPlot(let p):
+            drawParametricPlot(p, context: context)
+        case .polarPlot(let p):
+            drawPolarPlot(p, context: context)
+        case .measurement(let m):
+            drawMeasurement(m, context: context)
         }
     }
     
@@ -548,13 +564,158 @@ struct WhiteboardCanvasView: View {
             y: a.endPoint.y * zoom + offset.height
         ))
         context.stroke(body, with: .color(a.color.color), style: StrokeStyle(lineWidth: max(0.5, a.strokeWidth * zoom), lineCap: .round))
-        
+
         let head = a.headPoints
         var headPath = Path()
         headPath.move(to: CGPoint(x: head.left.x * zoom + offset.width, y: head.left.y * zoom + offset.height))
         headPath.addLine(to: CGPoint(x: a.endPoint.x * zoom + offset.width, y: a.endPoint.y * zoom + offset.height))
         headPath.addLine(to: CGPoint(x: head.right.x * zoom + offset.width, y: head.right.y * zoom + offset.height))
         context.stroke(headPath, with: .color(a.color.color), style: StrokeStyle(lineWidth: max(0.5, a.strokeWidth * zoom), lineCap: .round, lineJoin: .round))
+    }
+
+    // MARK: - 几何画板 v1.7+ 渲染
+
+    private func drawPoint(_ p: PointShape, context: GraphicsContext) {
+        let center = CGPoint(x: p.position.x * zoom + offset.width, y: p.position.y * zoom + offset.height)
+        let r = max(2, p.strokeWidth * zoom / 2)
+        let rect = CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)
+        context.fill(Path(ellipseIn: rect), with: .color(p.color.color))
+        if let label = p.label, !label.isEmpty {
+            context.draw(
+                Text(label).font(.system(size: max(10, 14 * zoom)).bold()),
+                at: CGPoint(x: center.x + r + 4, y: center.y),
+                anchor: .leading
+            )
+        }
+    }
+
+    private func drawCircle(_ c: CircleShape, context: GraphicsContext) {
+        let center = CGPoint(x: c.center.x * zoom + offset.width, y: c.center.y * zoom + offset.height)
+        let r = max(1, c.radius * zoom)
+        let rect = CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)
+        let path = Path(ellipseIn: rect)
+        context.stroke(path, with: .color(c.color.color), style: StrokeStyle(lineWidth: max(0.5, c.strokeWidth * zoom)))
+        if c.fillStyle.isVisible, let fc = c.fillColor {
+            context.fill(path, with: .color(fc.color.opacity(c.fillStyle == .semiTransparent ? 0.4 : 0.8)))
+        }
+        // 圆心十字
+        let mark = max(3, c.strokeWidth * zoom)
+        var cross = Path()
+        cross.move(to: CGPoint(x: center.x - mark, y: center.y))
+        cross.addLine(to: CGPoint(x: center.x + mark, y: center.y))
+        cross.move(to: CGPoint(x: center.x, y: center.y - mark))
+        cross.addLine(to: CGPoint(x: center.x, y: center.y + mark))
+        context.stroke(cross, with: .color(c.color.color), style: StrokeStyle(lineWidth: max(0.5, c.strokeWidth * zoom)))
+    }
+
+    private func drawArc(_ a: ArcShape, context: GraphicsContext) {
+        let center = CGPoint(x: a.center.x * zoom + offset.width, y: a.center.y * zoom + offset.height)
+        let r = max(1, a.radius * zoom)
+        let rect = CGRect(x: center.x - r, y: center.y - r, width: r * 2, height: r * 2)
+        var path = Path()
+        path.addArc(center: center, radius: r, startAngle: .radians(a.startAngle),
+                    endAngle: .radians(a.endAngle), clockwise: a.endAngle < a.startAngle)
+        context.stroke(path, with: .color(a.color.color), style: StrokeStyle(lineWidth: max(0.5, a.strokeWidth * zoom)))
+    }
+
+    private func drawPolygon(_ p: PolygonShape, context: GraphicsContext) {
+        guard !p.vertices.isEmpty else { return }
+        var path = Path()
+        let first = p.vertices[0]
+        path.move(to: CGPoint(x: first.x * zoom + offset.width, y: first.y * zoom + offset.height))
+        for i in 1..<p.vertices.count {
+            let v = p.vertices[i]
+            path.addLine(to: CGPoint(x: v.x * zoom + offset.width, y: v.y * zoom + offset.height))
+        }
+        path.closeSubpath()
+        context.stroke(path, with: .color(p.color.color), style: StrokeStyle(lineWidth: max(0.5, p.strokeWidth * zoom)))
+        if p.fillStyle.isVisible, let fc = p.fillColor {
+            context.fill(path, with: .color(fc.color.opacity(p.fillStyle == .semiTransparent ? 0.4 : 0.8)))
+        }
+        // 顶点画小点
+        for v in p.vertices {
+            let pt = CGPoint(x: v.x * zoom + offset.width, y: v.y * zoom + offset.height)
+            let rr: CGFloat = max(2, p.strokeWidth * zoom)
+            let rect = CGRect(x: pt.x - rr, y: pt.y - rr, width: rr * 2, height: rr * 2)
+            context.fill(Path(ellipseIn: rect), with: .color(p.color.color))
+        }
+    }
+
+    private func drawFunctionPlot(_ f: FunctionPlotShape, context: GraphicsContext) {
+        // 直接调用 model 的 samplePoints（结果在逻辑坐标系）。
+        // 我们不应用 zoom/offset 变换——而是把数据视作白板画布坐标系（白板默认 zoom = 1）。
+        let pts = f.samplePoints()
+        guard pts.count >= 2 else {
+            // 显示错误提示
+            context.draw(
+                Text("y = \(f.formula)").font(.system(size: 11)).foregroundColor(.secondary),
+                at: CGPoint(x: (f.xMin + f.xMax) / 2 * zoom + offset.width,
+                            y: (f.yMin + f.yMax) / 2 * zoom + offset.height),
+                anchor: .center
+            )
+            return
+        }
+        var path = Path()
+        for (i, v) in pts.enumerated() {
+            let p = CGPoint(x: v.x * zoom + offset.width, y: v.y * zoom + offset.height)
+            if i == 0 { path.move(to: p) } else { path.addLine(to: p) }
+        }
+        context.stroke(path, with: .color(f.color.color), style: StrokeStyle(lineWidth: max(0.5, f.strokeWidth * zoom), lineCap: .round))
+    }
+
+    private func drawParametricPlot(_ p: ParametricPlotShape, context: GraphicsContext) {
+        let pts = p.samplePoints()
+        guard pts.count >= 2 else {
+            context.draw(
+                Text("x=\(p.fxFormula)\ny=\(p.fyFormula)").font(.system(size: 10)).foregroundColor(.secondary),
+                at: .zero,
+                anchor: .topLeading
+            )
+            return
+        }
+        var path = Path()
+        for (i, v) in pts.enumerated() {
+            let pt = CGPoint(x: v.x * zoom + offset.width, y: v.y * zoom + offset.height)
+            if i == 0 { path.move(to: pt) } else { path.addLine(to: pt) }
+        }
+        context.stroke(path, with: .color(p.color.color), style: StrokeStyle(lineWidth: max(0.5, p.strokeWidth * zoom), lineCap: .round))
+    }
+
+    private func drawPolarPlot(_ pl: PolarPlotShape, context: GraphicsContext) {
+        let pts = pl.samplePoints()
+        guard pts.count >= 2 else { return }
+        var path = Path()
+        for (i, v) in pts.enumerated() {
+            let p = CGPoint(x: v.x * zoom + offset.width, y: v.y * zoom + offset.height)
+            if i == 0 { path.move(to: p) } else { path.addLine(to: p) }
+        }
+        context.stroke(path, with: .color(pl.color.color), style: StrokeStyle(lineWidth: max(0.5, pl.strokeWidth * zoom), lineCap: .round))
+    }
+
+    private func drawMeasurement(_ m: MeasurementMarkerShape, context: GraphicsContext) {
+        // v1.7 简化：仅显示一个标签 + 引导线段到第一个目标位置
+        var labelText: String
+        switch m.kind {
+        case .length: labelText = "长度：—"
+        case .angle:  labelText = "角度：—"
+        case .area:   labelText = "面积：—"
+        }
+        // 找不到目标时也提示
+        if let doc = service.currentDocument, let firstID = m.targetIDs.first,
+           let target = doc.objects.first(where: { $0.id == firstID }) {
+            _ = target
+            labelText = "测量目标已选"
+        } else if !m.targetIDs.isEmpty {
+            labelText = "目标对象已被删除"
+        }
+        let pos = CGPoint(x: m.position.x * zoom + offset.width, y: m.position.y * zoom + offset.height)
+        context.draw(
+            Text(labelText)
+                .font(.system(size: max(10, 12 * zoom)))
+                .foregroundColor(m.color.color),
+            at: pos,
+            anchor: .center
+        )
     }
     
     private func drawSelectionBounds(context: GraphicsContext) {
@@ -629,6 +790,18 @@ struct WhiteboardCanvasView: View {
         case .text:
             // 文字工具：拖拽时不做任何事，由 onEnded 触发输入面板
             break
+        case .point, .circle:
+            // 单点 / 圆心确定；半径/位置在 onEnded 一次性写入
+            break
+        case .arc, .polygon:
+            // 弧 / 多边形拖拽时实时绘制（与 rect/line 一致）
+            handleRectDrawing(worldPoint: worldPoint, start: startWorld, isEllipse: false)
+        case .functionPlot, .parametricPlot, .polarPlot:
+            // 函数图拖拽时不动（由右侧输入面板控制）
+            break
+        case .measure:
+            // 测量：暂不需要拖拽
+            break
         case .select:
             // 如果尚未开始拖拽，决定是移动已选对象还是开始框选
             guard let doc = service.currentDocument else { return }
@@ -689,7 +862,7 @@ struct WhiteboardCanvasView: View {
     
     private func handleDragEnded(value: DragGesture.Value) {
         let effectiveTool = isOptionKeyPressed ? .select : tool
-        
+
         switch effectiveTool {
         case .pen:
             if let stroke = currentStroke, stroke.points.count > 1 {
@@ -731,8 +904,32 @@ struct WhiteboardCanvasView: View {
             dragOriginalObjects = []
             marqueeStart = nil
             marqueeRect = nil
+        case .point:
+            let p = screenToWorld(value.location)
+            service.addObject(.point(PointShape(position: p, color: currentColor, strokeWidth: max(3, strokeWidth))))
+        case .circle:
+            let p = screenToWorld(value.location)
+            // 圆工具单击即放一个默认 60 半径的圆；按住拖动由后续版本支持缩放
+            service.addObject(.circle(CircleShape(center: p, radius: 60, color: currentColor, strokeWidth: strokeWidth, fillStyle: fillStyle, fillColor: fillStyle.isVisible ? fillColor : nil)))
+        case .arc:
+            if let drawing = drawingObject {
+                service.addObject(drawing)
+            }
+            drawingObject = nil
+        case .polygon:
+            // v1.7 简化：拖框绘制正多边形（4 边形 = 矩形复用作 polygon 占位）
+            if let drawing = drawingObject {
+                service.addObject(drawing)
+            }
+            drawingObject = nil
+        case .functionPlot, .parametricPlot, .polarPlot:
+            // 函数图：在 onTap（onTapGesture）里走弹窗面板
+            break
+        case .measure:
+            // 测量：v1.7 简化，后续版本支持选择目标对象
+            break
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
             self.hasMovedSignificantly = false
         }
@@ -788,7 +985,9 @@ struct WhiteboardCanvasView: View {
                 } else {
                     strokeReplacements.append((s.id, newStrokes))
                 }
-            case .rectangle, .ellipse, .triangle, .line, .arrow, .text:
+            case .rectangle, .ellipse, .triangle, .line, .arrow, .text,
+             .point, .circle, .arc, .polygon,
+             .functionPlot, .parametricPlot, .polarPlot, .measurement:
                 if obj.contains(worldPoint) {
                     toRemoveIds.insert(obj.id)
                 }
