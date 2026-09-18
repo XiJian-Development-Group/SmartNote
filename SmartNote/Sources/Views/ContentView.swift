@@ -167,6 +167,10 @@ struct SidebarView: View {
                     Label("纪念日", systemImage: "calendar.badge.exclamationmark")
                 }
 
+                NavigationLink(value: 26) {
+                    Label("计算器", systemImage: "function")
+                }
+
                 NavigationLink(value: 14) {
                     Label("重复清理", systemImage: "doc.on.doc")
                 }
@@ -235,6 +239,8 @@ struct DetailView: View {
                 WishView()
             case 25:
                 AnniversaryView()
+            case 26:
+                CalculatorView()
             default:
                 MaterialsListView()
             }

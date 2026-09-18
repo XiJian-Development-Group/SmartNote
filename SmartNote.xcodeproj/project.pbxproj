@@ -62,6 +62,7 @@
 		8C441C29A6D80A32A928C786 /* P2PSocialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41D0E79C54C3F1A34CD32B6E /* P2PSocialView.swift */; };
 		9212FED957EB7BE89CB44D96 /* Diary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63B827EA762FC4151DBAED5F /* Diary.swift */; };
 		94B23765CE8310489D26DC3D /* QuickNoteStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFD27BBE87060AA3F4201630 /* QuickNoteStore.swift */; };
+		95507A6BD797710A9A25B643 /* CalculatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B84A92646B9E0330B2CFE8A /* CalculatorView.swift */; };
 		96E3AA1638583660A537C17C /* SmartNoteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5A56F3D9C89D292DF37A1E7 /* SmartNoteApp.swift */; };
 		998BF9DC4BA7AFE119F197BC /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C46EB71CC98B2EB3FDFE9A6 /* LaunchAtLoginService.swift */; };
 		9CAE744DBC6BBC7B711611D4 /* UpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17FB5AE9239188D987DDB2EC /* UpdateService.swift */; };
@@ -84,6 +85,7 @@
 		BFA43AC7E399FE8ADFB72357 /* P2PModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 095FA7C50DFB7734ED797E8D /* P2PModels.swift */; };
 		C8E9BAE70F67DE4856F1BC45 /* P2PNetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59AD75CCE073CFD5DDE5346A /* P2PNetworkService.swift */; };
 		C98C37D307D876D69A24A506 /* AmbientSoundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC4A5250B396E1FC820AA70 /* AmbientSoundService.swift */; };
+		CA362BCE38751F041E72D1F7 /* CalculatorEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEAE4AB9DA83682B9BE4851A /* CalculatorEngine.swift */; };
 		CB2E8527A33C99E031379221 /* P2PSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB8A0D5710EFF14D4DCAEDD9 /* P2PSettingsView.swift */; };
 		CDCD8F44AA0129195F260CA0 /* FileScannerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6800551BD3F4E594202A9C63 /* FileScannerService.swift */; };
 		CFBC23D575D54A4644367C42 /* WishView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D90FE95074216C051D16377 /* WishView.swift */; };
@@ -153,6 +155,7 @@
 		73DA60CFB77A276CCCB9BCD1 /* SmartNote.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SmartNote.entitlements; sourceTree = "<group>"; };
 		75B7484EF8E90D3649A6A5FA /* MaterialsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialsListView.swift; sourceTree = "<group>"; };
 		79806AD5018667A8DE0ED3FE /* AnniversaryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryModel.swift; sourceTree = "<group>"; };
+		7B84A92646B9E0330B2CFE8A /* CalculatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatorView.swift; sourceTree = "<group>"; };
 		7F7C84D4C3172F01CA4E7215 /* LearningPreferenceAutoTuner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningPreferenceAutoTuner.swift; sourceTree = "<group>"; };
 		81E7459E7FE5DC39CDD074EA /* LearningProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningProfileSettingsView.swift; sourceTree = "<group>"; };
 		83656D0505253324AD314B29 /* DuplicateScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateScanner.swift; sourceTree = "<group>"; };
@@ -177,6 +180,7 @@
 		B9CD2DA9C12FD47108F0A6DC /* P2PAddFriendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PAddFriendView.swift; sourceTree = "<group>"; };
 		B9CD98BF6A753ECF9FE0480B /* SmartGradingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartGradingView.swift; sourceTree = "<group>"; };
 		BB8A0D5710EFF14D4DCAEDD9 /* P2PSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PSettingsView.swift; sourceTree = "<group>"; };
+		BEAE4AB9DA83682B9BE4851A /* CalculatorEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatorEngine.swift; sourceTree = "<group>"; };
 		BEF8E19044ACFD37E7466B8F /* LLMConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMConfiguration.swift; sourceTree = "<group>"; };
 		BF69A8C2FBED9C695F7D3F91 /* ExamCountdown.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExamCountdown.swift; sourceTree = "<group>"; };
 		C1CBA1BA3BF23D2680740DCD /* KeywordExtractionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeywordExtractionService.swift; sourceTree = "<group>"; };
@@ -278,6 +282,7 @@
 				4CC4A5250B396E1FC820AA70 /* AmbientSoundService.swift */,
 				12F78863D87A9B5643B582FA /* AnniversaryService.swift */,
 				FF6FA64C333BD80369166F9C /* BackupService.swift */,
+				BEAE4AB9DA83682B9BE4851A /* CalculatorEngine.swift */,
 				D50C4DEA6DDBE484CB505052 /* CalendarService.swift */,
 				677C192800FE87ECC35092EC /* DiaryEncryptionService.swift */,
 				AA0863EA110BC965E52DEF48 /* DiaryService.swift */,
@@ -334,6 +339,7 @@
 			children = (
 				A1BF99288F70ED636D3AAB01 /* AIChatView.swift */,
 				666731EAF6AC0A30FB52C0E5 /* AnniversaryView.swift */,
+				7B84A92646B9E0330B2CFE8A /* CalculatorView.swift */,
 				9153CA3BAB1A98A91814C442 /* Components.swift */,
 				5B8C1B44A2A61CA79BD48879 /* ContentView.swift */,
 				F4575EE9184B750B4B671582 /* CreateMaterialView.swift */,
@@ -540,6 +546,8 @@
 				4EA3451D5F3DE0BBCF46CD19 /* AnniversaryView.swift in Sources */,
 				574B9D96A352982436D54469 /* AppState.swift in Sources */,
 				6671313D5F0BFF12947C096F /* BackupService.swift in Sources */,
+				CA362BCE38751F041E72D1F7 /* CalculatorEngine.swift in Sources */,
+				95507A6BD797710A9A25B643 /* CalculatorView.swift in Sources */,
 				6BEAC51EFE84A910F12692E9 /* CalendarService.swift in Sources */,
 				B3FEF150B1EA9E2B81679BB2 /* Components.swift in Sources */,
 				67621F51E84AAAA8AB0E2627 /* ContentView.swift in Sources */,
