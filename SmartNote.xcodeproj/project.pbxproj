@@ -30,6 +30,7 @@
 		41B61849E433C92F3630126A /* LLMConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF8E19044ACFD37E7466B8F /* LLMConfiguration.swift */; };
 		460092FA7B2C9ACC7DBA3C3B /* HabitTrackerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6536CFEF783784FA9E9B460F /* HabitTrackerView.swift */; };
 		46304E5700729E5A7EA51398 /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D249E5C4EC6332AE451B8016 /* StatisticsView.swift */; };
+		55301C1221ED50F4D34DB999 /* WhiteNoiseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50F8DCA0FDB12D7B46B60FF1 /* WhiteNoiseView.swift */; };
 		55B477D0E5CC9109D0EA1F08 /* P2PCreateGroupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CD5397EAC76AC3AFFCD94CB /* P2PCreateGroupView.swift */; };
 		560180335971D299A12416BE /* ReviewPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7882398FAA6EDA889F8A4A6 /* ReviewPlan.swift */; };
 		574B9D96A352982436D54469 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70EA20C8E3AFF5E8F5780261 /* AppState.swift */; };
@@ -75,6 +76,7 @@
 		BDE72A44A8EEA5D1556594A4 /* OCRService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCEEF4F30835C4BD18D390FD /* OCRService.swift */; };
 		BFA43AC7E399FE8ADFB72357 /* P2PModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 095FA7C50DFB7734ED797E8D /* P2PModels.swift */; };
 		C8E9BAE70F67DE4856F1BC45 /* P2PNetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59AD75CCE073CFD5DDE5346A /* P2PNetworkService.swift */; };
+		C98C37D307D876D69A24A506 /* AmbientSoundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC4A5250B396E1FC820AA70 /* AmbientSoundService.swift */; };
 		CB2E8527A33C99E031379221 /* P2PSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB8A0D5710EFF14D4DCAEDD9 /* P2PSettingsView.swift */; };
 		CDCD8F44AA0129195F260CA0 /* FileScannerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6800551BD3F4E594202A9C63 /* FileScannerService.swift */; };
 		CFE3C567BC505E93A8FA5E4A /* P2PAddFriendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9CD2DA9C12FD47108F0A6DC /* P2PAddFriendView.swift */; };
@@ -121,8 +123,10 @@
 		3E90171FD20FC35D9B433345 /* P2PChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PChatView.swift; sourceTree = "<group>"; };
 		41D0E79C54C3F1A34CD32B6E /* P2PSocialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PSocialView.swift; sourceTree = "<group>"; };
 		48DD289F04C084C67319D15A /* SmartNote.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmartNote.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4CC4A5250B396E1FC820AA70 /* AmbientSoundService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmbientSoundService.swift; sourceTree = "<group>"; };
 		4CD5397EAC76AC3AFFCD94CB /* P2PCreateGroupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PCreateGroupView.swift; sourceTree = "<group>"; };
 		50886F601DF21C774F283D54 /* AlgebraEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlgebraEvaluator.swift; sourceTree = "<group>"; };
+		50F8DCA0FDB12D7B46B60FF1 /* WhiteNoiseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiteNoiseView.swift; sourceTree = "<group>"; };
 		52DB2C22BCC415B73BF84A48 /* PomodoroTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroTimer.swift; sourceTree = "<group>"; };
 		59AD75CCE073CFD5DDE5346A /* P2PNetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PNetworkService.swift; sourceTree = "<group>"; };
 		5B8C1B44A2A61CA79BD48879 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -255,6 +259,7 @@
 			isa = PBXGroup;
 			children = (
 				50886F601DF21C774F283D54 /* AlgebraEvaluator.swift */,
+				4CC4A5250B396E1FC820AA70 /* AmbientSoundService.swift */,
 				FF6FA64C333BD80369166F9C /* BackupService.swift */,
 				D50C4DEA6DDBE484CB505052 /* CalendarService.swift */,
 				677C192800FE87ECC35092EC /* DiaryEncryptionService.swift */,
@@ -346,6 +351,7 @@
 				F77F9236E0D091628720FB7A /* TodoStatisticsView.swift */,
 				1634AC2D5BD9559E116C4824 /* WhiteboardCanvasView.swift */,
 				5FF0F9399D305DF370C71A6C /* WhiteBoardView.swift */,
+				50F8DCA0FDB12D7B46B60FF1 /* WhiteNoiseView.swift */,
 				C2679F36366EF4AB15F14DAD /* WrongQuestionView.swift */,
 				C96737D8EEF3BD72484731DB /* Components */,
 				27539AF4A4F7E9D89EFA5157 /* Social */,
@@ -504,6 +510,7 @@
 			files = (
 				E6313AD984EC773F2474EF1D /* AIChatView.swift in Sources */,
 				40D8F5530409BB0A1D42322C /* AlgebraEvaluator.swift in Sources */,
+				C98C37D307D876D69A24A506 /* AmbientSoundService.swift in Sources */,
 				574B9D96A352982436D54469 /* AppState.swift in Sources */,
 				6671313D5F0BFF12947C096F /* BackupService.swift in Sources */,
 				6BEAC51EFE84A910F12692E9 /* CalendarService.swift in Sources */,
@@ -586,6 +593,7 @@
 				9CAE744DBC6BBC7B711611D4 /* UpdateService.swift in Sources */,
 				AADD190F79B79514A050BD7B /* UserLearningProfile.swift in Sources */,
 				26E36D156DF354C79863FC60 /* WhiteBoardView.swift in Sources */,
+				55301C1221ED50F4D34DB999 /* WhiteNoiseView.swift in Sources */,
 				3A67E92D2163F2CB2D2AE96D /* Whiteboard.swift in Sources */,
 				FBDF823AB16E3F98FB9970D4 /* WhiteboardCanvasView.swift in Sources */,
 				401FEEFEBD57E1CE1F49D5D8 /* WhiteboardService.swift in Sources */,

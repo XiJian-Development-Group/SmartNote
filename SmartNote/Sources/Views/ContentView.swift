@@ -155,6 +155,10 @@ struct SidebarView: View {
                     Label("文件加密", systemImage: "lock.doc.fill")
                 }
 
+                NavigationLink(value: 23) {
+                    Label("白噪音", systemImage: "speaker.wave.3.fill")
+                }
+
                 NavigationLink(value: 14) {
                     Label("重复清理", systemImage: "doc.on.doc")
                 }
@@ -217,6 +221,8 @@ struct DetailView: View {
                 HabitTrackerView()
             case 22:
                 FileCryptoView()
+            case 23:
+                WhiteNoiseView()
             default:
                 MaterialsListView()
             }
