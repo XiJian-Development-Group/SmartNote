@@ -4,6 +4,20 @@ import CoreGraphics
 import PDFKit
 
 class PDFService {
+    /// 从 PDF 文件中提取纯文本（按页拼接）。
+    /// - Returns: 拼接后的文本；nil = 解析失败或文件不是 PDF
+    func extractText(from url: URL) -> String? {
+        guard let pdf = PDFDocument(url: url) else { return nil }
+        var out = ""
+        for i in 0..<pdf.pageCount {
+            if let page = pdf.page(at: i), let s = page.string {
+                if !out.isEmpty { out += "\n" }
+                out += s
+            }
+        }
+        return out.isEmpty ? nil : out
+    }
+
     static func generateQuestionsPDF(questions: String, title: String, subject: String) -> URL? {
         let pageWidth: CGFloat = 595.2
         let pageHeight: CGFloat = 841.8
