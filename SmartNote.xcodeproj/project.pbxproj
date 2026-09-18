@@ -62,6 +62,7 @@
 		9EAAEA806753371A2E8B9F45 /* P2PGroupChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 724DA84529F331AACFD369EA /* P2PGroupChatView.swift */; };
 		9FD3F4890BD41A5194537223 /* TodoStatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F77F9236E0D091628720FB7A /* TodoStatisticsView.swift */; };
 		A04052BAA18BF67F53334614 /* PDFAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01B9E1AAB643D41A88EFF1E8 /* PDFAnnotation.swift */; };
+		A2966072D593B09B5E5F57C9 /* LearningPreferenceAutoTuner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F7C84D4C3172F01CA4E7215 /* LearningPreferenceAutoTuner.swift */; };
 		A6538E9AE726EB1B6A0A139A /* PDFAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E52D5CE99C2649DE472BDD06 /* PDFAnnotationView.swift */; };
 		A83592B1242E65D43DD45C35 /* CreateMaterialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4575EE9184B750B4B671582 /* CreateMaterialView.swift */; };
 		A8DC49BD20C525E43FE77C09 /* DuplicateScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83656D0505253324AD314B29 /* DuplicateScanner.swift */; };
@@ -136,6 +137,7 @@
 		724DA84529F331AACFD369EA /* P2PGroupChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PGroupChatView.swift; sourceTree = "<group>"; };
 		73DA60CFB77A276CCCB9BCD1 /* SmartNote.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SmartNote.entitlements; sourceTree = "<group>"; };
 		75B7484EF8E90D3649A6A5FA /* MaterialsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialsListView.swift; sourceTree = "<group>"; };
+		7F7C84D4C3172F01CA4E7215 /* LearningPreferenceAutoTuner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningPreferenceAutoTuner.swift; sourceTree = "<group>"; };
 		81E7459E7FE5DC39CDD074EA /* LearningProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningProfileSettingsView.swift; sourceTree = "<group>"; };
 		83656D0505253324AD314B29 /* DuplicateScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateScanner.swift; sourceTree = "<group>"; };
 		83D3416A6F06F0A71B9E8C68 /* WrongQuestion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongQuestion.swift; sourceTree = "<group>"; };
@@ -267,6 +269,7 @@
 				C1CBA1BA3BF23D2680740DCD /* KeywordExtractionService.swift */,
 				5C46EB71CC98B2EB3FDFE9A6 /* LaunchAtLoginService.swift */,
 				EDECE7F741B10883BAD49248 /* LearningAnalysisService.swift */,
+				7F7C84D4C3172F01CA4E7215 /* LearningPreferenceAutoTuner.swift */,
 				F3552CF8976544956A158CCD /* LLMService.swift */,
 				01A74D231E413B5F996B5308 /* NotificationService.swift */,
 				CCEEF4F30835C4BD18D390FD /* OCRService.swift */,
@@ -538,6 +541,7 @@
 				01278A3F060B847D549DDE83 /* LLMSettingsView.swift in Sources */,
 				998BF9DC4BA7AFE119F197BC /* LaunchAtLoginService.swift in Sources */,
 				38F0C9833BC554FEC874B39C /* LearningAnalysisService.swift in Sources */,
+				A2966072D593B09B5E5F57C9 /* LearningPreferenceAutoTuner.swift in Sources */,
 				FF6F66BF60F7910C14210550 /* LearningProfileSettingsView.swift in Sources */,
 				3892090038E102693EDA7002 /* MarkdownView.swift in Sources */,
 				E38E22182C6E3505A22E7BCF /* MaterialDetailView.swift in Sources */,

@@ -76,6 +76,18 @@ class LearningAnalysisService: ObservableObject {
         currentProfile.characteristics = characteristics
         storageService.saveLearningProfile(currentProfile)
     }
+
+    /// 本地启发式调优（不调 LLM）。把结果合并进当前 profile。
+    @discardableResult
+    func autoTuneLocally(mergeMode: LearningPreferenceAutoTuner.MergeMode = .fillMissing) -> LearningPreferenceAutoTuner.Suggestion {
+        let tuner = LearningPreferenceAutoTuner(storage: storageService)
+        let suggestion = tuner.generateSuggestion()
+        var p = currentProfile
+        tuner.applyAutoTuning(to: &p, suggestion: suggestion, mergeMode: mergeMode)
+        currentProfile = p
+        storageService.saveLearningProfile(p)
+        return suggestion
+    }
     
     private func performAnalysis() async {
         guard currentProfile.isEnabled else { return }

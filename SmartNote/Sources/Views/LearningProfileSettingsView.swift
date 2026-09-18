@@ -4,7 +4,8 @@ struct LearningProfileSettingsView: View {
     @EnvironmentObject var appState: AppState
     @State private var profile: UserLearningProfile
     @State private var isRefreshing = false
-    
+    @State private var lastAutoTuneSummary: String = ""
+
     init() {
         _profile = State(initialValue: LearningAnalysisService.shared.currentProfile)
     }
@@ -32,7 +33,7 @@ struct LearningProfileSettingsView: View {
                             Text(frequency.description).tag(frequency)
                         }
                     }
-                    
+
                     HStack {
                         Button {
                             refreshNow()
@@ -46,14 +47,29 @@ struct LearningProfileSettingsView: View {
                             }
                         }
                         .disabled(isRefreshing || !appState.llmConfiguration.enabled)
-                        
+
+                        Button {
+                            runLocalAutoTune()
+                        } label: {
+                            Label("本地启发式调优", systemImage: "wand.and.stars")
+                        }
+                        .help("不调 LLM，本地从资料 / 错题 / 复习计划中提取薄弱科目与近期话题。")
+                        .disabled(appState.materials.isEmpty)
+
                         Spacer()
-                        
+
                         if let lastDate = profile.lastAnalysisDate {
                             Text("上次: \(lastDate, formatter: dateFormatter)")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
+                    }
+
+                    if !lastAutoTuneSummary.isEmpty {
+                        Text(lastAutoTuneSummary)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.vertical, 4)
                     }
                 }
             }
@@ -170,6 +186,17 @@ struct LearningProfileSettingsView: View {
                 profile = appState.learningAnalysisService.currentProfile
             }
         }
+    }
+
+    private func runLocalAutoTune() {
+        let suggestion = appState.learningAnalysisService.autoTuneLocally()
+        profile = appState.learningAnalysisService.currentProfile
+        var parts: [String] = []
+        if !suggestion.weakSubjects.isEmpty { parts.append("薄弱：\(suggestion.weakSubjects.joined(separator: "、"))") }
+        if !suggestion.strongSubjects.isEmpty { parts.append("擅长：\(suggestion.strongSubjects.joined(separator: "、"))") }
+        if !suggestion.recentTopics.isEmpty { parts.append("近期：\(suggestion.recentTopics.prefix(3).joined(separator: "、"))") }
+        parts.append("推荐记忆类型：\(suggestion.suggestedMemoryType.description)")
+        lastAutoTuneSummary = parts.joined(separator: "  ")
     }
 }
 
