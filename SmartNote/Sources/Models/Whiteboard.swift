@@ -68,7 +68,16 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
     case line(LineShape)
     case arrow(ArrowShape)
     case text(TextShape)
-    
+    // 几何画板扩展（v1.7+）
+    case point(PointShape)
+    case circle(CircleShape)
+    case arc(ArcShape)
+    case polygon(PolygonShape)
+    case functionPlot(FunctionPlotShape)
+    case parametricPlot(ParametricPlotShape)
+    case polarPlot(PolarPlotShape)
+    case measurement(MeasurementMarkerShape)
+
     var id: UUID {
         switch self {
         case .stroke(let s): return s.id
@@ -78,9 +87,17 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .line(let s): return s.id
         case .arrow(let s): return s.id
         case .text(let s): return s.id
+        case .point(let s): return s.id
+        case .circle(let s): return s.id
+        case .arc(let s): return s.id
+        case .polygon(let s): return s.id
+        case .functionPlot(let s): return s.id
+        case .parametricPlot(let s): return s.id
+        case .polarPlot(let s): return s.id
+        case .measurement(let s): return s.id
         }
     }
-    
+
     var boundingRect: WhiteboardRect {
         switch self {
         case .stroke(let s): return s.boundingRect
@@ -90,9 +107,17 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .line(let s): return s.boundingRect
         case .arrow(let s): return s.boundingRect
         case .text(let s): return s.boundingRect
+        case .point(let s): return s.boundingRect
+        case .circle(let s): return s.boundingRect
+        case .arc(let s): return s.boundingRect
+        case .polygon(let s): return s.boundingRect
+        case .functionPlot(let s): return s.boundingRect
+        case .parametricPlot(let s): return s.boundingRect
+        case .polarPlot(let s): return s.boundingRect
+        case .measurement(let s): return s.boundingRect
         }
     }
-    
+
     var zIndex: Int {
         switch self {
         case .stroke(let s): return s.zIndex
@@ -102,9 +127,17 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .line(let s): return s.zIndex
         case .arrow(let s): return s.zIndex
         case .text(let s): return s.zIndex
+        case .point(let s): return s.zIndex
+        case .circle(let s): return s.zIndex
+        case .arc(let s): return s.zIndex
+        case .polygon(let s): return s.zIndex
+        case .functionPlot(let s): return s.zIndex
+        case .parametricPlot(let s): return s.zIndex
+        case .polarPlot(let s): return s.zIndex
+        case .measurement(let s): return s.zIndex
         }
     }
-    
+
     var color: WhiteboardColor {
         switch self {
         case .stroke(let s): return s.color
@@ -114,9 +147,17 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .line(let s): return s.color
         case .arrow(let s): return s.color
         case .text(let s): return s.color
+        case .point(let s): return s.color
+        case .circle(let s): return s.color
+        case .arc(let s): return s.color
+        case .polygon(let s): return s.color
+        case .functionPlot(let s): return s.color
+        case .parametricPlot(let s): return s.color
+        case .polarPlot(let s): return s.color
+        case .measurement(let s): return s.color
         }
     }
-    
+
     var strokeWidth: Double {
         switch self {
         case .stroke(let s): return s.strokeWidth
@@ -126,9 +167,17 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .line(let s): return s.strokeWidth
         case .arrow(let s): return s.strokeWidth
         case .text: return 0
+        case .point(let s): return s.strokeWidth
+        case .circle(let s): return s.strokeWidth
+        case .arc(let s): return s.strokeWidth
+        case .polygon(let s): return s.strokeWidth
+        case .functionPlot(let s): return s.strokeWidth
+        case .parametricPlot(let s): return s.strokeWidth
+        case .polarPlot(let s): return s.strokeWidth
+        case .measurement(let s): return s.strokeWidth
         }
     }
-    
+
     var fillStyle: FillStyle {
         switch self {
         case .stroke(let s): return .none
@@ -138,19 +187,29 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .line: return .none
         case .arrow: return .none
         case .text: return .none
+        case .point(let s): return s.fillStyle
+        case .circle(let s): return s.fillStyle
+        case .arc: return .none
+        case .polygon(let s): return s.fillStyle
+        case .functionPlot: return .none
+        case .parametricPlot: return .none
+        case .polarPlot: return .none
+        case .measurement: return .none
         }
     }
-    
+
     /// 该形状的独立填充色（nil = 使用笔划色）
     var fillColor: WhiteboardColor? {
         switch self {
         case .rectangle(let s): return s.fillColor
         case .ellipse(let s): return s.fillColor
         case .triangle(let s): return s.fillColor
+        case .circle(let s): return s.fillColor
+        case .polygon(let s): return s.fillColor
         default: return nil
         }
     }
-    
+
     func contains(_ point: WhiteboardPoint) -> Bool {
         switch self {
         case .stroke(let s): return s.contains(point)
@@ -160,6 +219,14 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .line(let s): return s.contains(point)
         case .arrow(let s): return s.contains(point)
         case .text(let s): return s.contains(point)
+        case .point(let s): return s.contains(point)
+        case .circle(let s): return s.contains(point)
+        case .arc(let s): return s.contains(point)
+        case .polygon(let s): return s.contains(point)
+        case .functionPlot(let s): return s.boundingRect.contains(point)
+        case .parametricPlot: return false
+        case .polarPlot: return false
+        case .measurement(let s): return s.contains(point)
         }
     }
 }
@@ -867,9 +934,18 @@ enum WhiteboardTool: String, CaseIterable, Identifiable, Codable {
     case arrow
     case text
     case eraser
-    
+    // 几何画板扩展（v1.7+）
+    case point
+    case circle
+    case arc
+    case polygon
+    case functionPlot
+    case parametricPlot
+    case polarPlot
+    case measure
+
     var id: String { rawValue }
-    
+
     var displayName: String {
         switch self {
         case .select: return "选择"
@@ -881,9 +957,17 @@ enum WhiteboardTool: String, CaseIterable, Identifiable, Codable {
         case .arrow: return "箭头"
         case .text: return "文字"
         case .eraser: return "橡皮"
+        case .point: return "点"
+        case .circle: return "圆"
+        case .arc: return "弧"
+        case .polygon: return "多边形"
+        case .functionPlot: return "函数图"
+        case .parametricPlot: return "参数方程"
+        case .polarPlot: return "极坐标"
+        case .measure: return "测量"
         }
     }
-    
+
     var icon: String {
         switch self {
         case .select: return "cursorarrow"
@@ -895,6 +979,31 @@ enum WhiteboardTool: String, CaseIterable, Identifiable, Codable {
         case .arrow: return "arrow.up.right"
         case .text: return "textformat"
         case .eraser: return "eraser"
+        case .point: return "circle.fill"
+        case .circle: return "circle.dashed"
+        case .arc: return "circle.dotted"
+        case .polygon: return "hexagon"
+        case .functionPlot: return "function"
+        case .parametricPlot: return "tornado"
+        case .polarPlot: return "rosette"
+        case .measure: return "ruler"
+        }
+    }
+
+    /// 工具分类，便于左右工具栏分组
+    enum Category {
+        case freehand    // 画笔/橡皮
+        case shape       // 传统图形
+        case geometry    // 几何画板
+        case measure     // 测量
+    }
+
+    var category: Category {
+        switch self {
+        case .pen, .eraser, .select: return .freehand
+        case .line, .rectangle, .ellipse, .triangle, .arrow, .text: return .shape
+        case .point, .circle, .arc, .polygon, .functionPlot, .parametricPlot, .polarPlot: return .geometry
+        case .measure: return .measure
         }
     }
 }

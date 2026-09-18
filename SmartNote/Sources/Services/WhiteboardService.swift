@@ -201,6 +201,14 @@ class WhiteboardService: ObservableObject {
         case .line(let l): return .line(l.translated(by: offset))
         case .arrow(let a): return .arrow(a.translated(by: offset))
         case .text(let t): return .text(t.translated(by: offset))
+        case .point(let s): return .point(s.translated(by: offset))
+        case .circle(let s): return .circle(s.translated(by: offset))
+        case .arc(let s): return .arc(s.translated(by: offset))
+        case .polygon(let s): return .polygon(s.translated(by: offset))
+        case .functionPlot(let s): return .functionPlot(s.translated(by: offset))
+        case .parametricPlot(let s): return .parametricPlot(s.translated(by: offset))
+        case .polarPlot(let s): return .polarPlot(s.translated(by: offset))
+        case .measurement(let s): return .measurement(s.translated(by: offset))
         }
     }
     
@@ -242,6 +250,30 @@ class WhiteboardService: ObservableObject {
             case .text(var s):
                 s.id = UUID()
                 copied.append(.text(s.translated(by: offset)))
+            case .point(var s):
+                s.id = UUID()
+                copied.append(.point(s.translated(by: offset)))
+            case .circle(var s):
+                s.id = UUID()
+                copied.append(.circle(s.translated(by: offset)))
+            case .arc(var s):
+                s.id = UUID()
+                copied.append(.arc(s.translated(by: offset)))
+            case .polygon(var s):
+                s.id = UUID()
+                copied.append(.polygon(s.translated(by: offset)))
+            case .functionPlot(var s):
+                s.id = UUID()
+                copied.append(.functionPlot(s.translated(by: offset)))
+            case .parametricPlot(var s):
+                s.id = UUID()
+                copied.append(.parametricPlot(s.translated(by: offset)))
+            case .polarPlot(var s):
+                s.id = UUID()
+                copied.append(.polarPlot(s.translated(by: offset)))
+            case .measurement(var s):
+                s.id = UUID()
+                copied.append(.measurement(s.translated(by: offset)))
             }
         }
         addObjects(copied)

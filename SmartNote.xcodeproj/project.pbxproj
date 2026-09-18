@@ -14,6 +14,7 @@
 		0CB88EC66EFF82034EC22064 /* P2PService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35933360A6AA6EE2A69BEFD4 /* P2PService.swift */; };
 		0D3AA91BBAC72021E2F85522 /* TodoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B4D9C3200C34A11A49F9FD4 /* TodoService.swift */; };
 		137C3BB73D6E4E4BBFCBFD50 /* DuplicateScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84839B0FC350C553762798B0 /* DuplicateScannerView.swift */; };
+		1734AF92A02F60108826B9A5 /* GeometryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9464589DFE947D8322A0AD6B /* GeometryModel.swift */; };
 		259D26655254DCD43393EFBB /* ThumbnailProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF7CBC0492E3C8A63E9E7691 /* ThumbnailProvider.swift */; };
 		268DDF1724C0158B44778F82 /* DiaryEncryptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 677C192800FE87ECC35092EC /* DiaryEncryptionService.swift */; };
 		26E36D156DF354C79863FC60 /* WhiteBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF0F9399D305DF370C71A6C /* WhiteBoardView.swift */; };
@@ -25,6 +26,7 @@
 		38F0C9833BC554FEC874B39C /* LearningAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDECE7F741B10883BAD49248 /* LearningAnalysisService.swift */; };
 		3A67E92D2163F2CB2D2AE96D /* Whiteboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 894FE930FEE63A60AD1A8934 /* Whiteboard.swift */; };
 		401FEEFEBD57E1CE1F49D5D8 /* WhiteboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C503288E45F021D992D5259D /* WhiteboardService.swift */; };
+		40D8F5530409BB0A1D42322C /* AlgebraEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50886F601DF21C774F283D54 /* AlgebraEvaluator.swift */; };
 		41B61849E433C92F3630126A /* LLMConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF8E19044ACFD37E7466B8F /* LLMConfiguration.swift */; };
 		460092FA7B2C9ACC7DBA3C3B /* HabitTrackerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6536CFEF783784FA9E9B460F /* HabitTrackerView.swift */; };
 		46304E5700729E5A7EA51398 /* StatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D249E5C4EC6332AE451B8016 /* StatisticsView.swift */; };
@@ -119,6 +121,7 @@
 		41D0E79C54C3F1A34CD32B6E /* P2PSocialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PSocialView.swift; sourceTree = "<group>"; };
 		48DD289F04C084C67319D15A /* SmartNote.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmartNote.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4CD5397EAC76AC3AFFCD94CB /* P2PCreateGroupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PCreateGroupView.swift; sourceTree = "<group>"; };
+		50886F601DF21C774F283D54 /* AlgebraEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlgebraEvaluator.swift; sourceTree = "<group>"; };
 		52DB2C22BCC415B73BF84A48 /* PomodoroTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroTimer.swift; sourceTree = "<group>"; };
 		59AD75CCE073CFD5DDE5346A /* P2PNetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PNetworkService.swift; sourceTree = "<group>"; };
 		5B8C1B44A2A61CA79BD48879 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -144,6 +147,7 @@
 		8D7073CBB84285BA6FACD1F5 /* Habit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Habit.swift; sourceTree = "<group>"; };
 		9153CA3BAB1A98A91814C442 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		92C67150FE8E22E2AEAC4C82 /* KeyPointsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyPointsView.swift; sourceTree = "<group>"; };
+		9464589DFE947D8322A0AD6B /* GeometryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryModel.swift; sourceTree = "<group>"; };
 		A1BF99288F70ED636D3AAB01 /* AIChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatView.swift; sourceTree = "<group>"; };
 		AA0863EA110BC965E52DEF48 /* DiaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryService.swift; sourceTree = "<group>"; };
 		AE6B781C89797E2A26CB86A2 /* TodoListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoListView.swift; sourceTree = "<group>"; };
@@ -248,6 +252,7 @@
 		587C09E74F9FBADEAE05595B /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				50886F601DF21C774F283D54 /* AlgebraEvaluator.swift */,
 				FF6FA64C333BD80369166F9C /* BackupService.swift */,
 				D50C4DEA6DDBE484CB505052 /* CalendarService.swift */,
 				677C192800FE87ECC35092EC /* DiaryEncryptionService.swift */,
@@ -359,6 +364,7 @@
 				63B827EA762FC4151DBAED5F /* Diary.swift */,
 				BF69A8C2FBED9C695F7D3F91 /* ExamCountdown.swift */,
 				E16F5008A6E6C57E3DCF9CC0 /* FlashCard.swift */,
+				9464589DFE947D8322A0AD6B /* GeometryModel.swift */,
 				8D7073CBB84285BA6FACD1F5 /* Habit.swift */,
 				BEF8E19044ACFD37E7466B8F /* LLMConfiguration.swift */,
 				095FA7C50DFB7734ED797E8D /* P2PModels.swift */,
@@ -494,6 +500,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E6313AD984EC773F2474EF1D /* AIChatView.swift in Sources */,
+				40D8F5530409BB0A1D42322C /* AlgebraEvaluator.swift in Sources */,
 				574B9D96A352982436D54469 /* AppState.swift in Sources */,
 				6671313D5F0BFF12947C096F /* BackupService.swift in Sources */,
 				6BEAC51EFE84A910F12692E9 /* CalendarService.swift in Sources */,
@@ -519,6 +526,7 @@
 				F50B5F6181F691E1DF61BDFA /* FlashCardView.swift in Sources */,
 				E5FE28187FFF047A3A7D2AFE /* FlowLayout.swift in Sources */,
 				06DDF901E2848FD484DD0C57 /* FocusModeService.swift in Sources */,
+				1734AF92A02F60108826B9A5 /* GeometryModel.swift in Sources */,
 				AA896DAFCA3BCD7B8C1FB398 /* Habit.swift in Sources */,
 				78869D9414CB1FFE8E0DA398 /* HabitService.swift in Sources */,
 				460092FA7B2C9ACC7DBA3C3B /* HabitTrackerView.swift in Sources */,
