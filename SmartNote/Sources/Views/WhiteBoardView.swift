@@ -20,16 +20,20 @@ struct WhiteboardView: View {
     @State private var showFunctionSheet: Bool = false
     @State private var showParametricSheet: Bool = false
     @State private var showPolarSheet: Bool = false
+    // 测量工具选中的目标（顺序敏感：角度测量顶点在中间）
+    @State private var measureTargets: [UUID] = []
+    // 画布尺寸（用于把新插入的曲线定位到当前视口中心）
+    @State private var canvasSize: CGSize = .zero
 
     // 函数图输入面板的临时状态
     @State private var functionFormula: String = "sin(x)"
     @State private var functionXMin: Double = -10
     @State private var functionXMax: Double = 10
-    @State private var parametricFx: String = "cos(t)"
-    @State private var parametricFy: String = "sin(t)"
+    @State private var parametricFx: String = "10*cos(t)"
+    @State private var parametricFy: String = "10*sin(t)"
     @State private var parametricTMin: Double = 0
     @State private var parametricTMax: Double = .pi * 2
-    @State private var polarFormula: String = "2 * sin(5*theta)"
+    @State private var polarFormula: String = "10 * sin(5*theta)"
     @State private var polarThetaMin: Double = 0
     @State private var polarThetaMax: Double = .pi * 2
     @State private var plotInsertError: String?
@@ -60,7 +64,11 @@ struct WhiteboardView: View {
                             offset: $offset,
                             selectedIDs: $selectedIDs,
                             isOptionKeyPressed: $isOptionKeyPressed,
-                            canvasSize: .zero
+                            showFunctionSheet: $showFunctionSheet,
+                            showParametricSheet: $showParametricSheet,
+                            showPolarSheet: $showPolarSheet,
+                            measureTargets: $measureTargets,
+                            canvasSize: canvasSize
                         )
                     } else {
                         emptyStateView
@@ -75,6 +83,13 @@ struct WhiteboardView: View {
                         }
                     }
                 }
+                .background(
+                    GeometryReader { geo in
+                        Color.clear
+                            .onAppear { canvasSize = geo.size }
+                            .onChange(of: geo.size) { _, newSize in canvasSize = newSize }
+                    }
+                )
                 Divider()
                 
                 // 右侧属性面板
@@ -244,7 +259,11 @@ struct WhiteboardView: View {
                 ToolButton(
                     tool: t,
                     isActive: tool == t && !isOptionKeyPressed,
-                    action: { tool = t }
+                    action: {
+                        tool = t
+                        // 切走工具时清空测量目标，避免残留高亮
+                        if t != .measure { measureTargets.removeAll() }
+                    }
                 )
             }
             
@@ -340,6 +359,39 @@ struct WhiteboardView: View {
                 }
             }
             
+            // 测量（选中测量工具时才显示）
+            if tool == .measure {
+                propertySection(title: "测量", icon: "ruler") {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(measureTargets.isEmpty
+                             ? "依次点击对象加入目标；再点击可移出"
+                             : "已选 \(measureTargets.count) 个目标")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        Button("测量距离（需 2 个目标）") {
+                            createMeasurement(.length)
+                        }
+                        .disabled(measureTargets.count != 2)
+
+                        Button("测量角度（需 3 个目标，顶点在中间）") {
+                            createMeasurement(.angle)
+                        }
+                        .disabled(measureTargets.count != 3)
+
+                        Button("测量面积（需 1 个闭合图形）") {
+                            createMeasurement(.area)
+                        }
+                        .disabled(measureTargets.count != 1)
+
+                        Button("清空目标") {
+                            measureTargets.removeAll()
+                        }
+                        .disabled(measureTargets.isEmpty)
+                    }
+                }
+            }
+
             // 缩放控制
             propertySection(title: "缩放", icon: "magnifyingglass") {
                 VStack(alignment: .leading, spacing: 6) {
@@ -529,7 +581,7 @@ struct WhiteboardView: View {
     private var functionInputSheet: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("插入函数图").font(.headline)
-            Text("支持 + - * / ^、sin/cos/tan/log/ln/sqrt/abs/exp、常量 pi/e")
+            Text("支持 + - * / ^ %、sin/cos/tan/asin/acos/atan、ln(自然)/log/log10/lg、sqrt/abs/exp/floor/ceil/round、min/max/pow、常量 pi/e；也可写成 y = sin(x)")
                 .font(.caption).foregroundColor(.secondary)
             TextField("y = … 例如 sin(x)", text: $functionFormula)
                 .textFieldStyle(.roundedBorder)
@@ -626,32 +678,112 @@ struct WhiteboardView: View {
         .frame(width: 460)
     }
 
+    /// 当前视口中心对应的世界坐标：新曲线默认插在这里，避免落到可视区域之外
+    private var viewCenterWorld: WhiteboardPoint {
+        guard canvasSize.width > 1, canvasSize.height > 1 else {
+            return WhiteboardPoint(x: 400, y: 300)
+        }
+        return WhiteboardPoint(x: (canvasSize.width / 2 - offset.width) / zoom,
+                               y: (canvasSize.height / 2 - offset.height) / zoom)
+    }
+
     private func insertFunctionPlot() {
-        let shape = FunctionPlotShape(formula: functionFormula, xMin: functionXMin, xMax: functionXMax, samples: 256, color: currentColor, strokeWidth: max(1.5, strokeWidth))
-        if (try? AlgebraEvaluator.evaluate(functionFormula, variables: ["x": 0])) == nil {
-            plotInsertError = "表达式解析失败，请检查语法"
+        guard functionXMin < functionXMax else {
+            plotInsertError = "x 区间无效：需满足 min < max"
             return
         }
-        _ = AlgebraEvaluator.sampleY(functionFormula, xRange: functionXMin...functionXMax, samples: 32)
+        do {
+            try AlgebraEvaluator.validate(functionFormula, allowedVariables: ["x"])
+        } catch {
+            plotInsertError = error.localizedDescription
+            return
+        }
+        guard !AlgebraEvaluator.sampleY(functionFormula, xRange: functionXMin...functionXMax, samples: 32).isEmpty else {
+            plotInsertError = "该区间内没有有效取值"
+            return
+        }
+        let shape = FunctionPlotShape(formula: functionFormula, xMin: functionXMin, xMax: functionXMax,
+                                      samples: 256, color: currentColor, strokeWidth: max(1.5, strokeWidth),
+                                      origin: viewCenterWorld)
         service.addObject(.functionPlot(shape))
         showFunctionSheet = false
         plotInsertError = nil
     }
 
     private func insertParametricPlot() {
-        let shape = ParametricPlotShape(fx: parametricFx, fy: parametricFy, tMin: parametricTMin, tMax: parametricTMax, samples: 256, color: currentColor, strokeWidth: max(1.5, strokeWidth))
-        _ = AlgebraEvaluator.sampleParametric(fx: parametricFx, fy: parametricFy, tRange: parametricTMin...parametricTMax, samples: 16)
+        guard parametricTMin < parametricTMax else {
+            plotInsertError = "t 区间无效：需满足 min < max"
+            return
+        }
+        do {
+            try AlgebraEvaluator.validate(parametricFx, allowedVariables: ["t"])
+            try AlgebraEvaluator.validate(parametricFy, allowedVariables: ["t"])
+        } catch {
+            plotInsertError = error.localizedDescription
+            return
+        }
+        guard !AlgebraEvaluator.sampleParametric(fx: parametricFx, fy: parametricFy,
+                                                 tRange: parametricTMin...parametricTMax, samples: 32).isEmpty else {
+            plotInsertError = "该区间内没有有效取值"
+            return
+        }
+        let shape = ParametricPlotShape(fx: parametricFx, fy: parametricFy,
+                                        tMin: parametricTMin, tMax: parametricTMax,
+                                        samples: 256, color: currentColor, strokeWidth: max(1.5, strokeWidth),
+                                        origin: viewCenterWorld)
         service.addObject(.parametricPlot(shape))
         showParametricSheet = false
         plotInsertError = nil
     }
 
     private func insertPolarPlot() {
-        let shape = PolarPlotShape(r: polarFormula, thetaMin: polarThetaMin, thetaMax: polarThetaMax, samples: 256, color: currentColor, strokeWidth: max(1.5, strokeWidth))
-        _ = AlgebraEvaluator.samplePolar(r: polarFormula, thetaRange: polarThetaMin...polarThetaMax, samples: 16)
+        guard polarThetaMin < polarThetaMax else {
+            plotInsertError = "θ 区间无效：需满足 min < max"
+            return
+        }
+        do {
+            try AlgebraEvaluator.validate(polarFormula, allowedVariables: ["theta"])
+        } catch {
+            plotInsertError = error.localizedDescription
+            return
+        }
+        guard !AlgebraEvaluator.samplePolar(r: polarFormula, thetaRange: polarThetaMin...polarThetaMax, samples: 32).isEmpty else {
+            plotInsertError = "该区间内没有有效取值"
+            return
+        }
+        let shape = PolarPlotShape(r: polarFormula, thetaMin: polarThetaMin, thetaMax: polarThetaMax,
+                                   samples: 256, color: currentColor, strokeWidth: max(1.5, strokeWidth),
+                                   origin: viewCenterWorld)
         service.addObject(.polarPlot(shape))
         showPolarSheet = false
         plotInsertError = nil
+    }
+
+    // MARK: - 测量
+
+    /// 把当前测量目标落成一个测量标记
+    private func createMeasurement(_ kind: MeasurementKind) {
+        guard let doc = service.currentDocument else { return }
+        let required: Int
+        switch kind {
+        case .length: required = 2
+        case .angle: required = 3
+        case .area: required = 1
+        }
+        guard measureTargets.count == required else { return }
+        let targets = measureTargets.compactMap { id in doc.objects.first(where: { $0.id == id }) }
+        guard targets.count == required else {
+            // 部分目标已被删除：只保留仍存在的 ID
+            measureTargets = targets.map(\.id)
+            return
+        }
+        // 标签放在第一个目标上方
+        let first = targets[0].boundingRect.center
+        let marker = MeasurementMarkerShape(kind: kind,
+                                            targetIDs: measureTargets,
+                                            position: WhiteboardPoint(x: first.x, y: first.y - 40))
+        service.addObject(.measurement(marker))
+        measureTargets.removeAll()
     }
 }
 

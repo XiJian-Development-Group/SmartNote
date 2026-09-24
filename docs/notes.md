@@ -23,7 +23,7 @@
 | 纪念日 | `EventKit` (EKEvent) 在路上；当前用 `UNUserNotificationCenter` | 还没接 EKEvent |
 | 提醒推送 | `UserNotifications` (`UNUserNotificationCenter`) | 提前 X 天通知 |
 | 白噪音 | `AVFoundation` (`AVAudioEngine` + `AVAudioPlayerNode`) | 本地资源 + 用户导入 |
-| 函数绘图 | `SwiftUI` Canvas + `Foundation` `NSExpression` 数学 | 不引 CorePlot 等 |
+| 函数绘图 | `SwiftUI` Canvas + 自研表达式求值器（tokenize + 递归下降） | 不引 CorePlot 等 |
 | AI 视觉 | `URLSession` + `AppKit` `NSImage` + `NSBitmapImageRep` | 仅 OpenAI / Anthropic 多模态 |
 | 倒数纪念日 | `Foundation.Calendar` + `UNUserNotificationCenter` | 不引第三方日期库 |
 | 星空动画 | `SwiftUI` `TimelineView` + `Canvas` | 粒子系统本地绘制 |
@@ -95,18 +95,28 @@
 
 - 新增 8 个 Shape 类型（点 / 圆 / 弧 / 多边形 / 函数图 / 参数方程 / 极坐标 / 测量标记），全部继承 `WhiteboardShape` 协议。
 - 旧 whiteboards.json 兼容：Codable enum 加 case 默认兼容（Swift 不知道的 case 反序列化时丢失，但不影响其他对象）。
-- 代数求值走 Foundation NSExpression：
-  - 用 `^` → `**`（NSExpression 内置 power 运算符）
-  - `ln` → `log`（NSExpression 的 log 默认即自然对数）
-  - 不支持嵌套函数中的 `^` token，但我党已加状态机；目前只支持简单两层
-- 函数图 / 参数 / 极坐标通过顶部菜单 "插入" 弹 sheet 输入；不占用 canvas drag。
+- 代数求值已弃用 NSExpression，改为自研 tokenizer + 递归下降 parser（`AlgebraEvaluator`）：
+  - 原因：NSExpression 抛的是 ObjC 异常，Swift `catch` 接不住——`sin(x)`、`1+`、`y = …` 前缀等输入直接崩溃（探针实测 exit=134）；且 `pi`/`e` 常量返回 nil、`ln` 被误映射成 log10。
+  - 现支持 `^`/`**` 幂（右结合）、`sin/cos/tan` 及反三角、`log/log10/lg/log2/ln`、`sqrt/cbrt/abs/exp/floor/ceil/round/trunc/pow/mod/atan2/hypot/min/max`、常量 `pi`/`e`、科学计数、`y = ` 定义式前缀剥除。
+  - 非法输入一律抛 `.parseFailed`，UI 显示"表达式无效：…"，不再崩溃。
+- 函数图 / 参数 / 极坐标通过顶部菜单 "插入" 弹 sheet 输入；左侧对应工具在画布上单击也会弹同一个 sheet，不占用 canvas drag。
+- 曲线类 Shape（函数图 / 参数 / 极坐标）新增 `origin: WhiteboardPoint?`（可选字段，旧 whiteboards.json 反序列化不受影响）：
+  - 数学原点 (0,0) → 世界坐标；**数学 y 轴向上、白板 y 轴向下**，采样时统一 `worldY = origin.y - yMath`，否则函数图会上下颠倒。
+  - 位移只改 `origin`（旧实现位移会篡改 t/θ 范围或 y 窗口，导致拖动后图形畸变/不动）。
+  - 命中判定 = 点到采样折线的距离；旧实现函数图是"整个定义域矩形"（橡皮一碰就删整图）、参数/极坐标 `contains` 恒为 false（无法点选）。
+  - 插入时 `origin` 取当前视口中心，否则默认 x∈[-10,10] 会有一大半落在画布外。
+- 弧 / 圆 / 多边形工具改为真正的拖拽绘制：圆 = 圆心+半径；弧 = A→B 的半圆（`normalizedAngles` 统一命中与渲染，渲染用采样折线而非 `Path.addArc` 的 clockwise 语义）；多边形 = 拖拽框内切正六边形。旧实现拖拽一律画成矩形。
+- `AlgebraEvaluator` 采样丢弃 NaN/±inf（否则包围盒变成 NaN，选框/绘制全坏）；插入面板先校验区间 `min < max`（旧实现写反会触发 `ClosedRange` 前置条件崩溃）。
+- 测量工具链路已打通：画布点选目标 → 右侧「测量」面板按目标数生成标记；渲染时实时计算 点间距离 / 三点夹角（顶点在中间）/ 闭合图形面积（多边形鞋带公式等），并画引导线。
 
 ### 没动的与原因
 
-- 未做测量工具的"选择 2/3 个对象自动算距离/角度"完整链路。原因：v1.7 阶段 Measurement 标记结构已建好，但"选择-计算"交互复杂，先保留 UI 占位（显示"测量目标已选"）。
-- 函数绘制**没有**自动轴 / 网格。原因：当前画布坐标系就是数学坐标系（默认 zoom = 1），加网格会改变白板本身语义。
+- 测量不支持曲线长度 / 切线类量。原因：需要沿笔划折线积分与导数估计，交互也更复杂，本期只覆盖点距 / 夹角 / 面积三种。
+- 函数绘制**没有**自动轴 / 网格。原因：白板本身是自由画布，加轴会改变白板语义；曲线插入时以视口中心为数学原点，可自行用点工具标注轴。
+- 曲线在渐近线处（如 `tan(x)`）仍会连成近竖直线。原因：采样失败点是"跳过"而非"断开"，要做断点需要按段输出折线，本期不做。
+- `TimelineView(.animation)` 每帧对每条曲线重新采样（256 次求值）。原因：现状可接受，未见明显卡顿；后续可加采样缓存。
 - 表达式**没有**完整复数 / 微积分 / 自动证明。原因：超出范围 (P1 第三档 — 几何证明)。
-- NSExpression 不支持的 token（如 `arccos`、`max(min)` 嵌套）当前会抛 .parseFailed 并在 UI 显示"表达式无效"。后续可换自写 Pratt parser 但本期不做。
+- 别名函数（如 `arccos`、`tan⁻¹`）暂未加，未知记号会抛 .parseFailed 并在 UI 显示"表达式无效"；如需可在函数表里补别名。
 
 ---
 

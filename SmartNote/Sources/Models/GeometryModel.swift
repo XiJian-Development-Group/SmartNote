@@ -8,6 +8,34 @@ import CoreGraphics
 // 全部继承 WhiteboardShape 协议，便于 WhiteboardObject enum 统一建模与持久化。
 // 这里集中放，避免 Whiteboard.swift 进一步膨胀。
 
+// MARK: - 折线命中辅助
+
+/// 点到折线 / 线段的距离，供曲线类 Shape（函数图 / 参数 / 极坐标 / 多边形）做命中判定。
+enum GeometryHit {
+    /// 点到线段的最短距离
+    static func distanceToSegment(_ p: WhiteboardPoint, _ a: WhiteboardPoint, _ b: WhiteboardPoint) -> Double {
+        let dx = b.x - a.x
+        let dy = b.y - a.y
+        let len2 = dx * dx + dy * dy
+        if len2 == 0 { return hypot(p.x - a.x, p.y - a.y) }
+        var t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2
+        t = max(0, min(1, t))
+        return hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy))
+    }
+
+    /// 点到折线的最短距离（点列为空时返回无穷大）
+    static func distanceToPolyline(_ p: WhiteboardPoint, points: [WhiteboardPoint]) -> Double {
+        guard let first = points.first else { return .infinity }
+        guard points.count > 1 else { return hypot(p.x - first.x, p.y - first.y) }
+        var best = Double.infinity
+        for i in 0..<(points.count - 1) {
+            best = Swift.min(best, distanceToSegment(p, points[i], points[i + 1]))
+            if best == 0 { return 0 }
+        }
+        return best
+    }
+}
+
 // MARK: - 代数点
 
 /// 拖动式点。可绑定到度量（中间点、垂足等）
@@ -149,6 +177,16 @@ struct ArcShape: WhiteboardShape, Codable, Hashable, Identifiable {
     var fillStyle: FillStyle
     var rotation: Double
 
+    /// 归一化后的 [起始角, 终止角]：保证 end > start，跨度 ≤ 2π。
+    /// 起止角相等按"整圆"处理。`contains` 与渲染都基于它，保证命中与绘制一致。
+    var normalizedAngles: (start: Double, end: Double) {
+        var s = startAngle
+        var e = endAngle
+        while e <= s { e += .pi * 2 }
+        if e - s > .pi * 2 { e = s + .pi * 2 }
+        return (s, e)
+    }
+
     init(id: UUID = UUID(), center: WhiteboardPoint, radius: Double, startAngle: Double, endAngle: Double, color: WhiteboardColor = .black, strokeWidth: Double = 2.0) {
         self.id = id
         self.center = center
@@ -193,17 +231,11 @@ struct ArcShape: WhiteboardShape, Codable, Hashable, Identifiable {
         let dy = point.y - center.y
         let d = sqrt(dx * dx + dy * dy)
         if abs(d - radius) > strokeWidth + 4 { return false }
-        let angle = atan2(dy, dx)
-        return angleBetween(startAngle, endAngle).contains(angle)
-    }
-
-    /// 规范化：start < end 的有向角范围（弧度）
-    private func angleBetween(_ a: Double, _ b: Double) -> ClosedRange<Double> {
-        var lo = a
-        var hi = b
-        while hi < lo { hi += .pi * 2 }
-        while lo < hi - .pi * 2 { lo += .pi * 2 }
-        return lo...hi
+        let (s, e) = normalizedAngles
+        var angle = atan2(dy, dx)
+        // atan2 返回 [-π, π]，把它平移到 [s, s+2π) 再与跨度比较
+        while angle < s { angle += .pi * 2 }
+        return angle <= e
     }
 }
 
@@ -262,26 +294,25 @@ struct PolygonShape: WhiteboardShape, Codable, Hashable, Identifiable {
     mutating func resize(to rect: WhiteboardRect) {
         let old = boundingRect
         guard old.width > 0 && old.height > 0 else { return }
-        let sx = rect.width / old.width
-        let sy = rect.height / old.height
-        let c = self
-        let _ = self.scaled(by: (sx + sy) / 2, around: rect.center)
-        // mutate
-        let scaledVerts = c.vertices.map { v in
+        let scale = ((rect.width / old.width) + (rect.height / old.height)) / 2
+        let from = old.center
+        let to = rect.center
+        vertices = vertices.map { v in
             WhiteboardPoint(
-                x: rect.center.x + (v.x - old.center.x) * (sx + sy) / 2,
-                y: rect.center.y + (v.y - old.center.y) * (sx + sy) / 2
+                x: to.x + (v.x - from.x) * scale,
+                y: to.y + (v.y - from.y) * scale
             )
         }
-        vertices = scaledVerts
+        strokeWidth *= scale
     }
     func contains(_ point: WhiteboardPoint) -> Bool {
         if fillStyle.isVisible { return pointInPolygon(point: point) }
         // 边框：判定到每条边的距离
+        guard vertices.count >= 2 else { return false }
         for i in 0..<vertices.count {
             let a = vertices[i]
             let b = vertices[(i + 1) % vertices.count]
-            if distanceToSegment(point: point, a: a, b: b) <= strokeWidth + 4 {
+            if GeometryHit.distanceToSegment(point, a, b) <= strokeWidth + 4 {
                 return true
             }
         }
@@ -304,17 +335,6 @@ struct PolygonShape: WhiteboardShape, Codable, Hashable, Identifiable {
         }
         return inside
     }
-    private func distanceToSegment(point p: WhiteboardPoint, a: WhiteboardPoint, b: WhiteboardPoint) -> Double {
-        let dx = b.x - a.x
-        let dy = b.y - a.y
-        let len2 = dx * dx + dy * dy
-        if len2 == 0 { return hypot(p.x - a.x, p.y - a.y) }
-        var t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2
-        t = max(0, min(1, t))
-        let fx = a.x + t * dx
-        let fy = a.y + t * dy
-        return hypot(p.x - fx, p.y - fy)
-    }
 }
 
 // MARK: - 函数图 / 参数图 / 极坐标图
@@ -333,14 +353,18 @@ struct FunctionPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
     var strokeWidth: Double
     var fillStyle: FillStyle
     var rotation: Double
+    /// 数学原点 (0,0) 对应的世界坐标；nil = 世界原点 (0,0)。
+    /// 数学坐标 y 轴向上、白板世界坐标 y 轴向下，因此 worldY = origin.y - yMath。
+    var origin: WhiteboardPoint?
 
-    init(id: UUID = UUID(), formula: String, xMin: Double = -10, xMax: Double = 10, samples: Int = 256, color: WhiteboardColor = .blue, strokeWidth: Double = 2.0) {
+    init(id: UUID = UUID(), formula: String, xMin: Double = -10, xMax: Double = 10, samples: Int = 256, color: WhiteboardColor = .blue, strokeWidth: Double = 2.0, origin: WhiteboardPoint? = nil) {
         self.id = id
         self.formula = formula
-        self.xMin = xMin
-        self.xMax = xMax
+        self.xMin = Swift.min(xMin, xMax)
+        self.xMax = Swift.max(xMin, xMax)
         self.yMin = -10
         self.yMax = 10
+        self.origin = origin
         self.samples = max(16, samples)
         self.zIndex = 0
         self.color = color
@@ -350,43 +374,58 @@ struct FunctionPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
     }
 
     var boundingRect: WhiteboardRect {
+        let pts = samplePoints()
+        guard !pts.isEmpty else {
+            // 采样失败：退化为定义域窗口，保证选框仍可见
+            let ox = origin?.x ?? 0, oy = origin?.y ?? 0
+            let w = Swift.max(1, xMax - xMin)
+            return WhiteboardRect(x: ox + xMin, y: oy - Swift.max(10, yMax), width: w, height: Swift.max(20, yMax - yMin))
+        }
+        let xs = pts.map(\.x), ys = pts.map(\.y)
+        let minX = xs.min() ?? 0, maxX = xs.max() ?? 0
+        let minY = ys.min() ?? 0, maxY = ys.max() ?? 0
         let p = strokeWidth + 2
-        return WhiteboardRect(x: xMin - p, y: yMin - p, width: (xMax - xMin) + p * 2, height: (yMax - yMin) + p * 2)
+        return WhiteboardRect(x: minX - p, y: minY - p, width: (maxX - minX) + p * 2, height: (maxY - minY) + p * 2)
     }
     func translated(by offset: WhiteboardPoint) -> FunctionPlotShape {
         var c = self
-        c.xMin += offset.x; c.xMax += offset.x
-        c.yMin += offset.y; c.yMax += offset.y
+        c.origin = WhiteboardPoint(x: (origin?.x ?? 0) + offset.x, y: (origin?.y ?? 0) + offset.y)
         return c
     }
-    func scaled(by factor: Double, around center: WhiteboardPoint) -> FunctionPlotShape {
+    func scaled(by factor: Double, around anchor: WhiteboardPoint) -> FunctionPlotShape {
         var c = self
-        let cx = (c.xMin + c.xMax) / 2, cy = (c.yMin + c.yMax) / 2
-        let newCx = center.x + (cx - center.x) * factor
-        let newCy = center.y + (cy - center.y) * factor
-        let w = (c.xMax - c.xMin) * factor / 2
-        let h = (c.yMax - c.yMin) * factor / 2
-        c.xMin = newCx - w; c.xMax = newCx + w
-        c.yMin = newCy - h; c.yMax = newCy + h
+        let ox = origin?.x ?? 0, oy = origin?.y ?? 0
+        c.origin = WhiteboardPoint(x: anchor.x + (ox - anchor.x) * factor,
+                                   y: anchor.y + (oy - anchor.y) * factor)
+        // y 方向由公式决定无法直接缩放；x 定义域围绕中点缩放
+        let cx = (xMin + xMax) / 2
+        let half = (xMax - xMin) * factor / 2
+        c.xMin = cx - half
+        c.xMax = cx + half
         c.strokeWidth *= factor
         return c
     }
     mutating func move(by offset: WhiteboardPoint) {
-        xMin += offset.x; xMax += offset.x
-        yMin += offset.y; yMax += offset.y
+        origin = WhiteboardPoint(x: (origin?.x ?? 0) + offset.x, y: (origin?.y ?? 0) + offset.y)
     }
     mutating func resize(to rect: WhiteboardRect) {
-        xMin = rect.x; xMax = rect.x + rect.width
-        yMin = rect.y; yMax = rect.y + rect.height
+        // 未提供手柄缩放，这里只把曲线中心对齐到目标矩形中心
+        let cur = boundingRect.center
+        let d = WhiteboardPoint(x: rect.center.x - cur.x, y: rect.center.y - cur.y)
+        origin = WhiteboardPoint(x: (origin?.x ?? 0) + d.x, y: (origin?.y ?? 0) + d.y)
     }
     func contains(_ point: WhiteboardPoint) -> Bool {
-        boundingRect.contains(point)
+        // 只在曲线本身附近命中，而不是整个定义域矩形
+        GeometryHit.distanceToPolyline(point, points: samplePoints()) <= strokeWidth + 5
     }
 
-    /// 用 AlgebraEvaluator 在内部坐标系下采样，结果直接当作屏幕点绘制。
+    /// 采样并映射到白板世界坐标（数学 y 轴翻转 + 原点平移）。
     func samplePoints() -> [WhiteboardPoint] {
+        guard xMax > xMin else { return [] }
+        let ox = origin?.x ?? 0
+        let oy = origin?.y ?? 0
         let pts = AlgebraEvaluator.sampleY(formula, variableName: "x", xRange: xMin...xMax, samples: samples)
-        return pts.map { (x, y) in WhiteboardPoint(x: x, y: y) }
+        return pts.map { (x, y) in WhiteboardPoint(x: ox + x, y: oy - y) }
     }
 }
 
@@ -403,13 +442,16 @@ struct ParametricPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
     var strokeWidth: Double
     var fillStyle: FillStyle
     var rotation: Double
+    /// 数学原点 (0,0) 对应的世界坐标；nil = 世界原点。数学 y 轴向上，绘制时 y 翻转。
+    var origin: WhiteboardPoint?
 
-    init(id: UUID = UUID(), fx: String, fy: String, tMin: Double = 0, tMax: Double = .pi * 2, samples: Int = 256, color: WhiteboardColor = .purple, strokeWidth: Double = 2.0) {
+    init(id: UUID = UUID(), fx: String, fy: String, tMin: Double = 0, tMax: Double = .pi * 2, samples: Int = 256, color: WhiteboardColor = .purple, strokeWidth: Double = 2.0, origin: WhiteboardPoint? = nil) {
         self.id = id
         self.fxFormula = fx
         self.fyFormula = fy
-        self.tMin = tMin
-        self.tMax = tMax
+        self.tMin = Swift.min(tMin, tMax)
+        self.tMax = Swift.max(tMin, tMax)
+        self.origin = origin
         self.samples = max(16, samples)
         self.zIndex = 0
         self.color = color
@@ -420,7 +462,9 @@ struct ParametricPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
 
     var boundingRect: WhiteboardRect {
         let pts = samplePoints()
-        guard !pts.isEmpty else { return WhiteboardRect(x: 0, y: 0, width: 0, height: 0) }
+        guard !pts.isEmpty else {
+            return WhiteboardRect(x: origin?.x ?? 0, y: origin?.y ?? 0, width: 1, height: 1)
+        }
         let xs = pts.map(\.x), ys = pts.map(\.y)
         let minX = xs.min() ?? 0, maxX = xs.max() ?? 0
         let minY = ys.min() ?? 0, maxY = ys.max() ?? 0
@@ -429,21 +473,35 @@ struct ParametricPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
     }
     func translated(by offset: WhiteboardPoint) -> ParametricPlotShape {
         var c = self
-        c.tMin += offset.x; c.tMax += offset.x   // 简化：用 t 范围表达位移
+        c.origin = WhiteboardPoint(x: (origin?.x ?? 0) + offset.x, y: (origin?.y ?? 0) + offset.y)
         return c
     }
-    func scaled(by factor: Double, around center: WhiteboardPoint) -> ParametricPlotShape {
+    func scaled(by factor: Double, around anchor: WhiteboardPoint) -> ParametricPlotShape {
         var c = self
+        let ox = origin?.x ?? 0, oy = origin?.y ?? 0
+        c.origin = WhiteboardPoint(x: anchor.x + (ox - anchor.x) * factor,
+                                   y: anchor.y + (oy - anchor.y) * factor)
         c.strokeWidth *= factor
         return c
     }
-    mutating func move(by offset: WhiteboardPoint) { /* no-op */ }
-    mutating func resize(to rect: WhiteboardRect) { /* no-op */ }
-    func contains(_ point: WhiteboardPoint) -> Bool { false }
+    mutating func move(by offset: WhiteboardPoint) {
+        origin = WhiteboardPoint(x: (origin?.x ?? 0) + offset.x, y: (origin?.y ?? 0) + offset.y)
+    }
+    mutating func resize(to rect: WhiteboardRect) {
+        let cur = boundingRect.center
+        let d = WhiteboardPoint(x: rect.center.x - cur.x, y: rect.center.y - cur.y)
+        origin = WhiteboardPoint(x: (origin?.x ?? 0) + d.x, y: (origin?.y ?? 0) + d.y)
+    }
+    func contains(_ point: WhiteboardPoint) -> Bool {
+        GeometryHit.distanceToPolyline(point, points: samplePoints()) <= strokeWidth + 5
+    }
 
     func samplePoints() -> [WhiteboardPoint] {
+        guard tMax > tMin else { return [] }
+        let ox = origin?.x ?? 0
+        let oy = origin?.y ?? 0
         let pts = AlgebraEvaluator.sampleParametric(fx: fxFormula, fy: fyFormula, tRange: tMin...tMax, samples: samples)
-        return pts.map { (x, y) in WhiteboardPoint(x: x, y: y) }
+        return pts.map { (x, y) in WhiteboardPoint(x: ox + x, y: oy - y) }
     }
 }
 
@@ -459,12 +517,15 @@ struct PolarPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
     var strokeWidth: Double
     var fillStyle: FillStyle
     var rotation: Double
+    /// 数学原点 (0,0) 对应的世界坐标；nil = 世界原点。数学 y 轴向上，绘制时 y 翻转。
+    var origin: WhiteboardPoint?
 
-    init(id: UUID = UUID(), r: String, thetaMin: Double = 0, thetaMax: Double = .pi * 2, samples: Int = 256, color: WhiteboardColor = .orange, strokeWidth: Double = 2.0) {
+    init(id: UUID = UUID(), r: String, thetaMin: Double = 0, thetaMax: Double = .pi * 2, samples: Int = 256, color: WhiteboardColor = .orange, strokeWidth: Double = 2.0, origin: WhiteboardPoint? = nil) {
         self.id = id
         self.rFormula = r
-        self.thetaMin = thetaMin
-        self.thetaMax = thetaMax
+        self.thetaMin = Swift.min(thetaMin, thetaMax)
+        self.thetaMax = Swift.max(thetaMin, thetaMax)
+        self.origin = origin
         self.samples = max(16, samples)
         self.zIndex = 0
         self.color = color
@@ -475,7 +536,9 @@ struct PolarPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
 
     var boundingRect: WhiteboardRect {
         let pts = samplePoints()
-        guard !pts.isEmpty else { return WhiteboardRect(x: 0, y: 0, width: 0, height: 0) }
+        guard !pts.isEmpty else {
+            return WhiteboardRect(x: origin?.x ?? 0, y: origin?.y ?? 0, width: 1, height: 1)
+        }
         let xs = pts.map(\.x), ys = pts.map(\.y)
         let minX = xs.min() ?? 0, maxX = xs.max() ?? 0
         let minY = ys.min() ?? 0, maxY = ys.max() ?? 0
@@ -484,21 +547,35 @@ struct PolarPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
     }
     func translated(by offset: WhiteboardPoint) -> PolarPlotShape {
         var c = self
-        c.thetaMin += offset.x; c.thetaMax += offset.x
+        c.origin = WhiteboardPoint(x: (origin?.x ?? 0) + offset.x, y: (origin?.y ?? 0) + offset.y)
         return c
     }
-    func scaled(by factor: Double, around center: WhiteboardPoint) -> PolarPlotShape {
+    func scaled(by factor: Double, around anchor: WhiteboardPoint) -> PolarPlotShape {
         var c = self
+        let ox = origin?.x ?? 0, oy = origin?.y ?? 0
+        c.origin = WhiteboardPoint(x: anchor.x + (ox - anchor.x) * factor,
+                                   y: anchor.y + (oy - anchor.y) * factor)
         c.strokeWidth *= factor
         return c
     }
-    mutating func move(by offset: WhiteboardPoint) { /* no-op */ }
-    mutating func resize(to rect: WhiteboardRect) { /* no-op */ }
-    func contains(_ point: WhiteboardPoint) -> Bool { false }
+    mutating func move(by offset: WhiteboardPoint) {
+        origin = WhiteboardPoint(x: (origin?.x ?? 0) + offset.x, y: (origin?.y ?? 0) + offset.y)
+    }
+    mutating func resize(to rect: WhiteboardRect) {
+        let cur = boundingRect.center
+        let d = WhiteboardPoint(x: rect.center.x - cur.x, y: rect.center.y - cur.y)
+        origin = WhiteboardPoint(x: (origin?.x ?? 0) + d.x, y: (origin?.y ?? 0) + d.y)
+    }
+    func contains(_ point: WhiteboardPoint) -> Bool {
+        GeometryHit.distanceToPolyline(point, points: samplePoints()) <= strokeWidth + 5
+    }
 
     func samplePoints() -> [WhiteboardPoint] {
+        guard thetaMax > thetaMin else { return [] }
+        let ox = origin?.x ?? 0
+        let oy = origin?.y ?? 0
         let pts = AlgebraEvaluator.samplePolar(r: rFormula, thetaRange: thetaMin...thetaMax, samples: samples)
-        return pts.map { (x, y) in WhiteboardPoint(x: x, y: y) }
+        return pts.map { (x, y) in WhiteboardPoint(x: ox + x, y: oy - y) }
     }
 }
 

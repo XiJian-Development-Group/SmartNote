@@ -68,7 +68,7 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
     case line(LineShape)
     case arrow(ArrowShape)
     case text(TextShape)
-    // 几何画板扩展（v1.7+）
+    // 几何画板扩展
     case point(PointShape)
     case circle(CircleShape)
     case arc(ArcShape)
@@ -223,9 +223,9 @@ enum WhiteboardObject: Codable, Identifiable, Hashable {
         case .circle(let s): return s.contains(point)
         case .arc(let s): return s.contains(point)
         case .polygon(let s): return s.contains(point)
-        case .functionPlot(let s): return s.boundingRect.contains(point)
-        case .parametricPlot: return false
-        case .polarPlot: return false
+        case .functionPlot(let s): return s.contains(point)
+        case .parametricPlot(let s): return s.contains(point)
+        case .polarPlot(let s): return s.contains(point)
         case .measurement(let s): return s.contains(point)
         }
     }
@@ -934,7 +934,7 @@ enum WhiteboardTool: String, CaseIterable, Identifiable, Codable {
     case arrow
     case text
     case eraser
-    // 几何画板扩展（v1.7+）
+    // 几何画板扩展
     case point
     case circle
     case arc
