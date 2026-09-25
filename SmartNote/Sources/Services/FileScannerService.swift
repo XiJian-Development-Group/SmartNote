@@ -25,6 +25,12 @@ actor FileScannerService {
     func scanDirectory(at url: URL, storageMode: MaterialStorageMode = .copy) async -> [StudyMaterial] {
         var materials: [StudyMaterial] = []
         let fileManager = FileManager.default
+        let didStartAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
         
         guard let enumerator = fileManager.enumerator(
             at: url,
@@ -68,6 +74,12 @@ actor FileScannerService {
     
     private func processFile(at url: URL, storageMode: MaterialStorageMode = .copy) async -> StudyMaterial? {
         let fileManager = FileManager.default
+        let didStartAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
         
         guard fileManager.fileExists(atPath: url.path) else {
             return nil
@@ -102,6 +114,11 @@ actor FileScannerService {
             case .reference:
                 storedURL = url
             }
+
+            // 关联文件在当前读取授权仍有效时创建安全作用域书签；复制模式无需保留外部授权。
+            let bookmarkData = finalStorageMode == .reference
+                ? StudyMaterial.makeSecurityScopedBookmark(for: url)
+                : nil
             
             let material = StudyMaterial(
                 name: url.deletingPathExtension().lastPathComponent,
@@ -109,6 +126,7 @@ actor FileScannerService {
                 category: category,
                 localURL: storedURL,
                 originalURL: url,
+                bookmarkData: bookmarkData,
                 content: content,
                 createdAt: createdAt,
                 modifiedAt: modifiedAt,

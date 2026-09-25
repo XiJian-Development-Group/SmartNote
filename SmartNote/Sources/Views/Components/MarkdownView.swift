@@ -1,25 +1,280 @@
 import SwiftUI
 import AppKit
 import Markdown
+import Foundation
+
+// MARK: - Markdown streaming and identity support
+
+/// 稳定且可区分重复内容的 Markdown 行/块 ID。
+///
+/// 只使用位置会让流式输出中的最后一块不断“换身份”，从而造成闪烁和滚动跳动。
+/// 这里把内容散列、同内容出现序号和内容键组合起来：重复行仍可区分，内容不变时 ID 不变。
+struct MarkdownStableLineID: Hashable, Identifiable, Sendable {
+    let digest: UInt64
+    let occurrence: Int
+    let source: String
+
+    var id: String {
+        let sourceKey = Data(source.utf8).base64EncodedString()
+        return "\(digest)-\(occurrence)-\(sourceKey)"
+    }
+}
+
+enum MarkdownStableID {
+    static func make(for text: String, occurrence: Int) -> MarkdownStableLineID {
+        MarkdownStableLineID(
+            digest: stableHash(text),
+            occurrence: occurrence,
+            source: text
+        )
+    }
+
+    static func makeIDs(for texts: [String]) -> [MarkdownStableLineID] {
+        var occurrences: [String: Int] = [:]
+        return texts.map { text in
+            let occurrence = occurrences[text, default: 0]
+            occurrences[text] = occurrence + 1
+            return make(for: text, occurrence: occurrence)
+        }
+    }
+
+    private static func stableHash(_ text: String) -> UInt64 {
+        // FNV-1a：跨进程稳定，不依赖 Swift 的随机化 Hashable 种子。
+        var hash: UInt64 = 14695981039346656037
+        for byte in text.utf8 {
+            hash ^= UInt64(byte)
+            hash &*= 1099511628211
+        }
+        return hash
+    }
+}
+
+struct MarkdownIndexedMarkup: Identifiable {
+    let id: MarkdownStableLineID
+    let index: Int
+    let markup: any Markup
+
+    static func make(from markups: [any Markup]) -> [MarkdownIndexedMarkup] {
+        // swift-markdown 的 children/cells 在不同父节点上暴露为不同的具体集合类型；
+        // 统一擦除为 existential 后再建立稳定 ID。
+        let ids = MarkdownStableID.makeIDs(for: markups.map { $0.plainText })
+        return zip(ids.indices, markups).map { index, value in
+            MarkdownIndexedMarkup(id: ids[index], index: index, markup: value)
+        }
+    }
+}
+
+/// 可复用的内容解析缓存。NSCache 自带锁，且设置数量上限避免长回复无限占用内存。
+final class MarkdownParseMemoryCache<Value: AnyObject>: @unchecked Sendable {
+    private let storage = NSCache<NSString, Value>()
+
+    init(countLimit: Int = 32) {
+        storage.countLimit = countLimit
+    }
+
+    func value(for content: String) -> Value? {
+        storage.object(forKey: NSString(string: content))
+    }
+
+    func insert(_ value: Value, for content: String) {
+        storage.setObject(value, forKey: NSString(string: content))
+    }
+}
+
+private final class MarkdownParseCacheEntry: NSObject {
+    let blocks: [MarkdownIndexedMarkup]
+
+    init(blocks: [MarkdownIndexedMarkup]) {
+        self.blocks = blocks
+    }
+}
+
+private enum MarkdownParseCache {
+    static let storage = MarkdownParseMemoryCache<MarkdownParseCacheEntry>()
+
+    static func blocks(for content: String) -> [MarkdownIndexedMarkup] {
+        if let cached = storage.value(for: content) {
+            return cached.blocks
+        }
+
+        let document = Document(parsing: content)
+        let blocks = MarkdownIndexedMarkup.make(from: Array(document.children).map { $0 as any Markup })
+        storage.insert(MarkdownParseCacheEntry(blocks: blocks), for: content)
+        return blocks
+    }
+}
+
+/// 纯逻辑节流器：不依赖 SwiftUI/计时器，便于对流式输入做单元测试。
+struct MarkdownStreamThrottler: Sendable {
+    let interval: TimeInterval
+    private(set) var lastEmission: TimeInterval?
+
+    init(interval: TimeInterval = 0.05) {
+        self.interval = max(0, interval)
+    }
+
+    mutating func shouldEmit(at timestamp: TimeInterval) -> Bool {
+        guard let lastEmission else {
+            self.lastEmission = timestamp
+            return true
+        }
+        guard timestamp - lastEmission >= interval else {
+            return false
+        }
+        self.lastEmission = timestamp
+        return true
+    }
+
+    func delay(until timestamp: TimeInterval) -> TimeInterval {
+        guard let lastEmission else { return 0 }
+        return max(0, interval - (timestamp - lastEmission))
+    }
+
+    mutating func reset() {
+        lastEmission = nil
+    }
+}
+
+/// 将非 UI 的文本流以最多约 50ms 的频率汇总；finish() 始终返回完整文本。
+final class ThrottledTextAccumulator: @unchecked Sendable {
+    private let lock = NSLock()
+    private var text = ""
+    private var throttler: MarkdownStreamThrottler
+
+    init(interval: TimeInterval = 0.05) {
+        throttler = MarkdownStreamThrottler(interval: interval)
+    }
+
+    func append(_ chunk: String, at timestamp: TimeInterval = Date().timeIntervalSinceReferenceDate) -> String? {
+        lock.lock()
+        defer { lock.unlock() }
+        text += chunk
+        guard throttler.shouldEmit(at: timestamp) else { return nil }
+        return text
+    }
+
+    func finish() -> String {
+        lock.lock()
+        defer { lock.unlock() }
+        return text
+    }
+}
+
+/// 供拖放回调使用的线程安全收集器；最终按 NSItemProvider 原始顺序排序。
+final class OrderedThreadSafeCollector<Element>: @unchecked Sendable {
+    private struct Entry {
+        let index: Int
+        let sequence: Int
+        let element: Element
+    }
+
+    private let lock = NSLock()
+    private var entries: [Entry] = []
+    private var nextSequence = 0
+
+    func append(_ element: Element, at index: Int) {
+        lock.lock()
+        entries.append(Entry(index: index, sequence: nextSequence, element: element))
+        nextSequence += 1
+        lock.unlock()
+    }
+
+    func snapshot() -> [Element] {
+        lock.lock()
+        let sorted = entries.sorted {
+            if $0.index != $1.index { return $0.index < $1.index }
+            return $0.sequence < $1.sequence
+        }
+        lock.unlock()
+        return sorted.map(\.element)
+    }
+}
+
+/// MarkdownText 只在节流窗口结束时替换解析块；父视图的普通重算不会再次解析同一内容。
+final class MarkdownRenderStore: ObservableObject {
+    @Published private(set) var blocks: [MarkdownIndexedMarkup]
+
+    private var displayedContent: String
+    private var pendingContent: String?
+    private var timer: Timer?
+    private var throttler: MarkdownStreamThrottler
+
+    init(content: String) {
+        displayedContent = content
+        pendingContent = nil
+        throttler = MarkdownStreamThrottler()
+        blocks = MarkdownParseCache.blocks(for: content)
+    }
+
+    func receive(_ content: String) {
+        guard content != displayedContent else {
+            pendingContent = nil
+            timer?.invalidate()
+            timer = nil
+            return
+        }
+        guard content != pendingContent else { return }
+
+        pendingContent = content
+        let now = Date().timeIntervalSinceReferenceDate
+        if throttler.shouldEmit(at: now) {
+            flushPending()
+        } else {
+            scheduleTimer()
+        }
+    }
+
+    /// 流结束时强制提交最后一个待处理版本，避免尾部内容停留在节流窗口内。
+    func finish() {
+        flushPending()
+        throttler.reset()
+    }
+
+    private func scheduleTimer() {
+        timer?.invalidate()
+        let now = Date().timeIntervalSinceReferenceDate
+        let delay = throttler.delay(until: now)
+        timer = Timer.scheduledTimer(withTimeInterval: max(0.001, delay), repeats: false) { [weak self] _ in
+            self?.flushPending()
+        }
+    }
+
+    private func flushPending() {
+        timer?.invalidate()
+        timer = nil
+        guard let content = pendingContent else { return }
+        pendingContent = nil
+        displayedContent = content
+        blocks = MarkdownParseCache.blocks(for: content)
+    }
+
+    deinit {
+        timer?.invalidate()
+    }
+}
 
 struct MarkdownText: View {
     let content: String
-    
+    @StateObject private var renderStore: MarkdownRenderStore
+
     init(_ content: String) {
         self.content = content
+        _renderStore = StateObject(wrappedValue: MarkdownRenderStore(content: content))
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(Array(parseAndRender().enumerated()), id: \.offset) { _, element in
-                element
+            ForEach(renderStore.blocks) { block in
+                renderMarkup(block.markup)
+                    .id(block.id)
             }
         }
-    }
-    
-    private func parseAndRender() -> [AnyView] {
-        let document = Document(parsing: content)
-        return document.children.map { AnyView(renderMarkup($0)) }
+        .onChange(of: content) { _, newContent in
+            renderStore.receive(newContent)
+        }
+        .onDisappear {
+            renderStore.finish()
+        }
     }
     
     @ViewBuilder
@@ -102,9 +357,10 @@ struct MarkdownText: View {
     
     @ViewBuilder
     private func renderUnorderedList(_ list: UnorderedList) -> some View {
+        let items = MarkdownIndexedMarkup.make(from: Array(list.children).map { $0 as any Markup })
         VStack(alignment: .leading, spacing: 4) {
-            ForEach(Array(list.children.enumerated()), id: \.offset) { _, item in
-                if let listItem = item as? ListItem {
+            ForEach(items) { item in
+                if let listItem = item.markup as? ListItem {
                     HStack(alignment: .top, spacing: 8) {
                         Text("•")
                             .font(.body)
@@ -112,6 +368,7 @@ struct MarkdownText: View {
                             .font(.body)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    .id(item.id)
                 }
             }
         }
@@ -119,16 +376,18 @@ struct MarkdownText: View {
     
     @ViewBuilder
     private func renderOrderedList(_ list: OrderedList) -> some View {
+        let items = MarkdownIndexedMarkup.make(from: Array(list.children).map { $0 as any Markup })
         VStack(alignment: .leading, spacing: 4) {
-            ForEach(Array(list.children.enumerated()), id: \.offset) { index, item in
-                if let listItem = item as? ListItem {
+            ForEach(items) { item in
+                if let listItem = item.markup as? ListItem {
                     HStack(alignment: .top, spacing: 8) {
-                        Text("\(index + 1).")
+                        Text("\(item.index + 1).")
                             .font(.body)
                         Text(listItem.plainText)
                             .font(.body)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    .id(item.id)
                 }
             }
         }
@@ -166,29 +425,36 @@ struct MarkdownText: View {
     
     @ViewBuilder
     private func renderTable(_ table: Markdown.Table) -> some View {
+        let headItems = MarkdownIndexedMarkup.make(from: Array(table.head.cells).map { $0 as any Markup })
+        let rowItems = MarkdownIndexedMarkup.make(from: Array(table.body.rows).map { $0 as any Markup })
         VStack(alignment: .leading, spacing: 0) {
-            let head = table.head
             HStack(spacing: 0) {
-                ForEach(Array(head.cells.enumerated()), id: \.offset) { _, cell in
-                    Text(cell.plainText)
+                ForEach(headItems) { item in
+                    Text(item.markup.plainText)
                         .fontWeight(.bold)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(8)
                         .background(Color(nsColor: .controlBackgroundColor))
+                        .id(item.id)
                 }
             }
             
             Divider()
             
-            ForEach(Array(table.body.rows.enumerated()), id: \.offset) { index, row in
-                HStack(spacing: 0) {
-                    ForEach(Array(row.cells.enumerated()), id: \.offset) { _, cell in
-                        Text(cell.plainText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(8)
+            ForEach(rowItems) { rowItem in
+                if let row = rowItem.markup as? Markdown.Table.Row {
+                    let cellItems = MarkdownIndexedMarkup.make(from: Array(row.cells).map { $0 as any Markup })
+                    HStack(spacing: 0) {
+                        ForEach(cellItems) { cellItem in
+                            Text(cellItem.markup.plainText)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(8)
+                                .id(cellItem.id)
+                        }
                     }
+                    .id(rowItem.id)
+                    .background(rowItem.index % 2 == 1 ? Color(nsColor: .controlBackgroundColor).opacity(0.5) : Color.clear)
                 }
-                .background(index % 2 == 1 ? Color(nsColor: .controlBackgroundColor).opacity(0.5) : Color.clear)
             }
         }
         .overlay(

@@ -1,12 +1,51 @@
 import Foundation
 import AppKit
 
+/// 图片请求的纯逻辑判定。`.ocrFallback` 明确表示：图片不会进入请求体，
+/// 只能先由本地 OCR 转成文本；只有 `.nativeVision` 才允许构造多模态载荷。
+enum LLMImageRequestDecision: String, Equatable, Sendable {
+    case textOnly
+    case ocrFallback
+    case nativeVision
+    case blocked
+
+    var sendsImagePayload: Bool {
+        self == .nativeVision
+    }
+
+    var blockedMessage: String? {
+        self == .blocked ? "当前 AI 服务不支持图像理解，未发送图片" : nil
+    }
+
+    static func make(
+        hasImages: Bool,
+        supportsImageUnderstanding: Bool,
+        supportsNativeVision: Bool
+    ) -> LLMImageRequestDecision {
+        guard hasImages else { return .textOnly }
+        guard supportsImageUnderstanding else { return .ocrFallback }
+        return supportsNativeVision ? .nativeVision : .blocked
+    }
+}
+
+struct LLMImageFallbackEvent: Sendable, Equatable {
+    let imageCount: Int
+    let message: String
+
+    init(imageCount: Int) {
+        self.imageCount = imageCount
+        self.message = "图片已转为文本发送"
+    }
+}
+
 class LLMService {
     private var configuration: LLMConfiguration
     private var currentTask: Task<String, Error>?
-    
-    init(configuration: LLMConfiguration = LLMConfiguration()) {
+    private let ocrService: OCRService
+
+    init(configuration: LLMConfiguration = LLMConfiguration(), ocrService: OCRService = OCRService()) {
         self.configuration = configuration
+        self.ocrService = ocrService
     }
     
     func updateConfiguration(_ config: LLMConfiguration) {
@@ -143,40 +182,81 @@ class LLMService {
         let mediaType: String   // "image/png" / "image/jpeg" / "image/webp" / "image/gif"
     }
 
-    /// 多模态流式接口（图片+文本）
-    /// - Throws: 当前 provider 不支持时抛 .notConfigured
-    func sendMessageWithImagesStreaming(system: String, user: String, images: [ImagePayload], onChunk: @escaping (String) -> Void) async throws {
+    /// 多模态流式接口（图片+文本）。
+    ///
+    /// 当配置关闭图像理解时，这里不会进入任何 vision request builder：
+    /// 先用本地 OCR 转成纯文本，再走普通文本 endpoint；OCR 失败则直接阻止请求。
+    func sendMessageWithImagesStreaming(
+        system: String,
+        user: String,
+        images: [ImagePayload],
+        onImageFallback: ((LLMImageFallbackEvent) -> Void)? = nil,
+        onChunk: @escaping (String) -> Void
+    ) async throws {
         guard isConfigured() else { throw LLMError.notConfigured }
-        guard configuration.supportsNativeVision else {
-            throw LLMError.notConfigured
-        }
+
+        let decision = LLMImageRequestDecision.make(
+            hasImages: !images.isEmpty,
+            supportsImageUnderstanding: configuration.supportsImageUnderstanding,
+            supportsNativeVision: configuration.supportsNativeVision
+        )
         let enhancedSystem = buildEnhancedPrompt(system)
 
-        switch configuration.provider {
-        case .lmstudio:
-            // 理论上不应到此
-            throw LLMError.notConfigured
-        case .openai:
-            try await streamOpenAIVision(system: enhancedSystem, user: user, images: images, onChunk: onChunk)
-        case .anthropic:
-            try await streamAnthropicVision(system: enhancedSystem, user: user, images: images, onChunk: onChunk)
+        switch decision {
+        case .textOnly:
+            try await streamTextOnly(system: enhancedSystem, user: user, onChunk: onChunk)
+        case .ocrFallback:
+            let textPrompt = try await makeOCRTextPrompt(user: user, images: images)
+            onImageFallback?(LLMImageFallbackEvent(imageCount: images.count))
+            try await streamTextOnly(system: enhancedSystem, user: textPrompt, onChunk: onChunk)
+        case .nativeVision:
+            switch configuration.provider {
+            case .openai:
+                try await streamOpenAIVision(system: enhancedSystem, user: user, images: images, onChunk: onChunk)
+            case .anthropic:
+                try await streamAnthropicVision(system: enhancedSystem, user: user, images: images, onChunk: onChunk)
+            case .lmstudio:
+                throw LLMError.imageUnderstandingUnavailable
+            }
+        case .blocked:
+            throw LLMError.imageUnderstandingUnavailable
         }
     }
 
-    /// 多模态非流式（一次性返回）
-    func sendMessageWithImages(system: String, user: String, images: [ImagePayload]) async throws -> String {
+    /// 多模态非流式（一次性返回），与流式接口使用同一套图像降级保险。
+    func sendMessageWithImages(
+        system: String,
+        user: String,
+        images: [ImagePayload],
+        onImageFallback: ((LLMImageFallbackEvent) -> Void)? = nil
+    ) async throws -> String {
         guard isConfigured() else { throw LLMError.notConfigured }
-        guard configuration.supportsNativeVision else {
-            throw LLMError.notConfigured
-        }
+
+        let decision = LLMImageRequestDecision.make(
+            hasImages: !images.isEmpty,
+            supportsImageUnderstanding: configuration.supportsImageUnderstanding,
+            supportsNativeVision: configuration.supportsNativeVision
+        )
         let enhancedSystem = buildEnhancedPrompt(system)
-        switch configuration.provider {
-        case .openai:
-            return try await callOpenAIVision(system: enhancedSystem, user: user, images: images)
-        case .anthropic:
-            return try await callAnthropicVision(system: enhancedSystem, user: user, images: images)
-        case .lmstudio:
-            throw LLMError.notConfigured
+
+        switch decision {
+        case .textOnly:
+            return try await sendChatMessage(system: enhancedSystem, user: user)
+        case .ocrFallback:
+            let textPrompt = try await makeOCRTextPrompt(user: user, images: images)
+            onImageFallback?(LLMImageFallbackEvent(imageCount: images.count))
+            return try await sendChatMessage(system: enhancedSystem, user: textPrompt)
+        case .nativeVision:
+            switch configuration.provider {
+            case .openai:
+                return try await callOpenAIVision(system: enhancedSystem, user: user, images: images)
+            case .anthropic:
+                return try await callAnthropicVision(system: enhancedSystem, user: user, images: images)
+            case .lmstudio:
+                throw LLMError.imageUnderstandingUnavailable
+            }
+        case .blocked:
+            throw LLMError.imageUnderstandingUnavailable
         }
     }
 
@@ -212,8 +292,68 @@ class LLMService {
         return (jpegData, "image/jpeg")
     }
     
+    /// 普通文本流式请求的单一分发点；OCR 降级也只走这里。
+    private func streamTextOnly(system: String, user: String, onChunk: @escaping (String) -> Void) async throws {
+        switch configuration.provider {
+        case .lmstudio:
+            try await streamLMStudio(system: system, user: user, onChunk: onChunk)
+        case .openai:
+            try await streamOpenAI(system: system, user: user, onChunk: onChunk)
+        case .anthropic:
+            try await streamAnthropic(system: system, user: user, onChunk: onChunk)
+        }
+    }
+
+    /// 将所有图片在本地转成 OCR 文本；任何一张无法识别时都不发送请求。
+    private func makeOCRTextPrompt(user: String, images: [ImagePayload]) async throws -> String {
+        var recognizedBlocks: [String] = []
+
+        for (index, image) in images.enumerated() {
+            let recognized: String
+            if let data = Data(base64Encoded: image.base64, options: [.ignoreUnknownCharacters]),
+               let nsImage = NSImage(data: data) {
+                recognized = await ocrService.recognizeText(from: nsImage)
+            } else {
+                recognized = ""
+            }
+
+            let trimmed = recognized.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else {
+                throw LLMError.imageUnderstandingUnavailable
+            }
+            recognizedBlocks.append("图片 \(index + 1)（\(image.mediaType)）：\n\(trimmed)")
+        }
+
+        let question = user.trimmingCharacters(in: .whitespacesAndNewlines)
+        let instruction = question.isEmpty ? "请分析以下图片内容。" : question
+        return """
+        \(instruction)
+
+        【本地 OCR 文本：图片未上传】
+        \(recognizedBlocks.joined(separator: "\n\n"))
+        """
+    }
+
+    /// 构造并校验 API 地址，避免非法服务器地址导致崩溃或发出相对路径请求。
+    private func makeRequestURL(path: String) throws -> URL {
+        let baseURL = configuration.baseURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !baseURL.isEmpty else {
+            throw LLMError.invalidURL
+        }
+        guard let url = URL(string: "\(baseURL)\(path)") else {
+            throw LLMError.invalidURL
+        }
+        guard let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https",
+              let host = url.host,
+              !host.isEmpty else {
+            throw LLMError.invalidURL
+        }
+        return url
+    }
+
     private func callLMStudio(system: String, user: String) async throws -> String {
-        let url = URL(string: "\(configuration.baseURL)/v1/chat/completions")!
+        let url = try makeRequestURL(path: "/v1/chat/completions")
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -257,7 +397,7 @@ class LLMService {
     }
     
     private func streamLMStudio(system: String, user: String, onChunk: @escaping (String) -> Void) async throws {
-        let url = URL(string: "\(configuration.baseURL)/v1/chat/completions")!
+        let url = try makeRequestURL(path: "/v1/chat/completions")
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -318,7 +458,7 @@ class LLMService {
     }
     
     private func streamOpenAI(system: String, user: String, onChunk: @escaping (String) -> Void) async throws {
-        let url = URL(string: "\(configuration.baseURL)/chat/completions")!
+        let url = try makeRequestURL(path: "/chat/completions")
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -379,7 +519,7 @@ class LLMService {
     }
     
     private func streamAnthropic(system: String, user: String, onChunk: @escaping (String) -> Void) async throws {
-        let url = URL(string: "\(configuration.baseURL)/v1/messages")!
+        let url = try makeRequestURL(path: "/v1/messages")
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -426,7 +566,7 @@ class LLMService {
     }
     
     private func callOpenAI(system: String, user: String) async throws -> String {
-        let url = URL(string: "\(configuration.baseURL)/chat/completions")!
+        let url = try makeRequestURL(path: "/chat/completions")
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -470,7 +610,7 @@ class LLMService {
     }
     
     private func callAnthropic(system: String, user: String) async throws -> String {
-        let url = URL(string: "\(configuration.baseURL)/v1/messages")!
+        let url = try makeRequestURL(path: "/v1/messages")
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -533,7 +673,11 @@ class LLMService {
     // MARK: - OpenAI 多模态
 
     private func streamOpenAIVision(system: String, user: String, images: [LLMService.ImagePayload], onChunk: @escaping (String) -> Void) async throws {
-        let url = URL(string: "\(configuration.baseURL)/chat/completions")!
+        guard configuration.supportsImageUnderstanding,
+              configuration.supportsNativeVision else {
+            throw LLMError.imageUnderstandingUnavailable
+        }
+        let url = try makeRequestURL(path: "/chat/completions")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -587,7 +731,11 @@ class LLMService {
     }
 
     private func callOpenAIVision(system: String, user: String, images: [LLMService.ImagePayload]) async throws -> String {
-        let url = URL(string: "\(configuration.baseURL)/chat/completions")!
+        guard configuration.supportsImageUnderstanding,
+              configuration.supportsNativeVision else {
+            throw LLMError.imageUnderstandingUnavailable
+        }
+        let url = try makeRequestURL(path: "/chat/completions")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -631,7 +779,11 @@ class LLMService {
     // MARK: - Anthropic 多模态
 
     private func streamAnthropicVision(system: String, user: String, images: [LLMService.ImagePayload], onChunk: @escaping (String) -> Void) async throws {
-        let url = URL(string: "\(configuration.baseURL)/v1/messages")!
+        guard configuration.supportsImageUnderstanding,
+              configuration.supportsNativeVision else {
+            throw LLMError.imageUnderstandingUnavailable
+        }
+        let url = try makeRequestURL(path: "/v1/messages")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -691,7 +843,11 @@ class LLMService {
     }
 
     private func callAnthropicVision(system: String, user: String, images: [LLMService.ImagePayload]) async throws -> String {
-        let url = URL(string: "\(configuration.baseURL)/v1/messages")!
+        guard configuration.supportsImageUnderstanding,
+              configuration.supportsNativeVision else {
+            throw LLMError.imageUnderstandingUnavailable
+        }
+        let url = try makeRequestURL(path: "/v1/messages")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -743,6 +899,8 @@ class LLMService {
 
 enum LLMError: LocalizedError {
     case notConfigured
+    case invalidURL
+    case imageUnderstandingUnavailable
     case invalidResponse
     case serverError(statusCode: Int)
     case parseError
@@ -752,6 +910,10 @@ enum LLMError: LocalizedError {
         switch self {
         case .notConfigured:
             return "LLM 未正确配置"
+        case .invalidURL:
+            return "LLM 服务器地址无效，请填写有效的 http/https 地址"
+        case .imageUnderstandingUnavailable:
+            return "当前 AI 服务不支持图像理解，未发送图片"
         case .invalidResponse:
             return "服务器响应无效"
         case .serverError(let statusCode):

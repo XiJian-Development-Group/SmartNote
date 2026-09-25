@@ -22,6 +22,9 @@ struct DiaryEditorView: View {
     @State private var showWhiteboardPicker = false
     @State private var showImagePicker = false
     @State private var entryLoaded = false
+    @State private var decryptionFailed = false
+    @State private var showOperationError = false
+    @State private var operationErrorMessage = ""
     
     // 添加分类
     @State private var showAddCategorySheet = false
@@ -42,6 +45,11 @@ struct DiaryEditorView: View {
         .task(id: entryID) {
             loadEntryData()
         }
+        .alert("日记操作失败", isPresented: $showOperationError) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            Text(operationErrorMessage)
+        }
     }
     
     private var isNewEntry: Bool { entryID == nil }
@@ -51,14 +59,24 @@ struct DiaryEditorView: View {
         guard !entryLoaded else { return }
         if let id = entryID, let entry = diaryService.entries.first(where: { $0.id == id }) {
             title = entry.title
-            content = entry.content
             category = entry.category
             linkedMaterials = entry.linkedMaterialIDs
             imagePaths = entry.imagePaths
             whiteboardID = entry.whiteboardID
-            
-            if entry.isEncrypted, let decrypted = diaryService.decryptEntry(entry) {
-                content = decrypted.content
+
+            if entry.isEncrypted {
+                switch diaryService.decryptEntry(entry) {
+                case .success(let decrypted):
+                    content = decrypted.content
+                case .failure(let error):
+                    // 不用空内容或密文冒充解密成功；同时阻止用户无意保存空正文
+                    // 覆盖一个尚未成功读取的加密日记。
+                    content = ""
+                    decryptionFailed = true
+                    presentOperationError(error.localizedDescription)
+                }
+            } else {
+                content = entry.content
             }
         }
         // 新建日记：保持默认状态（空标题/空内容/默认分类），不要覆盖用户输入
@@ -89,12 +107,14 @@ struct DiaryEditorView: View {
             .buttonStyle(.bordered)
             
             Button {
-                saveEntry()
-                dismissWindow()
+                if saveEntry() {
+                    dismissWindow()
+                }
             } label: {
                 Text("保存")
             }
             .buttonStyle(.borderedProminent)
+            .disabled(decryptionFailed)
         }
         .padding()
     }
@@ -159,7 +179,7 @@ struct DiaryEditorView: View {
                     
                     Spacer()
                     
-                    Text("\(chineseWordCount) 字")
+                    Text("\(DiaryEntry.countWords(in: content)) 字")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -180,7 +200,7 @@ struct DiaryEditorView: View {
             Divider()
             
             // 编辑/预览
-            if showPreview {
+            if showPreview && !decryptionFailed {
                 previewView
             } else {
                 editorView
@@ -259,9 +279,25 @@ struct DiaryEditorView: View {
     // MARK: - 编辑器
     
     private var editorView: some View {
-        TextEditor(text: $content)
-            .font(.body)
-            .padding(8)
+        Group {
+            if decryptionFailed {
+                VStack(spacing: 10) {
+                    Image(systemName: "lock.trianglebadge.exclamationmark")
+                        .font(.system(size: 36))
+                        .foregroundStyle(.orange)
+                    Text("日记尚未成功解密，编辑和保存已禁用")
+                        .font(.headline)
+                    Text("请确认钥匙串中的密码或数据完整性后重新打开此日记。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                TextEditor(text: $content)
+                    .font(.body)
+                    .padding(8)
+            }
+        }
     }
     
     // MARK: - 预览
@@ -409,19 +445,15 @@ struct DiaryEditorView: View {
         .frame(width: 360, height: 200)
     }
     
-    // MARK: - 计算属性
-    
-    private var chineseWordCount: Int {
-        let chineseChars = content.unicodeScalars.filter {
-            (0x4E00...0x9FFF).contains($0.value) || (0x3000...0x303F).contains($0.value) || (0xFF00...0xFFEF).contains($0.value)
-        }.count
-        let englishWords = content.split { !$0.isLetter && !$0.isNumber }.count
-        return chineseChars + englishWords
-    }
-    
     // MARK: - 保存
     
-    private func saveEntry() {
+    private func saveEntry() -> Bool {
+        guard !decryptionFailed else {
+            presentOperationError("解密失败：密码错误 或 数据已损坏；本次未保存")
+            return false
+        }
+
+        let result: Result<Void, DiaryEncryptionError>
         if isNewEntry {
             let newEntry = DiaryEntry(
                 id: UUID(),
@@ -436,7 +468,7 @@ struct DiaryEditorView: View {
                 imagePaths: imagePaths,
                 whiteboardID: whiteboardID
             )
-            diaryService.addEntry(newEntry)
+            result = diaryService.addEntry(newEntry)
         } else if let id = entryID, var existing = diaryService.entries.first(where: { $0.id == id }) {
             existing.title = title
             existing.content = content
@@ -445,8 +477,30 @@ struct DiaryEditorView: View {
             existing.linkedMaterialIDs = linkedMaterials
             existing.imagePaths = imagePaths
             existing.whiteboardID = whiteboardID
-            diaryService.updateEntry(existing)
+            // 正文已经是编辑器中的明文，不能保留旧的 isEncrypted 标志，否则
+            // DiaryService 会把明文误当成另一层密文。
+            existing.isEncrypted = false
+            result = diaryService.updateEntry(existing)
+        } else {
+            presentOperationError("找不到要保存的日记，本次未保存")
+            return false
         }
+
+        switch result {
+        case .success:
+            return true
+        case .failure(let error):
+            // 这里明确选择“未保存”，而不是把明文作为未加密草稿落盘。
+            presentOperationError(
+                "加密失败，本次未保存（请注意；不会保存为未加密草稿，未写入日记库）\n\(error.localizedDescription)"
+            )
+            return false
+        }
+    }
+
+    private func presentOperationError(_ message: String) {
+        operationErrorMessage = message
+        showOperationError = true
     }
 }
 

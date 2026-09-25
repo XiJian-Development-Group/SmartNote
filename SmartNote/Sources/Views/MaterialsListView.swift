@@ -173,6 +173,7 @@ struct MaterialsListView: View {
                 MaterialRowView(
                     material: material,
                     searchText: appState.searchText,
+                    showFileExtensions: appState.appSettings.showFileExtensions,
                     isSelected: selectedIDs.contains(material.id),
                     onSelect: {
                         let flags = NSEvent.modifierFlags
@@ -339,6 +340,7 @@ struct PDFKitRepresentedView: NSViewRepresentable {
 struct MaterialRowView: View {
     let material: StudyMaterial
     let searchText: String
+    let showFileExtensions: Bool
     let isSelected: Bool
     let onSelect: () -> Void
 
@@ -465,18 +467,37 @@ struct MaterialRowView: View {
         }
     }
 
+    private var displayedName: String {
+        let fileExtension = material.localURL?.pathExtension ?? material.originalURL?.pathExtension
+        let nameExtension = (material.name as NSString).pathExtension
+
+        if showFileExtensions {
+            guard let fileExtension, !fileExtension.isEmpty, nameExtension.isEmpty else {
+                return material.name
+            }
+            return "\(material.name).\(fileExtension)"
+        }
+
+        guard !nameExtension.isEmpty else { return material.name }
+        if let fileExtension,
+           !fileExtension.isEmpty,
+           nameExtension.caseInsensitiveCompare(fileExtension) != .orderedSame {
+            return material.name
+        }
+        return (material.name as NSString).deletingPathExtension
+    }
+
     private func highlightedName() -> Text {
+        let name = displayedName
         let search = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !search.isEmpty else { return Text(material.name) }
-        let lowered = material.name.lowercased()
-        let s = search.lowercased()
-        if let range = lowered.range(of: s) {
-            let prefix = String(material.name[..<range.lowerBound])
-            let match = String(material.name[range])
-            let suffix = String(material.name[range.upperBound...])
+        guard !search.isEmpty else { return Text(name) }
+        if let range = name.range(of: search, options: .caseInsensitive, range: nil, locale: .current) {
+            let prefix = String(name[..<range.lowerBound])
+            let match = String(name[range])
+            let suffix = String(name[range.upperBound...])
             return Text(prefix) + Text(match).foregroundColor(.accentColor) + Text(suffix)
         }
-        return Text(material.name)
+        return Text(name)
     }
 
     private var iconColor: Color {
@@ -489,5 +510,3 @@ struct MaterialRowView: View {
         }
     }
 }
-
-// ...existing code...

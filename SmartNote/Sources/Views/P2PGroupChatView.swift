@@ -39,6 +39,20 @@ struct P2PGroupChatView: View {
         .onReceive(p2pService.$groupMessages) { _ in
             loadMessages()
         }
+        .alert("安全提示", isPresented: securityAlertBinding) {
+            Button("知道了") { p2pService.dismissSecurityAlert() }
+        } message: {
+            Text(p2pService.securityAlert?.message ?? "")
+        }
+    }
+
+    private var securityAlertBinding: Binding<Bool> {
+        Binding(
+            get: { p2pService.securityAlert != nil },
+            set: { isPresented in
+                if !isPresented { p2pService.dismissSecurityAlert() }
+            }
+        )
     }
 
     private var header: some View {

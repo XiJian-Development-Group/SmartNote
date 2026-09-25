@@ -1,8 +1,23 @@
 import SwiftUI
+import AppKit
+import Combine
 
 @main
 struct SmartNoteApp: App {
-    @StateObject private var appState = AppState()
+    @StateObject private var appState: AppState
+    @Environment(\.scenePhase) private var scenePhase
+
+    init() {
+        _appState = StateObject(wrappedValue: AppState())
+        // 使用无队列的观察者，确保 willTerminate 通知处理在退出前同步完成。
+        _ = NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil,
+            queue: nil
+        ) { _ in
+            WhiteboardService.shared.flushPendingSave()
+        }
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -10,6 +25,12 @@ struct SmartNoteApp: App {
                 .environmentObject(appState)
                 .frame(minWidth: 900, minHeight: 600)
                 .preferredColorScheme(appState.colorScheme)
+                .onChange(of: scenePhase) { _, newPhase in
+                    if newPhase == .background {
+                        // 进入后台前同步落盘，避免 debounce 窗口内退出导致数据丢失。
+                        WhiteboardService.shared.flushPendingSave()
+                    }
+                }
         }
         .windowStyle(.automatic)
         .windowResizability(.contentMinSize)

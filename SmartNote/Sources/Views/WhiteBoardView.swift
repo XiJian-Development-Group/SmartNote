@@ -16,7 +16,6 @@ struct WhiteboardView: View {
     @State private var showDocumentPicker: Bool = false
     @State private var showRenameDialog: Bool = false
     @State private var newDocumentName: String = ""
-    @State private var showAutoSaveStatus: Bool = false
     @State private var showFunctionSheet: Bool = false
     @State private var showParametricSheet: Bool = false
     @State private var showPolarSheet: Bool = false
@@ -100,10 +99,6 @@ struct WhiteboardView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         // 监听 Option 键
         .background(OptionKeyMonitor(isPressed: $isOptionKeyPressed))
-        // 自动保存状态提示
-        .onReceive(service.objectWillChange) { _ in
-            showAutoSaveStatus = true
-        }
         .sheet(isPresented: $showDocumentPicker) {
             documentPicker
         }
@@ -222,21 +217,48 @@ struct WhiteboardView: View {
 
             Spacer()
             
-            // 自动保存状态
-            if showAutoSaveStatus {
-                HStack(spacing: 4) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                        .font(.caption)
-                    Text("已自动保存")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .transition(.opacity)
-            }
+            // 真实反映服务的保存状态，不在对象变化时提前显示“已保存”
+            saveStatusView
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
+    }
+
+    /// 保存状态由服务驱动：待落盘/写入中、成功时间、失败原因。
+    private var saveStatusView: some View {
+        HStack(spacing: 4) {
+            if let error = service.lastSaveError {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.red)
+                Text("保存失败：\(error)")
+                    .help("保存失败：\(error)")
+                Button("重试") {
+                    service.flushPendingSave()
+                }
+                .buttonStyle(.borderless)
+            } else if service.isSaving || service.hasPendingSave {
+                ProgressView()
+                    .controlSize(.small)
+                Text("正在保存…")
+            } else if let lastSaveTime = service.lastSaveTime {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundColor(.green)
+                Text("已保存 \(savedTimeText(lastSaveTime))")
+            } else {
+                Image(systemName: "circle.dotted")
+                    .foregroundColor(.secondary)
+                Text("尚未保存")
+            }
+        }
+        .font(.caption)
+        .foregroundColor(.secondary)
+        .lineLimit(1)
+    }
+
+    private func savedTimeText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
     }
     
     private var currentModeText: String {
@@ -465,18 +487,11 @@ struct WhiteboardView: View {
     private var statusBar: some View {
         HStack(spacing: 16) {
             // 自动保存状态
-            HStack(spacing: 4) {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
-                    .font(.caption)
-                Text("已自动保存")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color(nsColor: .controlBackgroundColor).opacity(0.8))
-            .cornerRadius(6)
+            saveStatusView
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color(nsColor: .controlBackgroundColor).opacity(0.8))
+                .cornerRadius(6)
             
             // 缩放比例
             HStack(spacing: 4) {
@@ -567,13 +582,25 @@ struct WhiteboardView: View {
             Image(systemName: "scribble.variable")
                 .font(.system(size: 60))
                 .foregroundColor(.secondary)
-            Text("没有可用的画板")
-                .font(.headline)
+            if let loadError = service.loadError {
+                Text("白板数据加载失败")
+                    .font(.headline)
+                Text(loadError)
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .multilineTextAlignment(.center)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: 520)
+            } else {
+                Text("没有可用的画板")
+                    .font(.headline)
+            }
             Button("创建新画板") {
                 _ = service.createDocument()
             }
             .buttonStyle(.borderedProminent)
         }
+        .padding(24)
     }
 
     // MARK: - 函数图 / 参数 / 极坐标 输入面板
@@ -583,9 +610,12 @@ struct WhiteboardView: View {
             Text("插入函数图").font(.headline)
             Text("支持 + - * / ^ %、sin/cos/tan/asin/acos/atan、ln(自然)/log/log10/lg、sqrt/abs/exp/floor/ceil/round、min/max/pow、常量 pi/e；也可写成 y = sin(x)")
                 .font(.caption).foregroundColor(.secondary)
-            TextField("y = … 例如 sin(x)", text: $functionFormula)
+            TextField("y = … 例如 sin(30deg)", text: $functionFormula)
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.body, design: .monospaced))
+            Text("白板按弧度计算；输入 30deg 可按角度")
+                .font(.caption2)
+                .foregroundColor(.secondary)
             HStack {
                 Text("x 区间")
                 Spacer()
@@ -627,6 +657,9 @@ struct WhiteboardView: View {
                 TextField("sin(t)", text: $parametricFy).textFieldStyle(.roundedBorder)
                     .font(.system(.body, design: .monospaced))
             }
+            Text("白板按弧度计算；输入 30deg 可按角度")
+                .font(.caption2)
+                .foregroundColor(.secondary)
             HStack {
                 Text("t 区间")
                 Spacer()
@@ -653,9 +686,12 @@ struct WhiteboardView: View {
             Text("插入极坐标").font(.headline)
             Text("r(θ) 形如 2 * sin(5*theta)")
                 .font(.caption).foregroundColor(.secondary)
-            TextField("r = …", text: $polarFormula)
+            TextField("r = … 例如 10*sin(5*theta)", text: $polarFormula)
                 .textFieldStyle(.roundedBorder)
                 .font(.system(.body, design: .monospaced))
+            Text("白板按弧度计算；输入 30deg 可按角度")
+                .font(.caption2)
+                .foregroundColor(.secondary)
             HStack {
                 Text("θ 区间")
                 Spacer()

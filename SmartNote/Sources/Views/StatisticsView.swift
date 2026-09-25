@@ -99,7 +99,7 @@ struct StatisticsView: View {
                             .font(.headline)
                             .foregroundColor(.secondary)
                         
-                        Text("\(totalMaterials > 0 ? Int(Double(count) / Double(totalMaterials) * 100) : 0)%")
+                        Text("\(percentageText(for: Double(count) / Double(totalMaterials)))%")
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .frame(width: 40, alignment: .trailing)
@@ -156,6 +156,20 @@ struct StatisticsView: View {
         case .personalAnalysis: return .purple
         case .other: return .gray
         }
+    }
+    
+    /// 百分比统一四舍五入，并限制在 0...100；非有限值按 0% 处理。
+    private func percentageText(for ratio: Double) -> String {
+        guard ratio.isFinite else { return "0%" }
+        let boundedRatio = min(max(ratio, 0), 1)
+        let percentage = roundedPercentage(boundedRatio * 100)
+        return "\(percentage)%"
+    }
+    
+    private func roundedPercentage(_ value: Double) -> Int {
+        guard value.isFinite else { return 0 }
+        let clamped = min(max(value, 0), 100)
+        return Int(clamped.rounded(.toNearestOrAwayFromZero))
     }
 }
 

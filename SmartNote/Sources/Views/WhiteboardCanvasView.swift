@@ -661,55 +661,81 @@ struct WhiteboardCanvasView: View {
         }
     }
 
-    private func drawFunctionPlot(_ f: FunctionPlotShape, context: GraphicsContext) {
-        // 直接调用 model 的 samplePoints（结果在逻辑坐标系）。
-        // 我们不应用 zoom/offset 变换——而是把数据视作白板画布坐标系（白板默认 zoom = 1）。
-        let pts = f.samplePoints()
-        guard pts.count >= 2 else {
-            // 显示错误提示
-            context.draw(
-                Text("y = \(f.formula)").font(.system(size: 11)).foregroundColor(.secondary),
-                at: CGPoint(x: (f.xMin + f.xMax) / 2 * zoom + offset.width,
-                            y: (f.yMin + f.yMax) / 2 * zoom + offset.height),
-                anchor: .center
-            )
-            return
-        }
+    /// 将分段的曲线画成互不相连的 Path 子路径。
+    /// 单点段不画点/线，保证退化函数（全 NaN 或只有一个有效采样点）不产生伪图形。
+    @discardableResult
+    private func drawPlotSegments(
+        _ segments: [[WhiteboardPoint]],
+        color: WhiteboardColor,
+        strokeWidth: Double,
+        context: GraphicsContext
+    ) -> Bool {
         var path = Path()
-        for (i, v) in pts.enumerated() {
-            let p = CGPoint(x: v.x * zoom + offset.width, y: v.y * zoom + offset.height)
-            if i == 0 { path.move(to: p) } else { path.addLine(to: p) }
+        var hasDrawableSegment = false
+        for segment in segments where segment.count >= 2 {
+            hasDrawableSegment = true
+            let first = segment[0]
+            path.move(to: CGPoint(
+                x: first.x * zoom + offset.width,
+                y: first.y * zoom + offset.height
+            ))
+            for point in segment.dropFirst() {
+                path.addLine(to: CGPoint(
+                    x: point.x * zoom + offset.width,
+                    y: point.y * zoom + offset.height
+                ))
+            }
         }
-        context.stroke(path, with: .color(f.color.color), style: StrokeStyle(lineWidth: max(0.5, f.strokeWidth * zoom), lineCap: .round))
+        guard hasDrawableSegment else { return false }
+        context.stroke(
+            path,
+            with: .color(color.color),
+            style: StrokeStyle(lineWidth: max(0.5, strokeWidth * zoom), lineCap: .round)
+        )
+        return true
+    }
+
+    private func drawFunctionPlot(_ f: FunctionPlotShape, context: GraphicsContext) {
+        // 直接调用 model 的分段采样（结果已映射到白板世界坐标）。
+        // 每段单独 move/addLine，渐近线两侧不会互相连线。
+        let drew = drawPlotSegments(
+            f.sampleSegments(),
+            color: f.color,
+            strokeWidth: f.strokeWidth,
+            context: context
+        )
+        guard !drew else { return }
+        // 全 NaN 或只有一个有效点时不画线，仅保留公式提示。
+        context.draw(
+            Text("y = \(f.formula)").font(.system(size: 11)).foregroundColor(.secondary),
+            at: CGPoint(x: (f.xMin + f.xMax) / 2 * zoom + offset.width,
+                        y: (f.yMin + f.yMax) / 2 * zoom + offset.height),
+            anchor: .center
+        )
     }
 
     private func drawParametricPlot(_ p: ParametricPlotShape, context: GraphicsContext) {
-        let pts = p.samplePoints()
-        guard pts.count >= 2 else {
-            context.draw(
-                Text("x=\(p.fxFormula)\ny=\(p.fyFormula)").font(.system(size: 10)).foregroundColor(.secondary),
-                at: .zero,
-                anchor: .topLeading
-            )
-            return
-        }
-        var path = Path()
-        for (i, v) in pts.enumerated() {
-            let pt = CGPoint(x: v.x * zoom + offset.width, y: v.y * zoom + offset.height)
-            if i == 0 { path.move(to: pt) } else { path.addLine(to: pt) }
-        }
-        context.stroke(path, with: .color(p.color.color), style: StrokeStyle(lineWidth: max(0.5, p.strokeWidth * zoom), lineCap: .round))
+        let drew = drawPlotSegments(
+            p.sampleSegments(),
+            color: p.color,
+            strokeWidth: p.strokeWidth,
+            context: context
+        )
+        guard !drew else { return }
+        context.draw(
+            Text("x=\(p.fxFormula)\ny=\(p.fyFormula)").font(.system(size: 10)).foregroundColor(.secondary),
+            at: .zero,
+            anchor: .topLeading
+        )
     }
 
     private func drawPolarPlot(_ pl: PolarPlotShape, context: GraphicsContext) {
-        let pts = pl.samplePoints()
-        guard pts.count >= 2 else { return }
-        var path = Path()
-        for (i, v) in pts.enumerated() {
-            let p = CGPoint(x: v.x * zoom + offset.width, y: v.y * zoom + offset.height)
-            if i == 0 { path.move(to: p) } else { path.addLine(to: p) }
-        }
-        context.stroke(path, with: .color(pl.color.color), style: StrokeStyle(lineWidth: max(0.5, pl.strokeWidth * zoom), lineCap: .round))
+        _ = drawPlotSegments(
+            pl.sampleSegments(),
+            color: pl.color,
+            strokeWidth: pl.strokeWidth,
+            context: context
+        )
     }
 
     /// 测量所需的目标数量：长度 2、角度 3（顶点在中间）、面积 1

@@ -34,6 +34,28 @@ enum GeometryHit {
         }
         return best
     }
+
+    /// 点到分段折线的最短距离。单点段不参与命中，因为曲线绘制也明确忽略单点段。
+    static func distanceToSegments(_ p: WhiteboardPoint, segments: [[WhiteboardPoint]]) -> Double {
+        var best = Double.infinity
+        for segment in segments where segment.count >= 2 {
+            for i in 0..<(segment.count - 1) {
+                best = Swift.min(best, distanceToSegment(p, segment[i], segment[i + 1]))
+                if best == 0 { return 0 }
+            }
+        }
+        return best
+    }
+}
+
+/// 采样字段的运行时保护：保留旧数据中 2~256 的有效值，非法小值仍按无曲线处理。
+private func normalizedPlotSamples(_ samples: Int) -> Int {
+    min(max(16, samples), AlgebraEvaluator.maxSamples)
+}
+
+private func boundedPlotSampleCount(_ samples: Int) -> Int? {
+    guard samples >= 2 else { return nil }
+    return min(samples, AlgebraEvaluator.maxSamples)
 }
 
 // MARK: - 代数点
@@ -365,7 +387,9 @@ struct FunctionPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
         self.yMin = -10
         self.yMax = 10
         self.origin = origin
-        self.samples = max(16, samples)
+        // 旧数据可能绕过 init 直接解码出很大的 samples；运行时仍会在
+        // samplePoints/sampleSegments 中再次收敛到 AlgebraEvaluator.maxSamples。
+        self.samples = normalizedPlotSamples(samples)
         self.zIndex = 0
         self.color = color
         self.strokeWidth = strokeWidth
@@ -415,17 +439,38 @@ struct FunctionPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
         origin = WhiteboardPoint(x: (origin?.x ?? 0) + d.x, y: (origin?.y ?? 0) + d.y)
     }
     func contains(_ point: WhiteboardPoint) -> Bool {
-        // 只在曲线本身附近命中，而不是整个定义域矩形
-        GeometryHit.distanceToPolyline(point, points: samplePoints()) <= strokeWidth + 5
+        // 使用分段结果命中，避免把渐近线两侧的非连续点当成一条线段。
+        GeometryHit.distanceToSegments(point, segments: sampleSegments()) <= strokeWidth + 5
     }
 
     /// 采样并映射到白板世界坐标（数学 y 轴翻转 + 原点平移）。
+    /// 保持旧的扁平 API：包围盒、移动和其它需要连续点列的调用点仍可使用它。
     func samplePoints() -> [WhiteboardPoint] {
-        guard xMax > xMin else { return [] }
+        guard xMax > xMin, let sampleCount = boundedPlotSampleCount(samples) else { return [] }
         let ox = origin?.x ?? 0
         let oy = origin?.y ?? 0
-        let pts = AlgebraEvaluator.sampleY(formula, variableName: "x", xRange: xMin...xMax, samples: samples)
+        let pts = AlgebraEvaluator.sampleY(
+            formula,
+            variableName: "x",
+            xRange: xMin...xMax,
+            samples: sampleCount
+        )
         return pts.map { (x, y) in WhiteboardPoint(x: ox + x, y: oy - y) }
+    }
+
+    /// 曲线分段采样；NaN/±inf 处断开。段内仍按世界坐标返回，供 Canvas 逐段绘制。
+    func sampleSegments() -> [[WhiteboardPoint]] {
+        guard xMax > xMin, let sampleCount = boundedPlotSampleCount(samples) else { return [] }
+        let ox = origin?.x ?? 0
+        let oy = origin?.y ?? 0
+        return AlgebraEvaluator.sampleYSegments(
+            formula,
+            variableName: "x",
+            xRange: xMin...xMax,
+            samples: sampleCount
+        ).map { segment in
+            segment.map { (x, y) in WhiteboardPoint(x: ox + x, y: oy - y) }
+        }
     }
 }
 
@@ -452,7 +497,9 @@ struct ParametricPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
         self.tMin = Swift.min(tMin, tMax)
         self.tMax = Swift.max(tMin, tMax)
         self.origin = origin
-        self.samples = max(16, samples)
+        // 旧数据可能绕过 init 直接解码出很大的 samples；运行时仍会在
+        // samplePoints/sampleSegments 中再次收敛到 AlgebraEvaluator.maxSamples。
+        self.samples = normalizedPlotSamples(samples)
         self.zIndex = 0
         self.color = color
         self.strokeWidth = strokeWidth
@@ -493,15 +540,36 @@ struct ParametricPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
         origin = WhiteboardPoint(x: (origin?.x ?? 0) + d.x, y: (origin?.y ?? 0) + d.y)
     }
     func contains(_ point: WhiteboardPoint) -> Bool {
-        GeometryHit.distanceToPolyline(point, points: samplePoints()) <= strokeWidth + 5
+        GeometryHit.distanceToSegments(point, segments: sampleSegments()) <= strokeWidth + 5
     }
 
+    /// 旧的扁平采样 API，保留给包围盒等需要点列的逻辑。
     func samplePoints() -> [WhiteboardPoint] {
-        guard tMax > tMin else { return [] }
+        guard tMax > tMin, let sampleCount = boundedPlotSampleCount(samples) else { return [] }
         let ox = origin?.x ?? 0
         let oy = origin?.y ?? 0
-        let pts = AlgebraEvaluator.sampleParametric(fx: fxFormula, fy: fyFormula, tRange: tMin...tMax, samples: samples)
+        let pts = AlgebraEvaluator.sampleParametric(
+            fx: fxFormula,
+            fy: fyFormula,
+            tRange: tMin...tMax,
+            samples: sampleCount
+        )
         return pts.map { (x, y) in WhiteboardPoint(x: ox + x, y: oy - y) }
+    }
+
+    /// 参数方程的分段采样，任一坐标非有限时断开。
+    func sampleSegments() -> [[WhiteboardPoint]] {
+        guard tMax > tMin, let sampleCount = boundedPlotSampleCount(samples) else { return [] }
+        let ox = origin?.x ?? 0
+        let oy = origin?.y ?? 0
+        return AlgebraEvaluator.sampleParametricSegments(
+            fx: fxFormula,
+            fy: fyFormula,
+            tRange: tMin...tMax,
+            samples: sampleCount
+        ).map { segment in
+            segment.map { (x, y) in WhiteboardPoint(x: ox + x, y: oy - y) }
+        }
     }
 }
 
@@ -526,7 +594,9 @@ struct PolarPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
         self.thetaMin = Swift.min(thetaMin, thetaMax)
         self.thetaMax = Swift.max(thetaMin, thetaMax)
         self.origin = origin
-        self.samples = max(16, samples)
+        // 旧数据可能绕过 init 直接解码出很大的 samples；运行时仍会在
+        // samplePoints/sampleSegments 中再次收敛到 AlgebraEvaluator.maxSamples。
+        self.samples = normalizedPlotSamples(samples)
         self.zIndex = 0
         self.color = color
         self.strokeWidth = strokeWidth
@@ -567,15 +637,107 @@ struct PolarPlotShape: WhiteboardShape, Codable, Hashable, Identifiable {
         origin = WhiteboardPoint(x: (origin?.x ?? 0) + d.x, y: (origin?.y ?? 0) + d.y)
     }
     func contains(_ point: WhiteboardPoint) -> Bool {
-        GeometryHit.distanceToPolyline(point, points: samplePoints()) <= strokeWidth + 5
+        GeometryHit.distanceToSegments(point, segments: sampleSegments()) <= strokeWidth + 5
     }
 
+    /// 旧的扁平采样 API，保留给包围盒等需要点列的逻辑。
     func samplePoints() -> [WhiteboardPoint] {
-        guard thetaMax > thetaMin else { return [] }
+        guard thetaMax > thetaMin, let sampleCount = boundedPlotSampleCount(samples) else { return [] }
         let ox = origin?.x ?? 0
         let oy = origin?.y ?? 0
-        let pts = AlgebraEvaluator.samplePolar(r: rFormula, thetaRange: thetaMin...thetaMax, samples: samples)
+        let pts = AlgebraEvaluator.samplePolar(
+            r: rFormula,
+            thetaRange: thetaMin...thetaMax,
+            samples: sampleCount
+        )
         return pts.map { (x, y) in WhiteboardPoint(x: ox + x, y: oy - y) }
+    }
+
+    /// 极坐标的分段采样；r 或转换后的笛卡尔坐标非有限时断开。
+    func sampleSegments() -> [[WhiteboardPoint]] {
+        guard thetaMax > thetaMin, let sampleCount = boundedPlotSampleCount(samples) else { return [] }
+        let ox = origin?.x ?? 0
+        let oy = origin?.y ?? 0
+        return AlgebraEvaluator.samplePolarSegments(
+            r: rFormula,
+            thetaRange: thetaMin...thetaMax,
+            samples: sampleCount
+        ).map { segment in
+            segment.map { (x, y) in WhiteboardPoint(x: ox + x, y: oy - y) }
+        }
+    }
+}
+
+// MARK: - 曲线 Codable 兼容与采样上限
+
+// 这些 shape 仍沿用原来的 JSON key；这里只接管 samples 的解码归一化。
+// 旧文件没有 origin 时仍按 Codable 的 optional 语义解码为 nil。
+extension FunctionPlotShape {
+    enum CodingKeys: String, CodingKey {
+        case id, formula, xMin, xMax, yMin, yMax, samples, zIndex
+        case color, strokeWidth, fillStyle, rotation, origin
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        formula = try container.decode(String.self, forKey: .formula)
+        xMin = try container.decode(Double.self, forKey: .xMin)
+        xMax = try container.decode(Double.self, forKey: .xMax)
+        yMin = try container.decode(Double.self, forKey: .yMin)
+        yMax = try container.decode(Double.self, forKey: .yMax)
+        samples = normalizedPlotSamples(try container.decode(Int.self, forKey: .samples))
+        zIndex = try container.decode(Int.self, forKey: .zIndex)
+        color = try container.decode(WhiteboardColor.self, forKey: .color)
+        strokeWidth = try container.decode(Double.self, forKey: .strokeWidth)
+        fillStyle = try container.decode(FillStyle.self, forKey: .fillStyle)
+        rotation = try container.decode(Double.self, forKey: .rotation)
+        origin = try container.decodeIfPresent(WhiteboardPoint.self, forKey: .origin)
+    }
+}
+
+extension ParametricPlotShape {
+    enum CodingKeys: String, CodingKey {
+        case id, fxFormula, fyFormula, tMin, tMax, samples, zIndex
+        case color, strokeWidth, fillStyle, rotation, origin
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        fxFormula = try container.decode(String.self, forKey: .fxFormula)
+        fyFormula = try container.decode(String.self, forKey: .fyFormula)
+        tMin = try container.decode(Double.self, forKey: .tMin)
+        tMax = try container.decode(Double.self, forKey: .tMax)
+        samples = normalizedPlotSamples(try container.decode(Int.self, forKey: .samples))
+        zIndex = try container.decode(Int.self, forKey: .zIndex)
+        color = try container.decode(WhiteboardColor.self, forKey: .color)
+        strokeWidth = try container.decode(Double.self, forKey: .strokeWidth)
+        fillStyle = try container.decode(FillStyle.self, forKey: .fillStyle)
+        rotation = try container.decode(Double.self, forKey: .rotation)
+        origin = try container.decodeIfPresent(WhiteboardPoint.self, forKey: .origin)
+    }
+}
+
+extension PolarPlotShape {
+    enum CodingKeys: String, CodingKey {
+        case id, rFormula, thetaMin, thetaMax, samples, zIndex
+        case color, strokeWidth, fillStyle, rotation, origin
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        rFormula = try container.decode(String.self, forKey: .rFormula)
+        thetaMin = try container.decode(Double.self, forKey: .thetaMin)
+        thetaMax = try container.decode(Double.self, forKey: .thetaMax)
+        samples = normalizedPlotSamples(try container.decode(Int.self, forKey: .samples))
+        zIndex = try container.decode(Int.self, forKey: .zIndex)
+        color = try container.decode(WhiteboardColor.self, forKey: .color)
+        strokeWidth = try container.decode(Double.self, forKey: .strokeWidth)
+        fillStyle = try container.decode(FillStyle.self, forKey: .fillStyle)
+        rotation = try container.decode(Double.self, forKey: .rotation)
+        origin = try container.decodeIfPresent(WhiteboardPoint.self, forKey: .origin)
     }
 }
 

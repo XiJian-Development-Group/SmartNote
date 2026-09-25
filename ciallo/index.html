@@ -3,11 +3,12 @@
 
 <head>
     <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none';">
     <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="Ciallo～(∠・ω< )⌒★">
     <meta name="keywords" content="Ciallo～(∠・ω< )⌒★">
     <title>Ciallo～(∠・ω< )⌒★</title>
-    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="shortcut icon" href="favicon.ico" />
     <link rel="stylesheet" href="index.css">
     <script src="index.js"></script>
     <style>
@@ -42,7 +43,7 @@
 <body id="t" class="offline">
 <div id="messageBox" class="sendmessage">
     <h1 style="text-align: center;font-family: 'Open Sans', sans-serif;">Press Space to  <span id="ciallo-text" class="shake-text">Ciallo～(∠・ω< )⌒★</span></h1>
-    <div class="niokbutton" onclick="okbuttonsend()"></div>
+    <div class="niokbutton" role="button" aria-label="显示 Ciallo 提示"></div>
 </div>
 <div id="main-frame-error" class="interstitial-wrapper">
     <div id="main-content">
@@ -58,68 +59,98 @@
         </template>
     </div>
 </div>
-<footer style="position: fixed; bottom: 0; right: 0; padding: 10px; background-color: #f8f8f800; width: 100%; text-align: right;">
-    <a style="color: #aeaeae; text-decoration: none;" href="https://beian.mps.gov.cn/#/query/webSearch?code=11011202001414" rel="noreferrer" target="_blank">京公网安备11011202001414</a>
-    <a style="color: #aeaeae; text-decoration: none;" href="https://beian.miit.gov.cn/">京ICP备2021009924号</a>
+<footer style="position: fixed; bottom: 0; left: 0; padding: 10px; background-color: #f8f8f800; width: 100%; text-align: right; color: #aeaeae; font-size: 12px;">
+    <div>京公网安备11011202001414 · 京ICP备2021009924号</div>
+    <div>备案信息仅作文本展示，本页面不提供外部链接跳转。</div>
 </footer>
 </body>
 
 <script>
-    document.onkeydown = function(evt) {
-        evt = evt || window.event;
-        if (evt.keyCode === 32) {
-            y = $('#main-content').offset().top;
-            x = 100;
-            ciallo(x, y + 100);
+    (() => {
+        'use strict';
+
+        const phrases = [
+            'Ciallo～(∠・ω< )⌒★',
+            'Ciallo～(∠・ω< )⌒☆'
+        ];
+        let phraseIndex = 0;
+
+        function randomColor() {
+            const channel = () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0');
+            return `#${channel()}${channel()}${channel()}`;
         }
-    };
-</script>
-<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<script type="text/javascript">
-    let a_idx = 0;
 
-    $(function (){
-            const text = $("#ciallo-text").text();
-            $("#ciallo-text").empty();
-            $.each(text.split(''), function (index, char) {
-                const span = $("<span>").text(char);
-                span.css("animation-delay", `${Math.random() * 0.5}s`);
-                $("#ciallo-text").append(span);
+        function showCiallo(x, y) {
+            const message = document.createElement('span');
+            message.textContent = phrases[phraseIndex];
+            phraseIndex = (phraseIndex + 1) % phrases.length;
+            Object.assign(message.style, {
+                zIndex: '2147483647',
+                top: `${y - 20}px`,
+                left: `${x}px`,
+                position: 'absolute',
+                fontWeight: 'bold',
+                color: randomColor(),
+                pointerEvents: 'none'
+            });
+            document.body.appendChild(message);
+
+            const startTime = performance.now();
+            const duration = 2500;
+            const animate = (timestamp) => {
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+                message.style.top = `${y - 20 - (160 * progress)}px`;
+                message.style.opacity = `${1 - progress}`;
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    message.remove();
+                }
+            };
+            requestAnimationFrame(animate);
+        }
+
+        function initialize() {
+            const textElement = document.getElementById('ciallo-text');
+            if (textElement) {
+                const text = textElement.textContent || '';
+                textElement.textContent = '';
+                Array.from(text).forEach((character) => {
+                    const span = document.createElement('span');
+                    span.textContent = character;
+                    span.style.animationDelay = `${Math.random() * 0.5}s`;
+                    textElement.appendChild(span);
+                });
+            }
+
+            document.body.addEventListener('click', (event) => {
+                showCiallo(event.pageX, event.pageY);
             });
 
-        $("body").click(function(e) {
-            ciallo(e.pageX, e.pageY)
-        });
-    })
-
-    function ciallo(x, y){
-        const a = new Array("Ciallo～(∠・ω< )⌒★", "Ciallo～(∠・ω< )⌒☆");
-        const $i = $("<span/>").text(a[a_idx]);
-        a_idx = (a_idx + 1) % a.length;
-        $i.css({
-            "z-index": 999999999999999999999999999999999999999999999999999999999999999999999,
-            "top": y - 20,
-            "left": x,
-            "position": "absolute",
-            "font-weight": "bold",
-            "color": color16()
-        });
-        $("body").append($i);
-        $i.animate({
-                "top": y - 180,
-                "opacity": 0
-            },
-             2500,
-            function() {
-                $i.remove();
+            const button = document.querySelector('.niokbutton');
+            button?.addEventListener('click', (event) => {
+                event.stopPropagation();
+                showCiallo(window.innerWidth / 2, window.innerHeight / 2);
             });
-    }
 
-    function color16(){
-        const r = Math.floor(Math.random()*256);
-        const g = Math.floor(Math.random()*256);
-        const b = Math.floor(Math.random()*256);
-        return `#${r.toString(16)}${g.toString(16)}${b.toString(16)}`;
-    }
+            document.addEventListener('keydown', (event) => {
+                if (event.code !== 'Space') {
+                    return;
+                }
+                event.preventDefault();
+                const mainContent = document.getElementById('main-content');
+                const y = mainContent
+                    ? mainContent.getBoundingClientRect().top + window.scrollY + 100
+                    : window.scrollY + 100;
+                showCiallo(100, y);
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initialize, { once: true });
+        } else {
+            initialize();
+        }
+    })();
 </script>
 </html>

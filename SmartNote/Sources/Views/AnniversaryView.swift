@@ -5,6 +5,9 @@ struct AnniversaryView: View {
     @EnvironmentObject var appState: AppState
     @State private var showAddSheet: Bool = false
     @State private var editingAnniversaryID: UUID?
+    @State private var isCheckingNotifications = false
+    @State private var showNotificationAlert = false
+    @State private var notificationMessage = ""
 
     private static let formatter: DateFormatter = {
         let f = DateFormatter()
@@ -54,6 +57,11 @@ struct AnniversaryView: View {
                 }
             )
         }
+        .alert("通知检查结果", isPresented: $showNotificationAlert) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            Text(notificationMessage)
+        }
     }
 
     private var header: some View {
@@ -63,8 +71,9 @@ struct AnniversaryView: View {
             Text("倒数纪念日").font(.headline)
             Spacer()
             Button("检查通知") {
-                Task { await appState.anniversaryService.checkAndRequestPermissionAndNotify() }
+                checkNotifications()
             }
+            .disabled(isCheckingNotifications)
             Button {
                 showAddSheet = true
             } label: {
@@ -74,6 +83,40 @@ struct AnniversaryView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+    }
+
+    private func checkNotifications() {
+        guard !isCheckingNotifications else { return }
+
+        isCheckingNotifications = true
+        Task { @MainActor in
+            let results = await appState.anniversaryService.checkAndRequestPermissionAndNotify()
+            notificationMessage = message(for: results)
+            isCheckingNotifications = false
+            showNotificationAlert = true
+        }
+    }
+
+    private func message(for results: [NotificationOperationResult]) -> String {
+        var failures: [String] = []
+        for result in results {
+            switch result {
+            case .success:
+                break
+            case .failure(let failure):
+                failures.append(failure.message)
+            case .skipped(let reason):
+                failures.append(reason)
+            }
+        }
+
+        if !failures.isEmpty {
+            return "纪念日通知检查未完全成功：\n" + failures.joined(separator: "\n")
+        }
+        if results.isEmpty {
+            return "当前没有需要发送的纪念日通知。"
+        }
+        return "纪念日通知已成功安排（\(results.count) 条）。"
     }
 
     private var emptyState: some View {

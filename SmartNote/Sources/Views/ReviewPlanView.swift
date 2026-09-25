@@ -362,6 +362,20 @@ struct PlanDetailView: View {
         else { return .green }
     }
     
+    /// 百分比统一四舍五入，并限制在 0...100；非有限值按 0% 处理。
+    private func percentageText(for ratio: Double) -> String {
+        guard ratio.isFinite else { return "0%" }
+        let boundedRatio = min(max(ratio, 0), 1)
+        let percentage = roundedPercentage(boundedRatio * 100)
+        return "\(percentage)%"
+    }
+    
+    private func roundedPercentage(_ value: Double) -> Int {
+        guard value.isFinite else { return 0 }
+        let clamped = min(max(value, 0), 100)
+        return Int(clamped.rounded(.toNearestOrAwayFromZero))
+    }
+    
     private var progressSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("复习进度")
@@ -371,7 +385,7 @@ struct PlanDetailView: View {
                 ProgressView(value: plan.progress)
                     .tint(plan.completedTasks == plan.totalTasks ? .green : .accentColor)
                 
-                Text("\(Int(plan.progress * 100))%")
+                Text("\(percentageText(for: plan.progress))%")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .frame(width: 40)

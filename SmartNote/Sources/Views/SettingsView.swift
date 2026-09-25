@@ -8,11 +8,14 @@ struct SettingsView: View {
     @State private var showImagePicker: Bool = false
     @State private var selectedImageData: Data? = nil
     @State private var selectedImageName: String? = nil
+    @ObservedObject private var notificationService = NotificationService.shared
 
     // 备份与恢复面板
     @State private var backupLabel: String = ""
     @State private var isMakingBackup: Bool = false
+    @State private var isRestoring: Bool = false
     @State private var backupStatus: String = ""
+    @State private var backupNotice: String = ""
     @State private var showRestoreConfirmation: Bool = false
     @State private var pendingRestoreURL: URL?
     
@@ -99,25 +102,34 @@ struct SettingsView: View {
         Form {
             Section("日历与提醒") {
                 Toggle("启用日历同步", isOn: $appState.appSettings.calendarIntegrationEnabled)
-                Toggle("启用提醒事项", isOn: $appState.appSettings.reminderEnabled)
-                
+
                 Toggle("每日学习通知", isOn: Binding(
-                    get: { appState.notificationService.dailyNotificationEnabled },
+                    get: {
+                        notificationService.dailyNotificationEnabled
+                            && notificationService.authorizationStatus.canSendNotifications
+                    },
                     set: { newValue in
                         Task {
-                            await appState.notificationService.setDailyNotification(enabled: newValue)
+                            await notificationService.setDailyNotification(enabled: newValue)
                         }
                     }
                 ))
-                
-                if appState.notificationService.dailyNotificationEnabled {
+
+                if let lastErrorMessage = notificationService.lastErrorMessage {
+                    Text(lastErrorMessage)
+                        .font(.caption2)
+                        .foregroundColor(.orange)
+                }
+
+                if notificationService.dailyNotificationEnabled
+                    && notificationService.authorizationStatus.canSendNotifications {
                     DatePicker(
                         "通知时间",
                         selection: Binding(
-                            get: { appState.notificationService.notificationTime },
+                            get: { notificationService.notificationTime },
                             set: { newValue in
                                 Task {
-                                    await appState.notificationService.updateNotificationTime(newValue)
+                                    await notificationService.updateNotificationTime(newValue)
                                 }
                             }
                         ),
@@ -130,6 +142,7 @@ struct SettingsView: View {
                        in: 15...120,
                        step: 15)
             }
+
 
             Section("系统集成") {
                 HStack {
@@ -165,7 +178,7 @@ struct SettingsView: View {
             }
 
             Section("更新") {
-                Toggle("自动下载并安装更新", isOn: $appState.appSettings.autoUpdateEnabled)
+                Toggle("自动检查更新", isOn: $appState.appSettings.autoUpdateEnabled)
                     .onChange(of: appState.appSettings.autoUpdateEnabled) { _old, newValue in
                         if newValue {
                             Task {
@@ -173,6 +186,9 @@ struct SettingsView: View {
                             }
                         }
                     }
+                Text("仅自动检查并提示；下载和安装需要你点击“立即更新”确认。")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
                 Stepper("检查间隔: \(appState.appSettings.updateCheckIntervalHours) 小时", value: $appState.appSettings.updateCheckIntervalHours, in: 1...168)
                 HStack {
                     Text("Repo")
@@ -183,6 +199,25 @@ struct SettingsView: View {
                 Picker("更新渠道", selection: $appState.appSettings.updateChannel) {
                     Text("Latest").tag(AppSettings.UpdateChannel.latest)
                     Text("Pre-release").tag(AppSettings.UpdateChannel.prerelease)
+                }
+                if let pending = appState.updateService.pendingRelease,
+                   appState.updateService.isUpdateAvailable(pending) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("发现新版本 \(pending.name ?? pending.tag_name ?? "新版本")，是否安装？")
+                            .font(.callout)
+                        HStack {
+                            Button("立即更新") {
+                                installPendingUpdate(pending)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(appState.updateService.isDownloading)
+                            if appState.updateService.isDownloading {
+                                ProgressView()
+                                    .controlSize(.small)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
                 }
                 HStack {
                     Button(action: {
@@ -202,9 +237,12 @@ struct SettingsView: View {
                                 if let release = try await appState.updateService.checkForUpdate(channel: svcChannel) {
                                     let isNewer = appState.updateService.isUpdateAvailable(release)
                                     if isNewer {
-                                        updateMessage = "找到更新: \(release.name ?? release.tag_name ?? "无名")"
+                                        let version = release.name ?? release.tag_name ?? "无名"
+                                        appState.updateService.pendingRelease = release
+                                        updateMessage = "发现新版本 \(version)，请确认是否安装"
                                     } else {
                                         appState.updateService.latestCheckedRelease = nil
+                                        appState.updateService.pendingRelease = nil
                                         updateMessage = "当前版本 (\(appState.updateService.currentAppVersion)) 已是最新"
                                     }
                                     // send notification to user that an update is available
@@ -219,6 +257,7 @@ struct SettingsView: View {
                                     s.lastFoundReleaseName = release.name ?? release.tag_name
                                     appState.storageService.saveSettings(s)
                                 } else {
+                                    appState.updateService.pendingRelease = nil
                                     updateMessage = "未找到符合条件的更新"
                                     var s = appState.storageService.loadSettings()
                                     s.lastUpdateCheckDate = Date()
@@ -307,44 +346,6 @@ struct SettingsView: View {
                     }
                     .padding(.top, 6)
 
-                    // Install & Relaunch button when an installed app is available
-                    if let installed = appState.updateService.lastInstalledURL {
-                        HStack {
-                            Button("安装并重启") {
-                                Task {
-                                    do {
-                                        try appState.updateService.installAndRelaunchApp(at: installed)
-                                    } catch {
-                                        updateMessage = "安装并重启失败: \(error.localizedDescription)"
-                                    }
-                                }
-                            }
-                        }
-                        .padding(.top, 6)
-                    }
-                    // Download & Install button
-                    if let found = appState.updateService.latestCheckedRelease,
-                       appState.updateService.isUpdateAvailable(found) {
-                        Button("下载并安装") {
-                            Task {
-                                updateMessage = "开始下载..."
-                                do {
-                                    let installed = try await appState.updateService.performDownloadAndInstall(release: found, autoInstall: appState.appSettings.autoUpdateEnabled)
-                                    if let url = installed {
-                                        updateMessage = "已下载/安装: \(url.path)"
-                                    } else {
-                                        updateMessage = "下载完成，未找到可安装的 .app"
-                                    }
-                                    var s = appState.storageService.loadSettings()
-                                    s.lastUpdateCheckDate = Date()
-                                    s.lastFoundReleaseName = found.name ?? found.tag_name
-                                    appState.storageService.saveSettings(s)
-                                } catch {
-                                    updateMessage = "下载或安装失败: \(error.localizedDescription)"
-                                }
-                            }
-                        }
-                    }
                     Spacer()
                     Text(updateMessage)
                         .foregroundColor(.secondary)
@@ -489,7 +490,7 @@ struct SettingsView: View {
                 HStack {
                     Text("占用空间")
                     Spacer()
-                    Text(ByteCountFormatter.string(fromByteCount: StorageService().getStorageSize(), countStyle: .file))
+                    Text(ByteCountFormatter.string(fromByteCount: appState.backupService.dataStorageSize(), countStyle: .file))
                         .foregroundColor(.secondary)
                 }
             }
@@ -557,7 +558,7 @@ struct SettingsView: View {
                             Label("立即备份", systemImage: "square.and.arrow.down")
                         }
                     }
-                    .disabled(isMakingBackup)
+                    .disabled(isMakingBackup || isRestoring)
                     .buttonStyle(.borderedProminent)
 
                     Spacer()
@@ -572,9 +573,20 @@ struct SettingsView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
                     .textSelection(.enabled)
+                Text("备份是未加密的 ZIP 压缩文件，请妥善保管。")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                if !backupNotice.isEmpty {
+                    Text(backupNotice)
+                        .font(.caption2)
+                        .foregroundColor(.orange)
+                }
             }
 
             Section("历史备份") {
+                Text("为保护历史数据，不会自动删除旧备份；可按需手动删除。")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
                 if backupList.isEmpty {
                     Text("暂无备份").foregroundColor(.secondary)
                 } else {
@@ -597,12 +609,13 @@ struct SettingsView: View {
                                 pendingRestoreURL = url
                                 showRestoreConfirmation = true
                             }
+                            .disabled(isRestoring)
                             Button(role: .destructive) {
-                                try? appState.backupService.deleteBackup(url)
-                                refreshBackupList()
+                                deleteBackup(url)
                             } label: {
                                 Image(systemName: "trash")
                             }
+                            .disabled(isRestoring)
                         }
                     }
                 }
@@ -625,15 +638,28 @@ struct SettingsView: View {
 
     private func refreshBackupList() {
         backupList = appState.backupService.listBackups()
+        backupNotice = appState.backupService.preparationWarnings.joined(separator: "\n")
+    }
+
+    private func deleteBackup(_ url: URL) {
+        do {
+            try appState.backupService.deleteBackup(url)
+            backupStatus = "已删除：\(url.lastPathComponent)"
+            refreshBackupList()
+        } catch {
+            backupStatus = "删除失败：\(error.localizedDescription)"
+        }
     }
 
     private func runManualBackup() {
+        guard !isRestoring else { return }
         isMakingBackup = true
         backupStatus = "正在打包…"
         let labelToUse: String? = backupLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : backupLabel
-        Task.detached { [labelToUse] in
+        let backupService = appState.backupService
+        Task.detached { [labelToUse, backupService] in
             do {
-                let url = try appState.backupService.makeBackup(label: labelToUse)
+                let url = try backupService.makeBackup(label: labelToUse)
                 await MainActor.run {
                     backupStatus = "已生成：\(url.lastPathComponent)"
                     backupLabel = ""
@@ -643,6 +669,7 @@ struct SettingsView: View {
             } catch {
                 await MainActor.run {
                     backupStatus = "失败：\(error.localizedDescription)"
+                    refreshBackupList()
                     isMakingBackup = false
                 }
             }
@@ -650,44 +677,73 @@ struct SettingsView: View {
     }
 
     private func restoreBackup(_ url: URL) {
-        backupStatus = "正在解压临时目录…"
-        Task.detached {
+        guard !isRestoring else { return }
+        isRestoring = true
+        backupStatus = "正在解压并校验临时目录…"
+        let backupService = appState.backupService
+        Task.detached { [backupService] in
             do {
-                let tempDir = try appState.backupService.extractBackup(url)
+                let tempDir = try backupService.extractBackup(url)
                 await MainActor.run {
-                    backupStatus = "已解压到临时目录。App 即将退出以完成恢复。"
+                    backupStatus = "校验通过，正在切换数据…"
+                    commitRestore(from: tempDir)
                 }
-                // 给一个短暂延迟让 UI 显示消息
-                try? await Task.sleep(nanoseconds: 800_000_000)
-                // 用 Process 重启 App：让 shell 把当前 process 退出后用 open 启动新 App
-                restartAppAfterRestore(tempDir: tempDir)
             } catch {
                 await MainActor.run {
                     backupStatus = "恢复失败：\(error.localizedDescription)"
+                    isRestoring = false
+                    refreshBackupList()
                 }
             }
         }
     }
 
-    /// 把解压目录的内容覆盖回 Application Support，然后退出当前进程。
-    /// 由于恢复涉及数据替换 + 清缓存，简洁做法是直接退出，让用户重新启动 app 触发 runStartupMigration 重读。
-    private func restartAppAfterRestore(tempDir: URL) {
-        let fm = FileManager.default
-        let target = appState.storageService.appSupportURL
+    /// 在主线程同步完成目录切换；退出前暂停定时器并取消主线程上的更新检查。
+    /// 白板立即保存会同时使其待执行自动保存失效，成功后立即退出，避免旧数据回写。
+    @MainActor
+    private func commitRestore(from tempDir: URL) {
+        let pomodoro = PomodoroTimer.shared
+        let shouldResumePomodoro = pomodoro.isRunning && !pomodoro.isPaused
+        if shouldResumePomodoro {
+            pomodoro.pause()
+        }
+        appState.updateCheckCancellable?.cancel()
+
+        // 先保存内存中尚未落盘的白板内容，并使白板自动保存定时器失效。
+        WhiteboardService.shared.saveDocuments()
+
         do {
-            // 把解压目录下"唯一一个子目录"的内容（ditto 解 zip 第一层是 zip 内的顶层文件名）拷回 target
-            let children = (try fm.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil))
-            for child in children {
-                let dest = target.appendingPathComponent(child.lastPathComponent)
-                try? fm.removeItem(at: dest)
-                try fm.moveItem(at: child, to: dest)
-            }
-            try? fm.removeItem(at: tempDir)
-            // 退出当前进程
+            try appState.backupService.replaceDataDirectory(withExtractedBackupAt: tempDir)
+            // 目录切换、复验与旧目录清理全部完成后再退出，启动时才会读取新数据。
             exit(0)
         } catch {
-            DispatchQueue.main.async {
-                backupStatus = "恢复阶段失败：\(error.localizedDescription)"
+            if shouldResumePomodoro {
+                pomodoro.resume()
+            }
+            appState.scheduleUpdateChecks(hoursInterval: appState.appSettings.updateCheckIntervalHours)
+            try? FileManager.default.removeItem(at: tempDir)
+            backupStatus = "恢复阶段失败：\(error.localizedDescription)"
+            isRestoring = false
+            refreshBackupList()
+        }
+    }
+
+    private func installPendingUpdate(_ release: UpdateService.ReleaseInfo) {
+        Task {
+            updateMessage = "正在下载、验证并切换版本..."
+            do {
+                // This call is reachable only from the user's explicit “立即更新” action.
+                let installed = try await appState.updateService.performDownloadAndInstall(
+                    release: release,
+                    autoInstall: true
+                )
+                if let installed {
+                    updateMessage = "更新已安装并启动：\(installed.path)"
+                }
+                appState.updateService.pendingRelease = nil
+                appState.updateService.latestCheckedRelease = nil
+            } catch {
+                updateMessage = "更新安装失败：\(error.localizedDescription)"
             }
         }
     }

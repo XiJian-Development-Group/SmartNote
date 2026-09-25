@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		01278A3F060B847D549DDE83 /* LLMSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F332C2BF2D9E8D571CB00EFA /* LLMSettingsView.swift */; };
-		06DDF901E2848FD484DD0C57 /* FocusModeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC170FA87CD834A81E9A4CC8 /* FocusModeService.swift */; };
 		06E37348180920D3401A9DB1 /* DiaryStatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFF31A424BF91F803292D395 /* DiaryStatisticsView.swift */; };
 		0C98C3911CC3654B9C1E07CD /* FileCryptoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3912FAE33D257AA267412B4 /* FileCryptoService.swift */; };
 		0CB88EC66EFF82034EC22064 /* P2PService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35933360A6AA6EE2A69BEFD4 /* P2PService.swift */; };
@@ -49,7 +48,6 @@
 		719E56A223EC013911943F9E /* P2PCryptoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0C0B9F554192EC67B33B58 /* P2PCryptoService.swift */; };
 		7293AEE96B617125F76D2670 /* WishService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7CE766764800A24D1EF1446 /* WishService.swift */; };
 		7552F0F047F504FF73B489EF /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7A7FCD6AE8A9178378E9E6 /* MenuBarContentView.swift */; };
-		779CC755CC9ECB20892847C1 /* StatusBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6EE24BB16C4F533244DA72D /* StatusBarView.swift */; };
 		78869D9414CB1FFE8E0DA398 /* HabitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86654A145D30D6948855CF39 /* HabitService.swift */; };
 		7BBD0FACD5978D7ECF7703FE /* ExamCountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D77772B153256013321672 /* ExamCountdownView.swift */; };
 		7E21801EB2DB6F679E2C20F0 /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12987FCC65DCD2D306F5CCB3 /* StorageService.swift */; };
@@ -90,7 +88,6 @@
 		CDCD8F44AA0129195F260CA0 /* FileScannerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6800551BD3F4E594202A9C63 /* FileScannerService.swift */; };
 		CFBC23D575D54A4644367C42 /* WishView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D90FE95074216C051D16377 /* WishView.swift */; };
 		CFE3C567BC505E93A8FA5E4A /* P2PAddFriendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9CD2DA9C12FD47108F0A6DC /* P2PAddFriendView.swift */; };
-		D2CFCA396F589555E60DBF67 /* ExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB5EFEE65AEF8F68B4C6D2F6 /* ExportService.swift */; };
 		D3AF9A33FA1E726319056CEC /* ExamCountdown.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF69A8C2FBED9C695F7D3F91 /* ExamCountdown.swift */; };
 		DB19809F6256C815578661E3 /* PomodoroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4BC77FB3E08F3B092FDE4BA /* PomodoroView.swift */; };
 		DF78E0D4DEF348AC424D73F2 /* SmartGradingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9CD98BF6A753ECF9FE0480B /* SmartGradingView.swift */; };
@@ -187,9 +184,7 @@
 		C2679F36366EF4AB15F14DAD /* WrongQuestionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WrongQuestionView.swift; sourceTree = "<group>"; };
 		C4BC77FB3E08F3B092FDE4BA /* PomodoroView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroView.swift; sourceTree = "<group>"; };
 		C503288E45F021D992D5259D /* WhiteboardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiteboardService.swift; sourceTree = "<group>"; };
-		C6EE24BB16C4F533244DA72D /* StatusBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarView.swift; sourceTree = "<group>"; };
 		C7882398FAA6EDA889F8A4A6 /* ReviewPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewPlan.swift; sourceTree = "<group>"; };
-		CB5EFEE65AEF8F68B4C6D2F6 /* ExportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportService.swift; sourceTree = "<group>"; };
 		CCEEF4F30835C4BD18D390FD /* OCRService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRService.swift; sourceTree = "<group>"; };
 		CD313CBF3D39729DE87A2BD7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		CF7CBC0492E3C8A63E9E7691 /* ThumbnailProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailProvider.swift; sourceTree = "<group>"; };
@@ -205,7 +200,6 @@
 		E52D5CE99C2649DE472BDD06 /* PDFAnnotationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFAnnotationView.swift; sourceTree = "<group>"; };
 		E7CE766764800A24D1EF1446 /* WishService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WishService.swift; sourceTree = "<group>"; };
 		EC14ECD3A7BAB1809B071A70 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		EC170FA87CD834A81E9A4CC8 /* FocusModeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusModeService.swift; sourceTree = "<group>"; };
 		EDECE7F741B10883BAD49248 /* LearningAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningAnalysisService.swift; sourceTree = "<group>"; };
 		EE1E56D223E7A85D761A70BA /* PDFService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFService.swift; sourceTree = "<group>"; };
 		F26CA084D90A23CA66459BF9 /* DiaryEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryEditorView.swift; sourceTree = "<group>"; };
@@ -287,10 +281,8 @@
 				677C192800FE87ECC35092EC /* DiaryEncryptionService.swift */,
 				AA0863EA110BC965E52DEF48 /* DiaryService.swift */,
 				83656D0505253324AD314B29 /* DuplicateScanner.swift */,
-				CB5EFEE65AEF8F68B4C6D2F6 /* ExportService.swift */,
 				B3912FAE33D257AA267412B4 /* FileCryptoService.swift */,
 				6800551BD3F4E594202A9C63 /* FileScannerService.swift */,
-				EC170FA87CD834A81E9A4CC8 /* FocusModeService.swift */,
 				86654A145D30D6948855CF39 /* HabitService.swift */,
 				FB48612064787A1A1154B175 /* KeychainService.swift */,
 				C1CBA1BA3BF23D2680740DCD /* KeywordExtractionService.swift */,
@@ -372,7 +364,6 @@
 				EC14ECD3A7BAB1809B071A70 /* SettingsView.swift */,
 				B9CD98BF6A753ECF9FE0480B /* SmartGradingView.swift */,
 				D249E5C4EC6332AE451B8016 /* StatisticsView.swift */,
-				C6EE24BB16C4F533244DA72D /* StatusBarView.swift */,
 				B99E35DB7755156968804420 /* TodoEditorView.swift */,
 				AE6B781C89797E2A26CB86A2 /* TodoListView.swift */,
 				F77F9236E0D091628720FB7A /* TodoStatisticsView.swift */,
@@ -472,7 +463,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1500;
+				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					C8D00250DE3F8808267908AE = {
 						ProvisioningStyle = Automatic;
@@ -480,11 +471,11 @@
 				};
 			};
 			buildConfigurationList = 9A48A5B4734D245FBBE0D7E7 /* Build configuration list for PBXProject "SmartNote" */;
-			developmentRegion = en;
+			developmentRegion = zh-Hans;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
-				en,
+				zh-Hans,
 			);
 			mainGroup = 4170B0FF628D4B3A3AAF700C;
 			minimizedProjectReferenceProxies = 1;
@@ -521,15 +512,17 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/ciallo",
 			);
 			name = "Copy Ciallo Web Files";
 			outputFileListPaths = (
 			);
 			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(CONTENTS_FOLDER_PATH)/Resources/ciallo",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "echo \"Copying ciallo web files to app bundle...\"\nmkdir -p \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources\"\ncp -R \"$SRCROOT/ciallo\" \"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources/\"\n";
+			shellScript = "echo \"Copying ciallo web files to app bundle...\"\ndestination=\"$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources/ciallo\"\nmkdir -p \"$destination\"\n# index.html uses native JS; do not ship the unused legacy jQuery/ajax directory.\n/usr/bin/rsync -a --delete --delete-excluded --exclude='.DS_Store' --exclude='.*' --exclude='/ajax/' \"$SRCROOT/ciallo/\" \"$destination/\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -562,7 +555,6 @@
 				137C3BB73D6E4E4BBFCBFD50 /* DuplicateScannerView.swift in Sources */,
 				D3AF9A33FA1E726319056CEC /* ExamCountdown.swift in Sources */,
 				7BBD0FACD5978D7ECF7703FE /* ExamCountdownView.swift in Sources */,
-				D2CFCA396F589555E60DBF67 /* ExportService.swift in Sources */,
 				0C98C3911CC3654B9C1E07CD /* FileCryptoService.swift in Sources */,
 				9E336DF425FE2FA40E077E07 /* FileCryptoView.swift in Sources */,
 				FD26ECDCB88D37EA644DDA79 /* FileImportView.swift in Sources */,
@@ -570,7 +562,6 @@
 				34D9205B28A70BBE00763929 /* FlashCard.swift in Sources */,
 				F50B5F6181F691E1DF61BDFA /* FlashCardView.swift in Sources */,
 				E5FE28187FFF047A3A7D2AFE /* FlowLayout.swift in Sources */,
-				06DDF901E2848FD484DD0C57 /* FocusModeService.swift in Sources */,
 				1734AF92A02F60108826B9A5 /* GeometryModel.swift in Sources */,
 				AA896DAFCA3BCD7B8C1FB398 /* Habit.swift in Sources */,
 				78869D9414CB1FFE8E0DA398 /* HabitService.swift in Sources */,
@@ -618,7 +609,6 @@
 				5A242F9F3153D944F654A612 /* SmartNoteIntents.swift in Sources */,
 				83C6C4978B69312028ECEAE9 /* SpeechService.swift in Sources */,
 				46304E5700729E5A7EA51398 /* StatisticsView.swift in Sources */,
-				779CC755CC9ECB20892847C1 /* StatusBarView.swift in Sources */,
 				7E21801EB2DB6F679E2C20F0 /* StorageService.swift in Sources */,
 				2F98FE09BB19688189632973 /* StudyMaterial.swift in Sources */,
 				259D26655254DCD43393EFBB /* ThumbnailProvider.swift in Sources */,
@@ -711,13 +701,10 @@
 				AUTOMATION_APPLE_EVENTS = NO;
 				CODE_SIGN_ENTITLEMENTS = SmartNote/Resources/SmartNote.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 88;
+				CURRENT_PROJECT_VERSION = 100;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
@@ -736,7 +723,6 @@
 				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
 				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
-				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Debug;
 		};
@@ -747,13 +733,10 @@
 				AUTOMATION_APPLE_EVENTS = NO;
 				CODE_SIGN_ENTITLEMENTS = SmartNote/Resources/SmartNote.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 88;
+				CURRENT_PROJECT_VERSION = 100;
 				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = YES;
-				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
-				ENABLE_RESOURCE_ACCESS_CAMERA = YES;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
@@ -772,7 +755,6 @@
 				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
 				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
-				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Release;
 		};

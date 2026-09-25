@@ -477,6 +477,7 @@ struct SmartGradingView: View {
     private func startGrading() {
         isGrading = true
         gradingResult = ""
+        let stream = ThrottledTextAccumulator()
         
         Task {
             await extractAllTexts()
@@ -541,19 +542,25 @@ struct SmartGradingView: View {
             
             do {
                 try await appState.llmService.sendMessageStreaming(system: "你是一个专业的老师，请仔细批改作业并给出详细的反馈。", user: prompt) { chunk in
-                    Task { @MainActor in
-                        self.gradingResult += chunk
+                    if let snapshot = stream.append(chunk) {
+                        Task { @MainActor in
+                            self.gradingResult = snapshot
+                        }
                     }
                 }
             } catch {
+                let partialText = stream.finish()
                 await MainActor.run {
+                    if !partialText.isEmpty { self.gradingResult = partialText }
                     appState.errorMessage = error.localizedDescription
                     appState.showError = true
                 }
             }
             
+            let finalText = stream.finish()
             await MainActor.run {
-                isGrading = false
+                if !finalText.isEmpty { self.gradingResult = finalText }
+                self.isGrading = false
             }
         }
     }
@@ -621,6 +628,7 @@ struct SmartGradingView: View {
     }
     
     private func generateAnalysis() {
+        let stream = ThrottledTextAccumulator()
         Task {
             let prompt = """
             基于以下批改结果，分析学生的学习情况，包括：
@@ -638,16 +646,22 @@ struct SmartGradingView: View {
             do {
                 analysisContent = ""
                 try await appState.llmService.sendMessageStreaming(system: "你是一个学习分析师，请生成详细的个人分析报告。", user: prompt) { chunk in
-                    Task { @MainActor in
-                        self.analysisContent += chunk
+                    if let snapshot = stream.append(chunk) {
+                        Task { @MainActor in
+                            self.analysisContent = snapshot
+                        }
                     }
                 }
                 
+                let finalText = stream.finish()
                 await MainActor.run {
-                    showAnalysisSheet = true
+                    if !finalText.isEmpty { self.analysisContent = finalText }
+                    self.showAnalysisSheet = true
                 }
             } catch {
+                let partialText = stream.finish()
                 await MainActor.run {
+                    if !partialText.isEmpty { self.analysisContent = partialText }
                     appState.errorMessage = error.localizedDescription
                     appState.showError = true
                 }
@@ -673,6 +687,7 @@ struct SmartGradingView: View {
     }
     
     private func generateExplanation() {
+        let stream = ThrottledTextAccumulator()
         Task {
             let prompt = """
             请详细讲解以下题目，要求：
@@ -687,12 +702,20 @@ struct SmartGradingView: View {
             do {
                 explanationResult = ""
                 try await appState.llmService.sendMessageStreaming(system: "你是一个耐心的老师，请详细讲解题目。", user: prompt) { chunk in
-                    Task { @MainActor in
-                        self.explanationResult += chunk
+                    if let snapshot = stream.append(chunk) {
+                        Task { @MainActor in
+                            self.explanationResult = snapshot
+                        }
                     }
                 }
-            } catch {
+                let finalText = stream.finish()
                 await MainActor.run {
+                    if !finalText.isEmpty { self.explanationResult = finalText }
+                }
+            } catch {
+                let partialText = stream.finish()
+                await MainActor.run {
+                    if !partialText.isEmpty { self.explanationResult = partialText }
                     appState.errorMessage = error.localizedDescription
                     appState.showError = true
                 }
@@ -701,6 +724,7 @@ struct SmartGradingView: View {
     }
     
     private func generateSimilarQuestions() {
+        let stream = ThrottledTextAccumulator()
         Task {
             let prompt = """
             请基于以下题目，生成 \(generateCount) 道同类练习题。
@@ -719,12 +743,20 @@ struct SmartGradingView: View {
             do {
                 generatedQuestions = ""
                 try await appState.llmService.sendMessageStreaming(system: "你是一个出题专家，请生成高质量的练习题。", user: prompt) { chunk in
-                    Task { @MainActor in
-                        self.generatedQuestions += chunk
+                    if let snapshot = stream.append(chunk) {
+                        Task { @MainActor in
+                            self.generatedQuestions = snapshot
+                        }
                     }
                 }
-            } catch {
+                let finalText = stream.finish()
                 await MainActor.run {
+                    if !finalText.isEmpty { self.generatedQuestions = finalText }
+                }
+            } catch {
+                let partialText = stream.finish()
+                await MainActor.run {
+                    if !partialText.isEmpty { self.generatedQuestions = partialText }
                     appState.errorMessage = error.localizedDescription
                     appState.showError = true
                 }

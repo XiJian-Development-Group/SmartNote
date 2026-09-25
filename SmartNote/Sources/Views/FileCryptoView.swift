@@ -355,16 +355,19 @@ struct FileCryptoView: View {
 
     private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
         let group = DispatchGroup()
-        var collected: [URL] = []
-        for p in providers {
+        let collector = OrderedThreadSafeCollector<URL>()
+        for (index, provider) in providers.enumerated() {
             group.enter()
-            _ = p.loadObject(ofClass: URL.self) { url, _ in
-                if let u = url { collected.append(u) }
-                group.leave()
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                defer { group.leave() }
+                if let url {
+                    collector.append(url, at: index)
+                }
             }
         }
         group.notify(queue: .main) {
-            addFiles(collected)
+            // 所有异步回调完成后，按拖放顺序一次性更新 rows/status。
+            self.addFiles(collector.snapshot())
         }
         return true
     }

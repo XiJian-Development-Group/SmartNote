@@ -20,24 +20,40 @@ class CalendarService {
     func generateReviewPlan(examDate: Date, subject: String, topics: [String]) -> ReviewPlan {
         let calendar = Calendar.current
         let today = Date()
-        let daysUntilExam = calendar.dateComponents([.day], from: today, to: examDate).day ?? 1
+        let daysUntilExam = max(1, calendar.dateComponents([.day], from: today, to: examDate).day ?? 1)
         
         let reviewTopics = topics.map { topic in
             ReviewTopic(name: topic, importance: .medium)
         }
         
+        // 没有主题时不生成下标切片，也不产生无意义的每日计划。
+        guard !topics.isEmpty else {
+            return ReviewPlan(
+                subject: subject,
+                examDate: examDate,
+                topics: reviewTopics,
+                dailyPlans: []
+            )
+        }
+
         var dailyPlans: [DailyPlan] = []
         
-        let daysToReview = min(daysUntilExam, 14)
+        let daysToReview = max(1, min(daysUntilExam, 14))
         let tasksPerDay = max(1, topics.count / daysToReview)
         
         for dayOffset in 0..<daysToReview {
             guard let planDate = calendar.date(byAdding: .day, value: dayOffset, to: today) else { continue }
             
-            let startIndex = dayOffset * tasksPerDay
-            let endIndex = min(startIndex + tasksPerDay, topics.count)
+            let (startIndex, indexOverflow) = dayOffset.multipliedReportingOverflow(by: tasksPerDay)
+            guard !indexOverflow, startIndex >= 0, startIndex < topics.count else { break }
             
-            guard startIndex < topics.count else { break }
+            let remainingCount = topics.count - startIndex
+            let (candidateEndIndex, endOverflow) = startIndex.addingReportingOverflow(
+                min(tasksPerDay, remainingCount)
+            )
+            guard !endOverflow else { break }
+            let endIndex = min(candidateEndIndex, topics.count)
+            guard endIndex > startIndex, endIndex <= topics.count else { break }
             
             let dayTopics = Array(topics[startIndex..<endIndex])
             

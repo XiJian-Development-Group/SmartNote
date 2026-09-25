@@ -127,11 +127,11 @@ struct MaterialDetailView: View {
                     Label("复制内容", systemImage: "doc.on.clipboard")
                 }
                 
-                if let url = material.localURL {
+                if material.readableURL != nil {
                     Divider()
                     
                     Button {
-                        NSWorkspace.shared.open(url)
+                        openMaterialFile()
                     } label: {
                         Label("打开原文件", systemImage: "arrow.up.forward.app")
                     }
@@ -197,7 +197,7 @@ struct MaterialDetailView: View {
                 InfoItem(title: "关键词数", value: "\(material.keywords?.count ?? 0)")
             }
             
-            if let url = material.localURL {
+            if let url = material.readableURL {
                 HStack {
                     Text("文件路径:")
                         .foregroundColor(.secondary)
@@ -209,7 +209,7 @@ struct MaterialDetailView: View {
                     Spacer()
                     
                     Button {
-                        NSWorkspace.shared.open(url)
+                        openMaterialFile()
                     } label: {
                         Label("打开", systemImage: "arrow.up.forward.app")
                     }
@@ -480,12 +480,30 @@ struct MaterialDetailView: View {
             appState.storageService.saveMaterials(appState.materials)
         }
     }
+
+    private func openMaterialFile() {
+        guard let url = material.readableURL else { return }
+        let didStartAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        NSWorkspace.shared.open(url)
+    }
     
     private func performOCR() {
-        guard let url = material.localURL, material.type == .image else { return }
+        guard let url = material.readableURL, material.type == .image else { return }
         isProcessingOCR = true
         
         Task {
+            let didStartAccess = url.startAccessingSecurityScopedResource()
+            defer {
+                if didStartAccess {
+                    url.stopAccessingSecurityScopedResource()
+                }
+            }
+
             let text = await appState.ocrService.recognizeText(from: url)
             await MainActor.run {
                 if let index = appState.materials.firstIndex(where: { $0.id == material.id }) {

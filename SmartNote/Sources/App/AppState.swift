@@ -14,11 +14,26 @@ class AppState: ObservableObject {
     @Published var extractedKeywords: [String] = []
     @Published var aiAnalysisResult: String = ""
     @Published var reviewPlans: [ReviewPlan] = []
-    @Published var examCountdowns: [ExamCountdown] = []
+    // 考试倒计时只以 AppState 为真相源，持久化在 examCountdowns.json；
+    // 同步到 appSettings 仅用于兼容旧的只读调用，不再写回 settings.json。
+    @Published var examCountdowns: [ExamCountdown] = [] {
+        didSet {
+            appSettings.examCountdowns = examCountdowns
+            guard !isRestoringExamCountdowns else { return }
+            storageService.saveExamCountdowns(examCountdowns)
+        }
+    }
     @Published var searchText: String = ""
     @Published var errorMessage: String?
     @Published var showError: Bool = false
-    @Published var appSettings: AppSettings = AppSettings()
+    @Published var appSettings: AppSettings = AppSettings() {
+        didSet {
+            // 防止设置页或其他调用方用旧快照替换整个 appSettings。
+            if appSettings.examCountdowns != examCountdowns {
+                appSettings.examCountdowns = examCountdowns
+            }
+        }
+    }
     
     var colorScheme: ColorScheme? {
         appSettings.darkModePreference.colorScheme
@@ -52,6 +67,10 @@ class AppState: ObservableObject {
     let updateService: UpdateService
     var updateCheckCancellable: AnyCancellable? = nil
     var llmService: LLMService
+    private var hasLoadedExamCountdowns: Bool = false
+    /// 从磁盘恢复倒计时期间抑制 didSet 写盘（避免用空值覆盖真实数据）。
+    private var isRestoringExamCountdowns: Bool = false
+    private var storageClearObserver: NSObjectProtocol?
 
     /// 最近一次启动期 schema 迁移结果（用于「备份与恢复」面板显示）
     @Published var lastStartupMigration: StartupMigrationResult?
@@ -71,6 +90,23 @@ class AppState: ObservableObject {
         self.appSettings = settings
         self.lastStartupMigration = migrationResult
         loadSavedData()
+
+        // 启动扫描走 FileScannerService 的异步路径，避免阻塞主线程。
+        if settings.autoScanDirectories && !settings.scanPaths.isEmpty {
+            let startupScanPaths = settings.scanPaths
+            Task { [weak self] in
+                await self?.performStartupScanIfNeeded(paths: startupScanPaths)
+            }
+        }
+
+        // 「清除所有数据」后磁盘已空：重载内存状态，避免界面仍显示旧数据
+        storageClearObserver = NotificationCenter.default.addObserver(
+            forName: .storageDidClearAllData,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.loadSavedData()
+        }
         // 把自己桥给 Siri / Shortcuts intent 用
         MainActor.assumeIsolated {
             SharedAppStateProxy.shared.bind(self)
@@ -88,7 +124,10 @@ class AppState: ObservableObject {
     }
     
     func refreshSettings() {
+        let currentExamCountdowns = examCountdowns
         self.appSettings = storageService.loadSettings()
+        // appSettings 的倒计时字段只作为内存镜像，不从旧磁盘快照反向覆盖。
+        self.appSettings.examCountdowns = currentExamCountdowns
     }
 
     func updateUpdateServiceRepositoryIfNeeded(owner: String, repo: String) {
@@ -109,46 +148,122 @@ class AppState: ObservableObject {
     }
 
     func performAutoCheckIfEnabled() async {
+        // 这里只读取检查所需的配置快照，不在网络请求返回后复用它写盘。
         let settings = storageService.loadSettings()
         guard settings.autoUpdateEnabled else { return }
         let channel: UpdateService.Channel = (settings.updateChannel == .prerelease) ? .prerelease : .latest
         do {
             if let release = try await updateService.checkForUpdate(channel: channel) {
-                var newSettings = settings
-                newSettings.lastUpdateCheckDate = Date()
-                newSettings.lastFoundReleaseName = release.name ?? release.tag_name
-                storageService.saveSettings(newSettings)
+                // 请求期间用户可能改过任意设置；返回后必须以当前磁盘内容为基底。
+                let currentSettings = storageService.loadSettings()
+                currentSettings.lastUpdateCheckDate = Date()
+                currentSettings.lastFoundReleaseName = release.name ?? release.tag_name
+                storageService.saveSettings(currentSettings)
+                syncUpdateCheckFields(from: currentSettings)
 
                 let isNewer = updateService.isUpdateAvailable(release)
                 if isNewer {
+                    // 后台检查只记录候选版本，绝不下载或安装；用户明确确认后才进入安全切换流程。
+                    updateService.pendingRelease = release
+                    let version = release.name ?? release.tag_name ?? "新版本"
+                    updateService.logs.append("发现新版本 \(version)，等待用户确认安装。")
                     Task {
                         await updateService.notifyUserUpdateFound(release)
                     }
-                    do {
-                        _ = try await updateService.performDownloadAndInstall(release: release, autoInstall: true)
-                    } catch {
-                        updateService.logs.append("自动安装失败：\(error.localizedDescription)")
-                    }
                 } else {
+                    updateService.pendingRelease = nil
                     updateService.logs.append("当前版本 (\(updateService.currentAppVersion)) 已是最新")
                 }
             } else {
-                var newSettings = settings
-                newSettings.lastUpdateCheckDate = Date()
-                storageService.saveSettings(newSettings)
+                // 同样重新读取，避免把请求开始前的旧 settings 快照写回去。
+                let currentSettings = storageService.loadSettings()
+                currentSettings.lastUpdateCheckDate = Date()
+                storageService.saveSettings(currentSettings)
+                syncUpdateCheckFields(from: currentSettings)
+                updateService.pendingRelease = nil
                 updateService.logs.append("未找到符合条件的更新")
             }
         } catch {
             updateService.logs.append("更新检查失败：\(error.localizedDescription)")
         }
     }
+
+    private func syncUpdateCheckFields(from settings: AppSettings) {
+        // 只同步本次检查更新的字段，保留用户当前内存中的其他设置和倒计时镜像。
+        appSettings.lastUpdateCheckDate = settings.lastUpdateCheckDate
+        appSettings.lastFoundReleaseName = settings.lastFoundReleaseName
+        appSettings.examCountdowns = examCountdowns
+    }
     
     func loadSavedData() {
         materials = storageService.loadMaterials()
         reviewPlans = storageService.loadReviewPlans()
-        examCountdowns = storageService.loadSettings().examCountdowns
+        if !hasLoadedExamCountdowns {
+            isRestoringExamCountdowns = true
+            // 优先读独立文件；旧版本数据仍在 settings.json 时做一次性迁移
+            var restored = storageService.loadExamCountdowns()
+            if restored.isEmpty {
+                let settings = storageService.loadSettings()
+                restored = settings.examCountdowns
+            }
+            examCountdowns = restored
+            isRestoringExamCountdowns = false
+            hasLoadedExamCountdowns = true
+            if !restored.isEmpty {
+                storageService.saveExamCountdowns(restored)
+            }
+        }
+        appSettings.examCountdowns = examCountdowns
     }
     
+    private func performStartupScanIfNeeded(paths: [String]) async {
+        guard !isScanning else { return }
+
+        let urls = paths
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .map { path -> URL in
+                if let fileURL = URL(string: path), fileURL.isFileURL {
+                    return fileURL
+                }
+                return URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+            }
+        guard !urls.isEmpty else { return }
+
+        isScanning = true
+        defer { isScanning = false }
+
+        var scannedMaterials: [StudyMaterial] = []
+        var unavailablePaths: [String] = []
+        let fileManager = FileManager.default
+        for url in urls {
+            var isDirectory: ObjCBool = false
+            guard fileManager.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
+                unavailablePaths.append(url.path)
+                continue
+            }
+
+            if isDirectory.boolValue {
+                scannedMaterials.append(
+                    contentsOf: await fileScanner.scanDirectory(at: url, storageMode: .copy)
+                )
+            } else {
+                scannedMaterials.append(
+                    contentsOf: await fileScanner.scanFiles(urls: [url], storageMode: .copy)
+                )
+            }
+        }
+
+        if !scannedMaterials.isEmpty {
+            materials.append(contentsOf: scannedMaterials)
+            storageService.saveMaterials(materials)
+        }
+        if !unavailablePaths.isEmpty {
+            errorMessage = "启动扫描失败，以下路径不可用：\(unavailablePaths.joined(separator: "、"))"
+            showError = true
+        }
+    }
+
     func importFiles(_ urls: [URL], storageMode: MaterialStorageMode = .copy) {
         isScanning = true
         Task {

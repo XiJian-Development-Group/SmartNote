@@ -160,7 +160,7 @@ struct ExamCountdownView: View {
         )
         
         appState.examCountdowns.append(exam)
-        saveExams()
+        // AppState.examCountdowns 的 didSet 负责落盘 examCountdowns.json
         
         showAddSheet = false
         resetForm()
@@ -169,19 +169,11 @@ struct ExamCountdownView: View {
     private func archiveExam(_ exam: ExamCountdown) {
         if let index = appState.examCountdowns.firstIndex(where: { $0.id == exam.id }) {
             appState.examCountdowns[index].isArchived = true
-            saveExams()
         }
     }
     
     private func deleteExam(_ exam: ExamCountdown) {
         appState.examCountdowns.removeAll { $0.id == exam.id }
-        saveExams()
-    }
-    
-    private func saveExams() {
-        var settings = StorageService().loadSettings()
-        settings.examCountdowns = appState.examCountdowns
-        StorageService().saveSettings(settings)
     }
     
     private func resetForm() {

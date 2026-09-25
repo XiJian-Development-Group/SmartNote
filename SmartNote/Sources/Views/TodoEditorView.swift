@@ -14,12 +14,16 @@ struct TodoEditorView: View {
     @State private var hasDueDate: Bool = false
     @State private var dueDate: Date = Date()
     @State private var hasReminder: Bool = false
-    @State private var reminderTime: Date = Date()
+    @State private var reminderTime: Date? = Date()
     @State private var reminderOffset: Int = 0
     @State private var isPinned: Bool = false
     @State private var tagsText: String = ""
     @State private var status: TodoStatus = .pending
     @State private var loaded = false
+    @State private var reminderIsScheduled = false
+    @State private var isSaving = false
+    @State private var showReminderError = false
+    @State private var reminderErrorMessage = ""
     
     private var isNewItem: Bool { itemID == nil }
     
@@ -38,12 +42,19 @@ struct TodoEditorView: View {
         .task(id: itemID) {
             loadFromItem()
         }
+        .alert("待办提醒", isPresented: $showReminderError) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            Text(reminderErrorMessage)
+        }
     }
     
     private func loadFromItem() {
         guard let id = itemID, let item = todoService.items.first(where: { $0.id == id }) else {
             // 新建模式
             if !loaded {
+                hasReminder = false
+                reminderIsScheduled = false
                 loaded = true
             }
             return
@@ -55,7 +66,8 @@ struct TodoEditorView: View {
         hasDueDate = item.dueDate != nil
         dueDate = item.dueDate ?? Date()
         hasReminder = item.reminderTime != nil
-        reminderTime = item.reminderTime ?? Date()
+        reminderTime = item.reminderTime
+        reminderIsScheduled = hasReminder
         // reminderOffset = item.reminderOffset
         isPinned = item.isPinned
         tagsText = item.tags.joined(separator: ", ")
@@ -68,6 +80,7 @@ struct TodoEditorView: View {
     private var editorHeader: some View {
         HStack {
             Button("取消") { dismiss() }
+                .disabled(isSaving)
             Spacer()
             Text(isNewItem ? "新建待办" : "编辑待办")
                 .font(.headline)
@@ -76,7 +89,7 @@ struct TodoEditorView: View {
                 saveItem()
             }
             .keyboardShortcut(.return, modifiers: .command)
-            .disabled(title.isEmpty)
+            .disabled(title.isEmpty || isSaving)
         }
         .padding()
     }
@@ -214,7 +227,20 @@ struct TodoEditorView: View {
     
     private var reminderSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle("设置提醒", isOn: $hasReminder)
+            Toggle("设置提醒", isOn: Binding(
+                get: { hasReminder },
+                set: { enabled in
+                    hasReminder = enabled
+                    if enabled {
+                        if reminderTime == nil {
+                            reminderTime = dueDate
+                        }
+                        reminderIsScheduled = false
+                    } else {
+                        reminderIsScheduled = false
+                    }
+                }
+            ))
                 .disabled(!hasDueDate)
                 .help(hasDueDate ? "" : "请先设置截止日期")
             
@@ -231,13 +257,20 @@ struct TodoEditorView: View {
                             Text("自定义").tag(-1)
                         }
                         .onChange(of: reminderOffset) { newValue in
+                            reminderIsScheduled = false
                             if newValue >= 0 {
                                 reminderTime = Calendar.current.date(byAdding: .minute, value: -newValue, to: dueDate) ?? dueDate
                             }
                         }
                         
                         if reminderOffset == -1 {
-                            DatePicker("提醒时间", selection: $reminderTime)
+                            DatePicker("提醒时间", selection: Binding(
+                                get: { reminderTime ?? dueDate },
+                                set: {
+                                    reminderTime = $0
+                                    reminderIsScheduled = false
+                                }
+                            ))
                                 .labelsHidden()
                         }
                         
@@ -245,6 +278,7 @@ struct TodoEditorView: View {
                         
                         Button {
                             hasReminder = false
+                            reminderIsScheduled = false
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundColor(.secondary)
@@ -255,6 +289,9 @@ struct TodoEditorView: View {
                     Text(reminderDescription)
                         .font(.caption)
                         .foregroundColor(.secondary)
+                    Text(reminderStatusText)
+                        .font(.caption)
+                        .foregroundColor(reminderIsScheduled ? .green : .secondary)
                 }
                 .padding(.leading)
             }
@@ -262,11 +299,21 @@ struct TodoEditorView: View {
     }
     
     private var reminderDescription: String {
+        guard let reminderTime else {
+            return "尚未设置提醒时间"
+        }
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         formatter.locale = Locale(identifier: "zh_CN")
         return "将于 \(formatter.string(from: reminderTime)) 提醒"
+    }
+
+    private var reminderStatusText: String {
+        if reminderIsScheduled {
+            return "提醒已开启"
+        }
+        return "保存后将验证并开启提醒"
     }
     
     // MARK: - 标签
@@ -330,38 +377,75 @@ struct TodoEditorView: View {
     }
     
     private func saveItem() {
+        guard !isSaving else { return }
+
+        let saved = makeItem()
+        isSaving = true
+
+        Task { @MainActor in
+            if saved.reminderTime != nil {
+                // 这是用户主动保存并开启/修改提醒的路径；启动和后台恢复不会
+                // 经过这里，因此只在这里请求通知权限。
+                _ = await NotificationService.shared.requestAuthorization()
+            }
+
+            // scheduleReminder 才是系统 add 的真实结果；本地开关不能代替它。
+            let result = await todoService.scheduleReminder(for: saved)
+            switch result {
+            case .success:
+                hasReminder = saved.reminderTime != nil
+                reminderIsScheduled = saved.reminderTime != nil
+                onSave(saved)
+                isSaving = false
+                dismiss()
+            case .failure(let error):
+                // 失败时仍保存其它编辑内容，但绝不把一个没有排上的提醒写回去。
+                var itemWithoutReminder = saved
+                itemWithoutReminder.reminderTime = nil
+                hasReminder = false
+                reminderTime = nil
+                reminderIsScheduled = false
+                onSave(itemWithoutReminder)
+                isSaving = false
+                reminderErrorMessage = error.localizedDescription
+                showReminderError = true
+            }
+        }
+    }
+
+    private func makeItem() -> TodoItem {
         let tags = tagsText
             .split(separator: ",")
             .map { String($0).trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
-        
-        var saved: TodoItem
+
+        var item: TodoItem
         if let id = itemID, let existing = todoService.items.first(where: { $0.id == id }) {
-            saved = existing
+            item = existing
         } else {
-            saved = TodoItem()
+            item = TodoItem()
         }
-        
-        saved.title = title
-        saved.description = description
-        saved.category = category
-        saved.priority = priority
-        saved.status = status
-        saved.isPinned = isPinned
-        saved.dueDate = hasDueDate ? dueDate : nil
-        saved.reminderTime = (hasDueDate && hasReminder) ? reminderTime : nil
-        // saved.reminderOffset = reminderOffset
-        saved.tags = tags
-        saved.updatedAt = Date()
-        
-        if status == .completed && saved.completedAt == nil {
-            saved.completedAt = Date()
+
+        item.title = title
+        item.description = description
+        item.category = category
+        item.priority = priority
+        item.status = status
+        item.isPinned = isPinned
+        item.dueDate = hasDueDate ? dueDate : nil
+        let shouldScheduleReminder = hasDueDate && hasReminder && status != .completed
+        item.reminderTime = shouldScheduleReminder ? reminderTime : nil
+        // item.reminderOffset = reminderOffset
+        item.tags = tags
+        item.updatedAt = Date()
+
+        if status == .completed && item.completedAt == nil {
+            item.completedAt = Date()
         } else if status != .completed {
-            saved.completedAt = nil
+            item.completedAt = nil
         }
-        
-        onSave(saved)
-        dismiss()
+
+        return item
     }
     
     private func formatTime(_ seconds: TimeInterval) -> String {

@@ -181,13 +181,15 @@ class LearningAnalysisService: ObservableObject {
     
     private func parseAnalysisResult(_ result: String) -> (preferences: LearningPreferences, characteristics: LearningCharacteristics)? {
         guard let jsonStart = result.firstIndex(of: "{"),
-              let jsonEnd = result.lastIndex(of: "}") else {
+              let jsonEnd = result.lastIndex(of: "}"),
+              jsonStart <= jsonEnd else {
             return nil
         }
         
         let jsonString = String(result[jsonStart...jsonEnd])
         guard let data = jsonString.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let jsonObject = try? JSONSerialization.jsonObject(with: data),
+              let json = jsonObject as? [String: Any],
               let prefs = json["preferences"] as? [String: Any],
               let chars = json["characteristics"] as? [String: Any] else {
             return nil

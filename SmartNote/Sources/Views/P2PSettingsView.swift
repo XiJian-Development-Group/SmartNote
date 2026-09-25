@@ -57,7 +57,7 @@ struct P2PSettingsView: View {
                         set: { p2pService.setBackgroundEnabled($0) }
                     ))
                     
-                    Text("开启后台常驻会占用少量系统资源用于维持P2P直连消息接收")
+                    Text("开启后会启动 TCP listener 接收直连消息；关闭会停止 listener 并断开连接。裸 TCP 链路本身没有 TLS，机密性依赖应用层加密。")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -85,6 +85,15 @@ struct P2PSettingsView: View {
                     }
                 }
                 
+                Section("安全边界") {
+                    Text("聊天使用 RSA-2048 交换带版本号的会话密钥，再以 AES-256-GCM 加密消息。每条消息使用新的随机 nonce；GCM 加密提供机密性，认证标签提供完整性。身份以用户确认的 SHA-256 指纹为准。当前是裸 TCP，不提供 TLS。")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("本实现不提供防重放、防中间人降级或证书式 TLS 身份验证。旧 AES-CBC 消息仅为兼容读取，CBC 本身没有认证标签。")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
                 Section("关于") {
                     HStack {
                         Text("版本")
@@ -93,11 +102,11 @@ struct P2PSettingsView: View {
                         Text(version)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     HStack {
                         Text("加密方式")
                         Spacer()
-                        Text("RSA-2048 + AES-256")
+                        Text("RSA-2048 + AES-256-GCM（应用层）")
                             .foregroundColor(.secondary)
                     }
                 }

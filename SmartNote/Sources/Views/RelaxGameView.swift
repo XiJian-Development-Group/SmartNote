@@ -66,19 +66,66 @@ struct RelaxGameView: View {
 }
 
 struct WebViewRepresentable: NSViewRepresentable {
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
     func makeNSView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
-        configuration.preferences.javaScriptEnabled = true
-        
+        configuration.websiteDataStore = .nonPersistent()
+        configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
+        configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+
         let webView = WKWebView(frame: .zero, configuration: configuration)
-        
+        webView.navigationDelegate = context.coordinator
+        webView.uiDelegate = context.coordinator
+        webView.allowsBackForwardNavigationGestures = false
+        webView.isInspectable = false
+
+        // 只允许加载应用包内这一个入口文件；其余本地资源由 file read access 读取。
         if let htmlURL = Bundle.main.resourceURL?.appendingPathComponent("ciallo/index.html") {
+            context.coordinator.allowedEntryURL = htmlURL
             webView.loadFileURL(htmlURL, allowingReadAccessTo: htmlURL.deletingLastPathComponent())
         }
-        
+
         return webView
     }
-    
+
     func updateNSView(_ nsView: WKWebView, context: Context) {
+    }
+
+    final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
+        var allowedEntryURL: URL?
+
+        func webView(
+            _ webView: WKWebView,
+            decidePolicyFor navigationAction: WKNavigationAction,
+            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+        ) {
+            // targetFrame == nil 表示 target=_blank/window.open；本功能永不创建新窗口。
+            guard navigationAction.targetFrame != nil,
+                  let url = navigationAction.request.url,
+                  isAllowedEntryURL(url) else {
+                decisionHandler(.cancel)
+                return
+            }
+            decisionHandler(.allow)
+        }
+
+        func webView(
+            _ webView: WKWebView,
+            createWebViewWith configuration: WKWebViewConfiguration,
+            for navigationAction: WKNavigationAction,
+            windowFeatures: WKWindowFeatures
+        ) -> WKWebView? {
+            nil
+        }
+
+        private func isAllowedEntryURL(_ url: URL) -> Bool {
+            guard url.isFileURL, let allowedEntryURL else { return false }
+            let allowedPath = allowedEntryURL.standardizedFileURL.resolvingSymlinksInPath().path
+            let requestedPath = url.standardizedFileURL.resolvingSymlinksInPath().path
+            return requestedPath == allowedPath
+        }
     }
 }

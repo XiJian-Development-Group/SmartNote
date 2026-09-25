@@ -6,29 +6,30 @@ struct LLMSettingsView: View {
     @State private var isTesting = false
     @State private var testResult: String = ""
     @State private var showTestResult = false
-    
+    @State private var settingsPersistenceError: String?
+
     init() {
         _config = State(initialValue: LLMConfiguration())
     }
-    
+
     var body: some View {
         Form {
             Section {
                 Toggle("启用 AI 分析功能", isOn: $config.enabled)
             }
-            
+
             Section("AI 提供商") {
                 Picker("选择提供商", selection: $config.provider) {
                     ForEach(LLMProvider.allCases) { provider in
                         Text(provider.displayName).tag(provider)
                     }
                 }
-                
+
                 Text(config.provider.description)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Section("服务器配置") {
                 HStack {
                     Text("服务器地址")
@@ -37,7 +38,7 @@ struct LLMSettingsView: View {
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 250)
                 }
-                
+
                 HStack {
                     Text("模型 ID")
                     Spacer()
@@ -45,7 +46,36 @@ struct LLMSettingsView: View {
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 250)
                 }
-                
+
+                if let warning = config.serverSecurityWarning {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                            Text(warning)
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        if config.requiresServerTrustConfirmation && config.isValidServerURL {
+                            Toggle("我信任此服务", isOn: Binding(
+                                get: { config.isServerTrusted },
+                                set: { isTrusted in
+                                    config.trustedServerURL = isTrusted ? config.normalizedServerURL : ""
+                                }
+                            ))
+                            if !config.isServerTrusted {
+                                Text("保存或测试连接前，请先确认 API key 会发送到此服务。")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    .padding(10)
+                    .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                }
+
                 if config.provider.requiresAPIKey || config.provider == .lmstudio {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Token / API Key")
@@ -53,10 +83,19 @@ struct LLMSettingsView: View {
                             .foregroundColor(.secondary)
                         SecureField("输入 Token 或 API Key", text: $config.apiKey)
                             .textFieldStyle(.roundedBorder)
+                        Text("API key 保存在 macOS 登录钥匙串，不会写入 settings.json 或新生成的未加密备份。")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
                     }
                 }
+
+                if let settingsPersistenceError {
+                    Label(settingsPersistenceError, systemImage: "xmark.octagon.fill")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
             }
-            
+
             Section("生成参数") {
                 HStack {
                     Text("Temperature")
@@ -66,49 +105,49 @@ struct LLMSettingsView: View {
                     Text(String(format: "%.1f", config.temperature))
                         .frame(width: 30)
                 }
-                
+
                 Stepper("最大 Token 数: \(config.maxTokens)", value: $config.maxTokens, in: 256...4096, step: 256)
             }
-            
+
             Section("图像理解") {
                 Toggle("AI 服务器支持图像理解", isOn: $config.supportsImageUnderstanding)
-                
+
                 if !config.supportsImageUnderstanding {
                     Text("关闭后，图片将被转换为文本发送（可能存在识别误差）")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
             }
-            
+
             Section("自定义系统提示词后缀") {
                 Text("该内容将追加到每次 AI 请求的系统提示词末尾，可用于指定回复风格、格式要求等。")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                
+
                 TextEditor(text: $config.customSystemPromptSuffix)
                     .font(.system(.body, design: .monospaced))
                     .frame(minHeight: 100)
                     .padding(4)
                     .background(Color(nsColor: .textBackgroundColor))
                     .cornerRadius(8)
-                
+
                 Text("示例：\"请始终用中文回复\" 或 \"请使用简短直接的回答\"")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Section {
                 HStack {
                     Button("测试连接") {
                         testConnection()
                     }
-                    .disabled(isTesting || !config.enabled)
-                    
+                    .disabled(isTesting || !config.enabled || !config.canSaveSafely)
+
                     if isTesting {
                         ProgressView()
                             .scaleEffect(0.7)
                     }
-                    
+
                     Spacer()
                 }
             }
@@ -117,9 +156,18 @@ struct LLMSettingsView: View {
         .padding()
         .onAppear {
             config = appState.llmConfiguration
+            settingsPersistenceError = StorageService.settingsPersistenceError
         }
         .onChange(of: config) { newValue in
+            // 未确认的第三方/HTTP 远端地址只保留在编辑状态，不能写入 settings，
+            // 也不能被测试按钮使用。
+            guard newValue.canSaveSafely else { return }
+            settingsPersistenceError = nil
             appState.llmConfiguration = newValue
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .storageSettingsPersistenceIssue)) { notification in
+            settingsPersistenceError = notification.userInfo?["message"] as? String
+                ?? StorageService.settingsPersistenceError
         }
         .alert("测试结果", isPresented: $showTestResult) {
             Button("确定", role: .cancel) {}
@@ -127,11 +175,24 @@ struct LLMSettingsView: View {
             Text(testResult)
         }
     }
-    
+
     private func testConnection() {
+        guard config.canSaveSafely else {
+            testResult = config.isValidServerURL
+                ? "请先确认你信任此服务，再测试连接。"
+                : "请先填写有效的服务器地址。"
+            showTestResult = true
+            return
+        }
+        guard config.enabled else {
+            testResult = "请先启用 AI 分析功能。"
+            showTestResult = true
+            return
+        }
+
         isTesting = true
         appState.llmConfiguration = config
-        
+
         Task {
             let result = await appState.llmService.testConnection()
             await MainActor.run {

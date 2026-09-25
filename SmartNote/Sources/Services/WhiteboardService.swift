@@ -9,6 +9,13 @@ class WhiteboardService: ObservableObject {
     @Published var documents: [WhiteboardDocument] = []
     @Published var currentDocument: WhiteboardDocument?
     
+    // 读取或保存失败时供界面展示，避免只在控制台输出错误
+    @Published private(set) var loadError: String?
+    @Published private(set) var isSaving: Bool = false
+    @Published private(set) var hasPendingSave: Bool = false
+    @Published private(set) var lastSaveTime: Date?
+    @Published private(set) var lastSaveError: String?
+    
     // 撤销/重做栈
     @Published private(set) var canUndo: Bool = false
     @Published private(set) var canRedo: Bool = false
@@ -20,21 +27,31 @@ class WhiteboardService: ObservableObject {
     // 自动保存
     private var autoSaveTimer: Timer?
     private let autoSaveInterval: TimeInterval = 3.0
-    private var lastSaveTime: Date = Date()
     
     // 存储路径
     private let documentsFileName = "whiteboards.json"
+    private let storageDirectoryOverride: URL?
+    private var clearAllDataObserver: NSObjectProtocol?
     
-    private init() {
-        loadDocuments()
-        if documents.isEmpty {
-            // 创建默认空白画板
-            let defaultDoc = WhiteboardDocument(name: "我的画板")
-            documents.append(defaultDoc)
-            currentDocument = defaultDoc
-            saveDocuments()
-        } else {
-            currentDocument = documents.first
+    /// 默认使用应用支持目录；测试或其他宿主可以显式指定目录。
+    init(storageDirectory: URL? = nil) {
+        self.storageDirectoryOverride = storageDirectory
+        let loadedSuccessfully = loadDocuments()
+        if loadedSuccessfully {
+            if documents.isEmpty {
+                // 首次使用（文件不存在）或磁盘上是空数组时，创建默认空白画板
+                createDefaultDocumentAndSave()
+            } else {
+                currentDocument = documents.first
+            }
+        }
+        // 解码失败时保持空列表，不在这里创建默认画板或触发保存
+        observeStorageClearAllData()
+    }
+    
+    deinit {
+        if let clearAllDataObserver {
+            NotificationCenter.default.removeObserver(clearAllDataObserver)
         }
     }
     
@@ -334,40 +351,163 @@ class WhiteboardService: ObservableObject {
     }
     
     private func scheduleAutoSave() {
+        hasPendingSave = true
+        isSaving = true
+        lastSaveError = nil
         autoSaveTimer?.invalidate()
         autoSaveTimer = Timer.scheduledTimer(withTimeInterval: autoSaveInterval, repeats: false) { [weak self] _ in
             self?.saveDocuments()
         }
     }
     
-    /// 立即保存
+    /// 立即保存。即使当前没有待保存内容，也允许调用方主动执行一次保存。
     func saveDocuments() {
+        autoSaveTimer?.invalidate()
+        autoSaveTimer = nil
+        isSaving = true
         do {
             let url = storageURL()
             let data = try JSONEncoder().encode(documents)
             try data.write(to: url, options: .atomic)
             lastSaveTime = Date()
+            lastSaveError = nil
+            hasPendingSave = false
         } catch {
+            let message = error.localizedDescription
+            lastSaveError = message
+            // 保存失败时保留待保存标记，界面可以重试，退出时也可以再次 flush
+            hasPendingSave = true
             print("[WhiteboardService] Save failed: \(error)")
+        }
+        isSaving = false
+    }
+    
+    /// 只在有变更待落盘时同步保存；重复调用不会重复写文件。
+    func flushPendingSave() {
+        guard hasPendingSave else { return }
+        saveDocuments()
+    }
+    
+    /// 供设置页或未来调用方使用的立即保存别名；没有待保存内容时不写盘。
+    func saveNow() {
+        flushPendingSave()
+    }
+    
+    /// 加载文档。返回 false 表示文件存在但读取/解码失败。
+    @discardableResult
+    func loadDocuments() -> Bool {
+        autoSaveTimer?.invalidate()
+        autoSaveTimer = nil
+        hasPendingSave = false
+        isSaving = false
+        lastSaveError = nil
+        
+        let url = storageURL()
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            documents = []
+            currentDocument = nil
+            loadError = nil
+            return true
+        }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            documents = try JSONDecoder().decode([WhiteboardDocument].self, from: data)
+            currentDocument = documents.first
+            loadError = nil
+            return true
+        } catch {
+            documents = []
+            currentDocument = nil
+            let backupURL = preserveCorruptedFile(at: url)
+            let backupDescription: String
+            if let backupURL {
+                backupDescription = "已创建隔离副本 \(backupURL.lastPathComponent)"
+            } else {
+                backupDescription = "隔离副本创建失败，原文件仍保留"
+            }
+            let message = "白板文件读取失败，\(backupDescription)。原文件未被修改：\(error.localizedDescription)"
+            loadError = message
+            print("[WhiteboardService] Load failed: \(error)")
+            NotificationCenter.default.post(
+                name: .storageIntegrityIssue,
+                object: self,
+                userInfo: [
+                    "fileURL": url,
+                    "message": message
+                ]
+            )
+            return false
         }
     }
     
-    /// 加载文档
-    func loadDocuments() {
-        do {
-            let url = storageURL()
-            guard FileManager.default.fileExists(atPath: url.path) else { return }
-            let data = try Data(contentsOf: url)
-            documents = try JSONDecoder().decode([WhiteboardDocument].self, from: data)
-        } catch {
-            print("[WhiteboardService] Load failed: \(error)")
-            documents = []
+    private func createDefaultDocumentAndSave() {
+        let defaultDoc = WhiteboardDocument(name: "我的画板")
+        documents = [defaultDoc]
+        currentDocument = defaultDoc
+        hasPendingSave = true
+        saveDocuments()
+    }
+    
+    private func preserveCorruptedFile(at url: URL) -> URL? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        let stamp = formatter.string(from: Date())
+        let directory = url.deletingLastPathComponent()
+        let baseName = url.deletingPathExtension().lastPathComponent
+        var backupURL = directory.appendingPathComponent("\(baseName).corrupted-\(stamp).json")
+        var suffix = 1
+        while FileManager.default.fileExists(atPath: backupURL.path) {
+            backupURL = directory.appendingPathComponent("\(baseName).corrupted-\(stamp)-\(suffix).json")
+            suffix += 1
         }
+        
+        do {
+            try FileManager.default.copyItem(at: url, to: backupURL)
+            return backupURL
+        } catch {
+            print("[WhiteboardService] Failed to preserve corrupted file: \(error)")
+            return nil
+        }
+    }
+    
+    private func observeStorageClearAllData() {
+        clearAllDataObserver = NotificationCenter.default.addObserver(
+            forName: .storageDidClearAllData,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleStorageDidClearAllData()
+        }
+    }
+    
+    private func handleStorageDidClearAllData() {
+        autoSaveTimer?.invalidate()
+        autoSaveTimer = nil
+        documents = []
+        currentDocument = nil
+        resetUndoStacks()
+        loadError = nil
+        isSaving = false
+        hasPendingSave = false
+        lastSaveError = nil
+        lastSaveTime = nil
+        
+        let url = storageURL()
+        // 只有文件确实不存在时才创建默认画板；已有文件不因清空通知被覆盖。
+        guard !FileManager.default.fileExists(atPath: url.path) else { return }
+        createDefaultDocumentAndSave()
     }
     
     private func storageURL() -> URL {
-        let paths = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-        let appSupport = paths.first!.appendingPathComponent("SmartNote", isDirectory: true)
+        let appSupport: URL
+        if let storageDirectoryOverride {
+            appSupport = storageDirectoryOverride
+        } else {
+            let paths = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            appSupport = paths.first!.appendingPathComponent("SmartNote", isDirectory: true)
+        }
         if !FileManager.default.fileExists(atPath: appSupport.path) {
             try? FileManager.default.createDirectory(at: appSupport, withIntermediateDirectories: true)
         }
@@ -376,8 +516,17 @@ class WhiteboardService: ObservableObject {
     
     /// 获取自动保存状态信息
     var autoSaveStatus: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss"
-        return "已自动保存于 \(formatter.string(from: lastSaveTime))"
+        if let lastSaveError {
+            return "保存失败：\(lastSaveError)"
+        }
+        if isSaving || hasPendingSave {
+            return "正在保存…"
+        }
+        if let lastSaveTime {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "HH:mm:ss"
+            return "已保存 \(formatter.string(from: lastSaveTime))"
+        }
+        return "尚未保存"
     }
 }

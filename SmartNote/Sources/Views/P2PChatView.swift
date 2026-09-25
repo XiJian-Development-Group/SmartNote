@@ -7,6 +7,7 @@ struct P2PChatView: View {
     @State private var messageText = ""
     @State private var messages: [P2PChatMessage] = []
     @State private var isConnected = false
+    @State private var canSend = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -35,6 +36,7 @@ struct P2PChatView: View {
         }
         .onAppear {
             loadMessages()
+            updateTrustState()
             if !isConnected {
                 _ = p2pService.reconnectToFriend(friend)
             }
@@ -44,7 +46,25 @@ struct P2PChatView: View {
         }
         .onReceive(p2pService.$connectionStatus) { _ in
             isConnected = p2pService.connectionStatus[friend.id] == .online
+            updateTrustState()
         }
+        .onReceive(p2pService.$trustedPeerIDs) { _ in
+            updateTrustState()
+        }
+        .alert("安全提示", isPresented: securityAlertBinding) {
+            Button("知道了") { p2pService.dismissSecurityAlert() }
+        } message: {
+            Text(p2pService.securityAlert?.message ?? "")
+        }
+    }
+
+    private var securityAlertBinding: Binding<Bool> {
+        Binding(
+            get: { p2pService.securityAlert != nil },
+            set: { isPresented in
+                if !isPresented { p2pService.dismissSecurityAlert() }
+            }
+        )
     }
 
     private var chatHeader: some View {
@@ -69,9 +89,14 @@ struct P2PChatView: View {
                     Circle()
                         .fill(isConnected ? Color.green : Color.gray)
                         .frame(width: 8, height: 8)
-                    Text(isConnected ? "在线" : "离线")
+                    Text(isConnected ? (canSend ? "在线（身份已确认）" : "等待身份确认") : "离线")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                    Text("记录指纹：\(p2pService.fingerprint(forPublicKey: friend.publicKey))")
+                        .font(.system(.caption2, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                        .textSelection(.enabled)
                 }
             }
 
@@ -97,7 +122,7 @@ struct P2PChatView: View {
                 Image(systemName: "paperplane.fill")
             }
             .buttonStyle(.borderedProminent)
-            .disabled(messageText.isEmpty)
+            .disabled(messageText.isEmpty || !canSend)
         }
         .padding()
     }
@@ -105,10 +130,15 @@ struct P2PChatView: View {
     private func loadMessages() {
         messages = p2pService.chatMessages[friend.id] ?? []
         isConnected = p2pService.connectionStatus[friend.id] == .online
+        updateTrustState()
+    }
+
+    private func updateTrustState() {
+        canSend = p2pService.canSendToFriend(friend.id)
     }
 
     private func sendMessage() {
-        guard !messageText.isEmpty else { return }
+        guard !messageText.isEmpty, canSend else { return }
         p2pService.sendMessage(messageText, to: friend.id)
         messageText = ""
     }

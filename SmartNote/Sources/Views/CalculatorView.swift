@@ -148,15 +148,16 @@ struct CalculatorView: View {
                 Button("NOT") { engine.applyBitwise("NOT") }
                     .buttonStyle(CalcKeyStyle(kind: .function))
                     .frame(maxWidth: .infinity)
-                Button("<<") { engine.applyBitwise("SHL") }
+                Button("×2") { engine.applyBitwise("MUL2") }
                     .buttonStyle(CalcKeyStyle(kind: .function))
                     .frame(maxWidth: .infinity)
             }
             HStack(spacing: 8) {
-                Button(">>") { engine.applyBitwise("SHR") }
+                Button("÷2") { engine.applyBitwise("DIV2") }
                     .buttonStyle(CalcKeyStyle(kind: .function))
                     .frame(maxWidth: .infinity)
-                Spacer()
+                CalcKey(button: .equals, engine: engine)
+                    .frame(maxWidth: .infinity)
                 Button("Clear") { engine.clear() }
                     .buttonStyle(CalcKeyStyle(kind: .danger))
                     .frame(maxWidth: .infinity)
@@ -299,7 +300,7 @@ private struct CalcKey: View {
         case .dot:
             engine.appendDot()
         case .op(let s, let alternate):
-            // 特殊操作符 mod / ^ → 转 NSExpression 接受的形式
+            // 特殊操作符 mod / ^ → 转 AlgebraEvaluator 接受的形式
             if alternate || s == "mod" {
                 engine.appendOperator(" mod ")
             } else if s == "^" {
@@ -312,7 +313,7 @@ private struct CalcKey: View {
             switch kind {
             case .clear: engine.clear()
             case .negate: engine.toggleSign()
-            case .percent: engine.appendOperator(" * 0.01 ")
+            case .percent: engine.applyPercent()
             case .abs: engine.applyFunction("abs")
             case .sin: engine.applyFunction("sin")
             case .cos: engine.applyFunction("cos")
@@ -322,7 +323,7 @@ private struct CalcKey: View {
             case .sqrt: engine.applyFunction("sqrt")
             case .sqr: engine.applyFunction("sqr")
             case .x2: engine.applyFunction("sqr")
-            case .cube: engine.appendOperator(" * ")  // x³ = x*x, 真实计算在等号里
+            case .cube: engine.applyFunction("cube")
             case .inv: engine.applyFunction("inv")
             case .fact: engine.applyFunction("fact")
             case .leftParen: engine.appendOperator("(")

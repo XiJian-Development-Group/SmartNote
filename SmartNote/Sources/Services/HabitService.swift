@@ -1,53 +1,181 @@
 import Foundation
 import UserNotifications
 
-/// 管理用户习惯与打卡，并负责安排提醒
+/// 管理用户习惯与打卡，并负责安排提醒。
+///
+/// 初始化只加载数据，不请求通知权限。权限请求只发生在 add/update 这类用户
+/// 主动开启/编辑提醒的路径；打卡、启动恢复和后台安排只查询当前状态。
 class HabitService: ObservableObject {
     static let shared = HabitService()
 
     @Published private(set) var habits: [Habit] = []
+    @Published private(set) var lastNotificationResult: NotificationOperationResult?
+    @Published private(set) var lastNotificationError: String?
 
-    private let storage = StorageService()
-    private let notification = NotificationService.shared
+    private let storage: StorageService
+    private let notification: NotificationService
 
-    private init() {
+    init(
+        storage: StorageService = StorageService(),
+        notification: NotificationService = NotificationService.shared
+    ) {
+        self.storage = storage
+        self.notification = notification
         load()
-        // 每次启动时为所有启用的习惯安排下一次提醒
-        Task {
-            await scheduleNextNotificationsForAll()
+        // 启动时可以恢复已有授权的提醒，但只查询状态并安排已有请求，绝不调用
+        // requestAuthorization；真正的权限请求仍只发生在用户主动开启/编辑路径。
+        Task { [weak self] in
+            guard let self else { return }
+            _ = await self.scheduleNextNotificationsForAll(requestPermissionIfNeeded: false)
         }
     }
 
     // MARK: - CRUD
-    func addHabit(_ habit: Habit) {
-        habits.append(habit)
+
+    @discardableResult
+    func addHabit(_ habit: Habit) -> Task<NotificationOperationResult, Never> {
+        guard habit.isEnabled else {
+            habits.append(habit)
+            save()
+            return Task {
+                .skipped(reason: "习惯提醒未启用。")
+            }
+        }
+
+        // 先以“未启用”落盘，只有通知请求真实成功后才把用户选择保存为启用。
+        // 这样权限拒绝/系统 add 失败不会留下一个看似已启用的提醒。
+        var pendingHabit = habit
+        pendingHabit.isEnabled = false
+        habits.append(pendingHabit)
         save()
-        Task { await scheduleNextNotification(for: habit) }
+
+        return Task { [weak self] in
+            guard let self else {
+                return .failure(NotificationFailure(
+                    reason: .addFailed,
+                    message: "习惯服务已释放，提醒未安排。"
+                ))
+            }
+            // addHabit 是用户主动添加并开启习惯的路径；已有权限时 requestAuthorization
+            // 只查询状态，不会重复弹框。
+            let result = await self.scheduleNextNotification(
+                for: habit,
+                requestPermissionIfNeeded: true
+            )
+            await self.applyEnablementResult(result, habitID: habit.id, requestedHabit: habit)
+            return result
+        }
     }
 
-    func updateHabit(_ habit: Habit) {
-        if let idx = habits.firstIndex(where: { $0.id == habit.id }) {
+    @discardableResult
+    func updateHabit(_ habit: Habit) -> Task<NotificationOperationResult, Never> {
+        guard let idx = habits.firstIndex(where: { $0.id == habit.id }) else {
+            return Task { .skipped(reason: "找不到要更新的习惯。") }
+        }
+        if !habit.isEnabled {
             habits[idx] = habit
             save()
-            Task { await scheduleNextNotification(for: habit) }
+            notification.removePendingNotification(identifier: NotificationIdentifiers.habit(habit.id))
+            return Task { .skipped(reason: "习惯提醒已关闭。") }
         }
+
+        // 与 addHabit 相同：先不让失败的请求以 enabled 状态写入磁盘。
+        var pendingHabit = habit
+        pendingHabit.isEnabled = false
+        habits[idx] = pendingHabit
+        save()
+
+        return Task { [weak self] in
+            guard let self else {
+                return .failure(NotificationFailure(
+                    reason: .addFailed,
+                    message: "习惯服务已释放，提醒未安排。"
+                ))
+            }
+            // 用户主动编辑并保持开启时，允许在这个上下文中请求一次权限。
+            let result = await self.scheduleNextNotification(
+                for: habit,
+                requestPermissionIfNeeded: true
+            )
+            await self.applyEnablementResult(result, habitID: habit.id, requestedHabit: habit)
+            return result
+        }
+    }
+
+    private func applyEnablementResult(
+        _ result: NotificationOperationResult,
+        habitID: UUID,
+        requestedHabit: Habit
+    ) async {
+        let enabled: Bool
+        if case .success = result {
+            enabled = true
+        } else {
+            enabled = false
+        }
+
+        await MainActor.run {
+            if let index = self.habits.firstIndex(where: { $0.id == habitID }) {
+                var persistedHabit = requestedHabit
+                persistedHabit.isEnabled = enabled
+                self.habits[index] = persistedHabit
+            }
+        }
+        save()
+        await saveNotificationResult(result)
     }
 
     func deleteHabit(id: UUID) {
         habits.removeAll { $0.id == id }
         save()
-        // 取消对应 pending notification
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["habit_\(id.uuidString)"])
+        notification.removePendingNotification(identifier: NotificationIdentifiers.habit(id))
     }
 
-    /// 在指定时间打卡，返回是否成功
+    /// 在指定时间打卡，返回是否成功。打卡不会触发权限请求。
     @discardableResult
     func checkIn(habitId: UUID, at date: Date = Date()) -> Bool {
         guard let idx = habits.firstIndex(where: { $0.id == habitId }) else { return false }
         habits[idx].checkIns.append(date)
         save()
-        Task { await scheduleNextNotification(for: habits[idx]) }
+        let scheduledHabit = habits[idx]
+        Task { [weak self] in
+            guard let self else { return }
+            let result = await self.scheduleNextNotification(
+                for: scheduledHabit,
+                requestPermissionIfNeeded: false
+            )
+            await self.saveNotificationResult(result)
+        }
         return true
+    }
+
+    private func authorizationFailure(for status: NotificationAuthorizationStatus) -> NotificationFailure {
+        switch status {
+        case .notDetermined:
+            return NotificationFailure(reason: .authorizationRequired)
+        case .denied:
+            return NotificationFailure(reason: .authorizationDenied)
+        case .restricted, .unknown:
+            return NotificationFailure(reason: .systemRestricted)
+        case .authorized, .provisional, .ephemeral:
+            return NotificationFailure(reason: .systemRestricted)
+        }
+    }
+
+    private func saveNotificationResult(_ result: NotificationOperationResult) async {
+        let errorMessage: String?
+        switch result {
+        case .success:
+            errorMessage = nil
+        case .skipped(let reason):
+            errorMessage = reason
+        case .failure(let failure):
+            errorMessage = failure.message
+        }
+        await MainActor.run {
+            self.lastNotificationResult = result
+            self.lastNotificationError = errorMessage
+        }
     }
 
     // MARK: - 统计功能
@@ -153,7 +281,7 @@ class HabitService: ObservableObject {
         let base = (habit.checkIns.sorted(by: { $0 > $1 }).first) ?? start
 
         // 目标时分
-        var components = calendar.dateComponents([.hour, .minute], from: habit.reminderTime ?? Date())
+        let components = calendar.dateComponents([.hour, .minute], from: habit.reminderTime ?? Date())
 
         var candidate: Date?
         switch habit.intervalType {
@@ -205,35 +333,84 @@ class HabitService: ObservableObject {
         return computeNextOccurrence(for: habit, after: Date())
     }
 
-    func scheduleNextNotification(for habit: Habit) async {
-        guard habit.isEnabled else { return }
-        let center = UNUserNotificationCenter.current()
-        // 先移除旧的同 id 请求
-        center.removePendingNotificationRequests(withIdentifiers: ["habit_\(habit.id.uuidString)"])
+    /// 安排习惯的下一次提醒，并返回真实 add 结果。
+    ///
+    /// `requestPermissionIfNeeded` 只有用户主动开启/编辑路径才应为 true；默认
+    /// false 可安全用于启动恢复、打卡和后台检查。
+    @discardableResult
+    func scheduleNextNotification(
+        for habit: Habit,
+        requestPermissionIfNeeded: Bool = false
+    ) async -> NotificationOperationResult {
+        let identifier = NotificationIdentifiers.habit(habit.id)
+        // 同一习惯只保留一个 pending 请求，重复开关/多设备恢复不会堆叠。
+        notification.removePendingNotification(identifier: identifier)
 
-        guard let next = computeNextOccurrence(for: habit, after: Date()) else { return }
-
-        let granted = await notification.requestAuthorization()
-        guard granted else { return }
-
-        let content = UNMutableNotificationContent()
-        content.title = "打卡提醒：\(habit.title)"
-        content.body = "别忘了完成你的习惯打卡：\(habit.title)。"
-        content.sound = .default
-
-        let comps = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: next)
-        let trigger = UNCalendarNotificationTrigger(dateMatching: comps, repeats: false)
-        let req = UNNotificationRequest(identifier: "habit_\(habit.id.uuidString)", content: content, trigger: trigger)
-        do {
-            try await center.add(req)
-        } catch {
-            print("Failed to schedule habit notification: \(error)")
+        guard habit.isEnabled else {
+            let result = NotificationOperationResult.skipped(reason: "习惯提醒已关闭。")
+            await saveNotificationResult(result)
+            return result
         }
+        guard let next = computeNextOccurrence(for: habit, after: Date()) else {
+            let result = NotificationOperationResult.skipped(reason: "该习惯没有下一次提醒时间。")
+            await saveNotificationResult(result)
+            return result
+        }
+
+        let authorization: NotificationAuthorizationResult
+        if requestPermissionIfNeeded {
+            authorization = await notification.requestAuthorization()
+        } else {
+            let status = await notification.checkAuthorization()
+            authorization = status.canSendNotifications
+                ? .success(status)
+                : .failure(authorizationFailure(for: status))
+        }
+
+        guard case .success(let status) = authorization else {
+            let result: NotificationOperationResult
+            if case .failure(let failure) = authorization {
+                result = .failure(failure)
+            } else {
+                result = .failure(NotificationFailure(reason: .authorizationRequired))
+            }
+            await saveNotificationResult(result)
+            return result
+        }
+
+        // 习惯名称属于用户内容，正文只使用中性描述；详情只保留 habitID，
+        // 供 App 将来在用户点击通知后自行查询。
+        let content = NotificationService.makePrivateContent(
+            title: "习惯打卡提醒",
+            body: "习惯打卡提醒",
+            userInfo: [
+                "kind": "habit",
+                "habitID": habit.id.uuidString
+            ]
+        )
+        let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: next)
+        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        let result = await notification.submitNotification(
+            identifier: identifier,
+            content: content,
+            trigger: trigger,
+            removeExisting: true,
+            authorizationStatus: status
+        )
+        await saveNotificationResult(result)
+        return result
     }
 
-    func scheduleNextNotificationsForAll() async {
+    /// 后台/启动恢复入口：只查询权限和安排已有授权的请求，不主动弹框。
+    @discardableResult
+    func scheduleNextNotificationsForAll(requestPermissionIfNeeded: Bool = false) async -> [NotificationOperationResult] {
+        var results: [NotificationOperationResult] = []
         for habit in habits where habit.isEnabled {
-            await scheduleNextNotification(for: habit)
+            results.append(await scheduleNextNotification(
+                for: habit,
+                requestPermissionIfNeeded: requestPermissionIfNeeded
+            ))
         }
+        return results
     }
 }

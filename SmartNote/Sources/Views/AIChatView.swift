@@ -1,6 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import AppKit
+import Foundation
 
 /// 视图内"上传前的图片附件"——仅在本视图持有，不持久化。
 struct ChatImageAttachment: Identifiable, Hashable {
@@ -23,6 +24,8 @@ struct AIChatView: View {
     @State private var attachments: [ChatImageAttachment] = []
     @State private var showImagePicker: Bool = false
     @State private var isTargeted: Bool = false
+    @State private var imageTransferStatus: String?
+    @State private var showImageTransferAlert: Bool = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -59,6 +62,19 @@ struct AIChatView: View {
             LLMSettingsView()
                 .environmentObject(appState)
         }
+        .alert("图片未发送", isPresented: $showImageTransferAlert) {
+            Button("好", role: .cancel) {}
+        } message: {
+            Text(imageTransferStatus ?? "当前 AI 服务不支持图像理解，未发送图片")
+        }
+    }
+
+    private var canAttachImages: Bool {
+        LLMImageRequestDecision.make(
+            hasImages: true,
+            supportsImageUnderstanding: appState.llmConfiguration.supportsImageUnderstanding,
+            supportsNativeVision: appState.llmConfiguration.supportsNativeVision
+        ) != .blocked
     }
     
     private var headerView: some View {
@@ -162,9 +178,11 @@ struct AIChatView: View {
             } label: {
                 Image(systemName: "photo.on.rectangle.angled")
             }
-            .help("附加图片（仅 OpenAI / Anthropic 多模态 API）")
+            .help(appState.llmConfiguration.supportsImageUnderstanding
+                  ? "附加图片（将按服务能力发送）"
+                  : "附加图片（先在本地 OCR 为文本发送）")
             .disabled(!appState.llmConfiguration.enabled
-                      || !appState.llmConfiguration.supportsNativeVision
+                      || !canAttachImages
                       || attachments.count >= appState.llmConfiguration.visionMaxImages
                       || isSending)
 
@@ -210,28 +228,38 @@ struct AIChatView: View {
 
     private func handleDroppedImages(_ providers: [NSItemProvider]) -> Bool {
         let group = DispatchGroup()
-        var urls: [URL] = []
-        for p in providers where p.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
+        let collector = OrderedThreadSafeCollector<URL>()
+        for (index, provider) in providers.enumerated()
+        where provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
             group.enter()
-            p.loadDataRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { data, _ in
+            provider.loadDataRepresentation(forTypeIdentifier: UTType.fileURL.identifier) { data, _ in
                 defer { group.leave() }
                 guard let data,
-                      let s = String(data: data, encoding: .utf8),
-                      let u = URL(string: s) else { return }
-                let ext = u.pathExtension.lowercased()
-                if ["png","jpg","jpeg","webp","gif","heic"].contains(ext) {
-                    urls.append(u)
+                      let string = String(data: data, encoding: .utf8),
+                      let url = URL(string: string) else { return }
+                let ext = url.pathExtension.lowercased()
+                if ["png", "jpg", "jpeg", "webp", "gif", "heic"].contains(ext) {
+                    collector.append(url, at: index)
                 }
             }
         }
-        group.notify(queue: .main) { for u in urls { self.ingestImageURL(u) } }
+        group.notify(queue: .main) {
+            // 收集器按拖放原始索引排序；所有 NSItemProvider 完成后才在主线程更新 SwiftUI 状态。
+            for url in collector.snapshot() {
+                self.ingestImageURL(url)
+            }
+        }
         return true
     }
 
     private func ingestImageURL(_ url: URL) {
         let cfg = appState.llmConfiguration
-        let allowed = cfg.supportsNativeVision && attachments.count < cfg.visionMaxImages
-        guard allowed else { return }
+        let decision = LLMImageRequestDecision.make(
+            hasImages: true,
+            supportsImageUnderstanding: cfg.supportsImageUnderstanding,
+            supportsNativeVision: cfg.supportsNativeVision
+        )
+        guard decision != .blocked, attachments.count < cfg.visionMaxImages else { return }
         let didStart = url.startAccessingSecurityScopedResource()
         defer { if didStart { url.stopAccessingSecurityScopedResource() } }
         guard let image = NSImage(contentsOf: url) else { return }
@@ -245,6 +273,7 @@ struct AIChatView: View {
             mediaType: mediaType,
             thumbnail: thumb
         ))
+        imageTransferStatus = nil
     }
 
     private func thumbnailFromImage(_ image: NSImage, maxEdge: Int) -> NSImage? {
@@ -259,7 +288,7 @@ struct AIChatView: View {
     }
 
     private var attachmentStrip: some View {
-        Group {
+        VStack(alignment: .leading, spacing: 4) {
             if !attachments.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
@@ -287,9 +316,21 @@ struct AIChatView: View {
                     .padding(.horizontal, 4)
                 }
                 .frame(height: 70)
-                .padding(.bottom, 4)
+            }
+
+            if let imageTransferStatus {
+                Label(
+                    imageTransferStatus,
+                    systemImage: imageTransferStatus.contains("未发送图片")
+                        ? "exclamationmark.triangle.fill"
+                        : "text.badge.checkmark"
+                )
+                .font(.caption)
+                .foregroundStyle(imageTransferStatus.contains("未发送图片") ? Color.orange : Color.green)
+                .padding(.horizontal, 4)
             }
         }
+        .padding(.bottom, attachments.isEmpty ? 0 : 4)
     }
 
     private func sendMessage() {
@@ -306,8 +347,9 @@ struct AIChatView: View {
 
         let userMessageSnapshot = question
         let attachmentsSnapshot = attachments
+        let stream = ThrottledTextAccumulator()
         userMessage = ""
-        attachments = []
+        imageTransferStatus = nil
         isSending = true
         currentStreamingID = systemMsg.id
         streamingContent = ""
@@ -319,51 +361,87 @@ struct AIChatView: View {
                 """
 
                 if attachmentsSnapshot.isEmpty {
-                    // 纯文本流式
+                    // 纯文本流式；文本汇总最多每 50ms 刷新一次。
                     try await appState.llmService.sendMessageStreaming(system: prompt, user: userMessageSnapshot) { chunk in
-                        Task { @MainActor in
-                            self.streamingContent += chunk
-                            if let index = self.messages.firstIndex(where: { $0.id == self.currentStreamingID }) {
-                                self.messages[index] = ChatMessage(id: self.currentStreamingID!, role: .system, content: self.streamingContent)
+                        if let snapshot = stream.append(chunk) {
+                            Task { @MainActor in
+                                self.applyStreamingSnapshot(snapshot, messageID: systemMsg.id)
                             }
                         }
                     }
                 } else {
-                    // 多模态流式
                     let images: [LLMService.ImagePayload] = attachmentsSnapshot.map {
                         LLMService.ImagePayload(base64: $0.base64, mediaType: $0.mediaType)
                     }
-                    try await appState.llmService.sendMessageWithImagesStreaming(system: prompt, user: userMessageSnapshot.isEmpty ? "请描述这张图" : userMessageSnapshot, images: images) { chunk in
-                        Task { @MainActor in
-                            self.streamingContent += chunk
-                            if let index = self.messages.firstIndex(where: { $0.id == self.currentStreamingID }) {
-                                self.messages[index] = ChatMessage(id: self.currentStreamingID!, role: .system, content: self.streamingContent)
+                    try await appState.llmService.sendMessageWithImagesStreaming(
+                        system: prompt,
+                        user: userMessageSnapshot.isEmpty ? "请描述这张图" : userMessageSnapshot,
+                        images: images,
+                        onImageFallback: { event in
+                            Task { @MainActor in
+                                self.imageTransferStatus = event.message
+                            }
+                        },
+                        onChunk: { chunk in
+                            if let snapshot = stream.append(chunk) {
+                                Task { @MainActor in
+                                    self.applyStreamingSnapshot(snapshot, messageID: systemMsg.id)
+                                }
                             }
                         }
-                    }
+                    )
                 }
-                
+
+                let finalText = stream.finish()
                 await MainActor.run {
-                    isSending = false
-                    currentStreamingID = nil
-                    if !streamingContent.isEmpty {
-                        appState.speechService.speak(streamingContent)
+                    self.applyStreamingSnapshot(finalText, messageID: systemMsg.id)
+                    self.attachments = []
+                    self.isSending = false
+                    self.currentStreamingID = nil
+                    if !finalText.isEmpty {
+                        appState.speechService.speak(finalText)
                     }
                 }
             } catch is CancellationError {
+                let partialText = stream.finish()
                 await MainActor.run {
-                    isSending = false
-                    currentStreamingID = nil
+                    self.applyStreamingSnapshot(partialText, messageID: systemMsg.id)
+                    self.isSending = false
+                    self.currentStreamingID = nil
                 }
             } catch {
+                let partialText = stream.finish()
+                let errorMessage = error.localizedDescription
+                let imageWasBlocked: Bool
+                if case LLMError.imageUnderstandingUnavailable = error {
+                    imageWasBlocked = true
+                } else {
+                    imageWasBlocked = false
+                }
                 await MainActor.run {
-                    if let index = messages.firstIndex(where: { $0.id == systemMsg.id }) {
-                        messages[index] = ChatMessage(id: systemMsg.id, role: .system, content: "抱歉，发生错误: \(error.localizedDescription)")
+                    if imageWasBlocked {
+                        self.imageTransferStatus = "当前 AI 服务不支持图像理解，未发送图片"
+                        self.showImageTransferAlert = true
                     }
-                    isSending = false
-                    currentStreamingID = nil
+                    if let index = self.messages.firstIndex(where: { $0.id == systemMsg.id }) {
+                        self.messages[index] = ChatMessage(
+                            id: systemMsg.id,
+                            role: .system,
+                            content: imageWasBlocked ? errorMessage : "抱歉，发生错误: \(errorMessage)"
+                        )
+                    }
+                    self.isSending = false
+                    self.currentStreamingID = nil
                 }
             }
+        }
+    }
+
+    private func applyStreamingSnapshot(_ text: String, messageID: UUID) {
+        guard currentStreamingID == messageID else { return }
+        streamingContent = text
+        if let index = messages.firstIndex(where: { $0.id == messageID }) {
+            messages[index] = ChatMessage(id: messageID, role: .system, content: text)
         }
     }
     

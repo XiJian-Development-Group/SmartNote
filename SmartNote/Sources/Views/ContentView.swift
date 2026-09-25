@@ -1,12 +1,15 @@
 import SwiftUI
+import AppKit
+import Combine
 
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
-    
+    @State private var integrityIssues: [StorageIntegrityIssue] = StorageService.integrityIssues
+
     var body: some View {
         ZStack {
             BackgroundImageView()
-            
+
             NavigationSplitView {
                 SidebarView()
             } detail: {
@@ -15,6 +18,13 @@ struct ContentView: View {
             .navigationSplitViewStyle(.balanced)
             .frame(minWidth: 900, minHeight: 600)
             .background(Color.clear)
+            .overlay(alignment: .top) {
+                if !integrityIssues.isEmpty {
+                    storageIntegrityBanner
+                        .padding(.horizontal, 12)
+                        .padding(.top, 8)
+                }
+            }
         }
         .sheet(isPresented: $appState.showFileImporter) {
             FileImportView()
@@ -25,6 +35,57 @@ struct ContentView: View {
         } message: {
             Text(appState.errorMessage ?? "发生未知错误")
         }
+        .onReceive(NotificationCenter.default.publisher(for: .storageIntegrityIssue)) { notification in
+            guard let fileURL = notification.userInfo?["fileURL"] as? URL,
+                  let message = notification.userInfo?["message"] as? String else { return }
+            integrityIssues.append(StorageIntegrityIssue(fileURL: fileURL, message: message))
+            integrityIssues.sort { $0.timestamp < $1.timestamp }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .storageDidClearAllData)) { _ in
+            integrityIssues.removeAll()
+            StorageService.dismissIntegrityIssues()
+        }
+    }
+
+    private var storageIntegrityBanner: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+
+                Text("部分数据文件读取失败，已自动备份损坏文件（\(integrityIssues.map { $0.fileURL.lastPathComponent }.joined(separator: "、"))），若继续保存会写入新内容。")
+                    .font(.caption)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer(minLength: 8)
+
+                HStack(spacing: 6) {
+                    Button("查看备份位置") {
+                        showBackupLocation()
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button("关闭") {
+                        integrityIssues.removeAll()
+                        StorageService.dismissIntegrityIssues()
+                    }
+                    .buttonStyle(.borderless)
+                }
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.regularMaterial)
+        .overlay(alignment: .bottom) {
+            Divider()
+        }
+    }
+
+    private func showBackupLocation() {
+        guard let firstIssue = integrityIssues.first else { return }
+        let directory = firstIssue.fileURL.deletingLastPathComponent()
+        NSWorkspace.shared.open(directory)
     }
 }
 

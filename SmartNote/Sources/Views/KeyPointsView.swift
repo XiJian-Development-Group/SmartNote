@@ -365,23 +365,42 @@ struct AIAnalysisSheet: View {
             prompt = "基于以下学习资料，生成 5 道复习思考题或选择题："
         }
         
+        let stream = ThrottledTextAccumulator()
         Task {
             do {
                 try await appState.llmService.sendMessageStreaming(system: prompt, user: text) { chunk in
-                    Task { @MainActor in
-                        if !self.isCancelled {
-                            self.streamingText += chunk
-                            appState.aiAnalysisResult = self.streamingText
+                    if let snapshot = stream.append(chunk) {
+                        Task { @MainActor in
+                            if !self.isCancelled {
+                                self.streamingText = snapshot
+                                self.appState.aiAnalysisResult = snapshot
+                            }
                         }
                     }
                 }
-            } catch is CancellationError {
-                await MainActor.run {
-                    // User cancelled, keep the partial result
-                }
-            } catch {
+                let finalText = stream.finish()
                 await MainActor.run {
                     if !self.isCancelled {
+                        self.streamingText = finalText
+                        self.appState.aiAnalysisResult = finalText
+                    }
+                }
+            } catch is CancellationError {
+                let partialText = stream.finish()
+                await MainActor.run {
+                    if !self.isCancelled {
+                        self.streamingText = partialText
+                        self.appState.aiAnalysisResult = partialText
+                    }
+                }
+            } catch {
+                let partialText = stream.finish()
+                await MainActor.run {
+                    if !self.isCancelled {
+                        if !partialText.isEmpty {
+                            self.streamingText = partialText
+                            self.appState.aiAnalysisResult = partialText
+                        }
                         appState.errorMessage = error.localizedDescription
                         appState.showError = true
                     }

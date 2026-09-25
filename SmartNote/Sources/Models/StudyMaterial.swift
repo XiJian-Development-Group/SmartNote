@@ -7,6 +7,8 @@ struct StudyMaterial: Identifiable, Codable, Hashable {
     var category: MaterialCategory
     var localURL: URL?
     var originalURL: URL?
+    /// 关联模式下由用户授权 URL 生成的安全作用域书签。字段可选，旧版 JSON 缺少它时仍可解码。
+    var bookmarkData: Data?
     var content: String
     var extractedText: String?
     var keywords: [String]?
@@ -24,6 +26,7 @@ struct StudyMaterial: Identifiable, Codable, Hashable {
         category: MaterialCategory = .other,
         localURL: URL? = nil,
         originalURL: URL? = nil,
+        bookmarkData: Data? = nil,
         content: String = "",
         extractedText: String? = nil,
         keywords: [String]? = nil,
@@ -40,6 +43,7 @@ struct StudyMaterial: Identifiable, Codable, Hashable {
         self.category = category
         self.localURL = localURL
         self.originalURL = originalURL
+        self.bookmarkData = bookmarkData
         self.content = content
         self.extractedText = extractedText
         self.keywords = keywords
@@ -63,6 +67,45 @@ struct StudyMaterial: Identifiable, Codable, Hashable {
         formatter.timeStyle = .short
         return formatter.string(from: createdAt)
     }
+
+    /// 实际读取时优先使用书签恢复的 URL；复制模式仍读取 App 自有存储中的副本。
+    /// 访问授权由调用方在异步 I/O 周围成对 start/stop，本属性不持有长期授权。
+    var readableURL: URL? {
+        if storageMode == .reference,
+           let bookmarkData,
+           let resolvedURL = Self.resolveSecurityScopedBookmark(bookmarkData) {
+            return resolvedURL
+        }
+        if let localURL, storageMode == .copy {
+            return localURL
+        }
+        if let bookmarkData,
+           let resolvedURL = Self.resolveSecurityScopedBookmark(bookmarkData) {
+            return resolvedURL
+        }
+        return localURL ?? originalURL
+    }
+
+    static func makeSecurityScopedBookmark(for url: URL) -> Data? {
+        try? url.bookmarkData(
+            options: [.withSecurityScope],
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil
+        )
+    }
+
+    static func resolveSecurityScopedBookmark(_ data: Data) -> URL? {
+        var isStale = false
+        return try? URL(
+            resolvingBookmarkData: data,
+            options: [.withSecurityScope, .withoutUI],
+            relativeTo: nil,
+            bookmarkDataIsStale: &isStale
+        )
+    }
+
+    // App Sandbox 本轮仍关闭：新关联资料会保存安全作用域书签，旧资料仍可回退普通 URL；
+    // 开启前还需把 /Applications 安装拆成受控 helper，并迁移 ditto/unzip 等外部进程及其文件授权。
 }
 
 enum MaterialType: String, Codable, CaseIterable {

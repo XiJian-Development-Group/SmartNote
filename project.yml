@@ -3,7 +3,8 @@ options:
   bundleIdPrefix: com.skyc8266
   deploymentTarget:
     macOS: "15.0"
-  xcodeVersion: "15.0"
+  xcodeVersion: "16.0"
+  developmentLanguage: zh-Hans
   generateEmptyDirectories: true
 
 packages:
@@ -30,10 +31,16 @@ targets:
       - package: Markdown
     preBuildScripts:
       - name: Copy Ciallo Web Files
+        inputPaths:
+          - "$(SRCROOT)/ciallo"
+        outputPaths:
+          - "$(TARGET_BUILD_DIR)/$(CONTENTS_FOLDER_PATH)/Resources/ciallo"
         script: |
           echo "Copying ciallo web files to app bundle..."
-          mkdir -p "$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources"
-          cp -R "$SRCROOT/ciallo" "$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources/"
+          destination="$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources/ciallo"
+          mkdir -p "$destination"
+          # index.html uses native JS; do not ship the unused legacy jQuery/ajax directory.
+          /usr/bin/rsync -a --delete --delete-excluded --exclude='.DS_Store' --exclude='.*' --exclude='/ajax/' "$SRCROOT/ciallo/" "$destination/"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.skyc8266.smartnote
@@ -41,27 +48,39 @@ targets:
         CODE_SIGN_ENTITLEMENTS: SmartNote/Resources/SmartNote.entitlements
         PRODUCT_NAME: SmartNote
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        SWIFT_EMIT_LOC_STRINGS: YES
         GENERATE_INFOPLIST_FILE: NO
         MARKETING_VERSION: "2.0.0"
-        CURRENT_PROJECT_VERSION: "89"
+        CURRENT_PROJECT_VERSION: "100"
+        ENABLE_RESOURCE_ACCESS_CALENDARS: YES
+        ENABLE_RESOURCE_ACCESS_CONTACTS: NO
+        ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY: NO
     info:
       path: SmartNote/Resources/Info.plist
       properties:
         CFBundleName: SmartNote
         CFBundleDisplayName: 智学笔记
         CFBundleIdentifier: com.skyc8266.smartnote
-        CFBundleVersion: "89"
-        CFBundleShortVersionString: "2.0.0"
+        CFBundleDevelopmentRegion: zh-Hans
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundlePackageType: APPL
         CFBundleExecutable: SmartNote
         LSMinimumSystemVersion: "15.0"
         LSApplicationCategoryType: public.app-category.education
         NSHumanReadableCopyright: "Copyright 2026 Skyc8266"
         NSPrincipalClass: NSApplication
+        NSCalendarsFullAccessUsageDescription: "智学笔记需要访问日历，以便将复习计划创建为日历事件。"
+        NSRemindersFullAccessUsageDescription: "智学笔记需要访问提醒事项，以便将复习任务创建为提醒。"
+        NSLocalNetworkUsageDescription: "智学笔记需要访问本地网络，以便连接同一局域网中的 P2P 设备。"
+        NSBonjourServices:
+          - _tcp
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     entitlements:
       path: SmartNote/Resources/SmartNote.entitlements
       properties:
+        # 安全作用域书签已接入资料模型；开启沙盒前仍需完成 /Applications 安装 helper、
+        # 外部 ditto/unzip 流程迁移及全量沙盒回归，因此本轮保持关闭。
         com.apple.security.app-sandbox: false
         com.apple.security.files.user-selected.read-write: true
         com.apple.security.personal-information.calendars: true

@@ -67,7 +67,9 @@ struct P2PAddFriendView: View {
                 .background(Color(nsColor: .controlBackgroundColor))
                 .cornerRadius(8)
 
-                Text("将以上地址发给好友，等待对方连接")
+                Text(p2pService.isBackgroundEnabled
+                    ? "将以上地址发给好友。裸 TCP 连接建立后，首次连接仍需在“待处理”中核对对端 SHA-256 指纹。"
+                    : "后台监听当前关闭；请先在设置中开启，才能接收对端连接。")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -103,7 +105,7 @@ struct P2PAddFriendView: View {
             errorMessage = "对方已在黑名单中，或连接失败"
             isConnecting = false
         } else {
-            errorMessage = "连接已建立，等待对方确认..."
+            errorMessage = "TCP 连接已发起；等待对方回应。首次连接请在“待处理”中核对指纹后再信任。"
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 isConnecting = false
                 dismiss()

@@ -12,6 +12,9 @@ struct HabitTrackerView: View {
     // 用于触发打卡动画
     @State private var animatingHabitId: UUID? = nil
     @State private var animateScale: Bool = false
+    @State private var isAddingHabit = false
+    @State private var showNotificationError = false
+    @State private var notificationErrorMessage = ""
 
     var body: some View {
         VStack {
@@ -113,25 +116,10 @@ struct HabitTrackerView: View {
                         .font(.headline)
                     Spacer()
                     Button("添加") {
-                        let habit = Habit(
-                            title: newTitle,
-                            startDate: Date(),
-                            endDate: hasEndDate ? newEndDate : nil,
-                            intervalType: newIntervalType,
-                            intervalCount: max(1, newIntervalCount),
-                            reminderTime: newReminderTime,
-                            isEnabled: true
-                        )
-                        service.addHabit(habit)
-                        // reset
-                        newTitle = ""
-                        newIntervalType = .daily
-                        newIntervalCount = 1
-                        newReminderTime = Calendar.current.date(from: DateComponents(hour: 9, minute: 0)) ?? Date()
-                        hasEndDate = false
-                        showingAdd = false
+                        addHabit()
                     }
                     .buttonStyle(.borderedProminent)
+                    .disabled(isAddingHabit)
                 }
                 .padding()
 
@@ -156,7 +144,59 @@ struct HabitTrackerView: View {
             }
             .frame(width: 480, height: 380)
         }
+        .alert("习惯提醒", isPresented: $showNotificationError) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            Text(notificationErrorMessage)
+        }
         .padding()
+    }
+
+    private func addHabit() {
+        guard !isAddingHabit else { return }
+
+        let habit = Habit(
+            title: newTitle,
+            startDate: Date(),
+            endDate: hasEndDate ? newEndDate : nil,
+            intervalType: newIntervalType,
+            intervalCount: max(1, newIntervalCount),
+            reminderTime: newReminderTime,
+            isEnabled: true
+        )
+
+        isAddingHabit = true
+        let operation = service.addHabit(habit)
+        Task { @MainActor in
+            let result = await operation.value
+            isAddingHabit = false
+            resetAddForm()
+            showingAdd = false
+
+            if let message = notificationErrorMessage(for: result) {
+                notificationErrorMessage = message
+                showNotificationError = true
+            }
+        }
+    }
+
+    private func resetAddForm() {
+        newTitle = ""
+        newIntervalType = .daily
+        newIntervalCount = 1
+        newReminderTime = Calendar.current.date(from: DateComponents(hour: 9, minute: 0)) ?? Date()
+        hasEndDate = false
+    }
+
+    private func notificationErrorMessage(for result: NotificationOperationResult) -> String? {
+        switch result {
+        case .success:
+            return nil
+        case .failure(let failure):
+            return service.lastNotificationError ?? failure.message
+        case .skipped(let reason):
+            return service.lastNotificationError ?? reason
+        }
     }
 
     private func formatted(date: Date) -> String {

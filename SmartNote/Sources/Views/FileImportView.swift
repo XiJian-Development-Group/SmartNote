@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -191,7 +192,10 @@ struct FileImportView: View {
     
     private func importFiles() {
         guard !selectedURLs.isEmpty else { return }
-        
+
+        // 这里只在移交前短暂验证 URL 可读；FileScannerService 会在真正的异步读取周围
+        // 再次 start/stop，避免把安全作用域授权泄漏到 View 的生命周期。
+        verifySelectedURLsAreReadable()
         isScanning = true
         appState.importFiles(selectedURLs, storageMode: storageMode)
         
@@ -199,6 +203,24 @@ struct FileImportView: View {
             isScanning = false
             dismiss()
         }
+    }
+
+    private func verifySelectedURLsAreReadable() {
+        for url in selectedURLs {
+            withSecurityScopedAccess(to: url) {
+                _ = FileManager.default.isReadableFile(atPath: url.path)
+            }
+        }
+    }
+
+    private func withSecurityScopedAccess(to url: URL, operation: () -> Void) {
+        let didStartAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+        operation()
     }
 }
 

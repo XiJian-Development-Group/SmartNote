@@ -21,6 +21,20 @@ struct P2PSocialView: View {
         .sheet(isPresented: $showAddFriend) { P2PAddFriendView() }
         .sheet(isPresented: $showSettings) { P2PSettingsView() }
         .sheet(isPresented: $showCreateGroup) { P2PCreateGroupView() }
+        .alert("安全提示", isPresented: securityAlertBinding) {
+            Button("知道了") { p2pService.dismissSecurityAlert() }
+        } message: {
+            Text(p2pService.securityAlert?.message ?? "")
+        }
+    }
+
+    private var securityAlertBinding: Binding<Bool> {
+        Binding(
+            get: { p2pService.securityAlert != nil },
+            set: { isPresented in
+                if !isPresented { p2pService.dismissSecurityAlert() }
+            }
+        )
     }
 
     private func identityHeader(_ identity: P2PUserIdentity) -> some View {
@@ -43,9 +57,9 @@ struct P2PSocialView: View {
                     .font(.headline)
                 HStack(spacing: 4) {
                     Circle()
-                        .fill(Color.green)
+                        .fill(p2pService.isBackgroundEnabled ? Color.green : Color.gray)
                         .frame(width: 8, height: 8)
-                    Text("在线")
+                    Text(p2pService.isBackgroundEnabled ? "后台监听已开启" : "后台监听已关闭")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -151,29 +165,31 @@ struct P2PSocialView: View {
                     .frame(width: 40, height: 40)
                     .foregroundColor(.accentColor)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(pending.nickname)
                         .font(.headline)
-                    Text("请求连接")
+                    Text("首次连接：请通过另一条渠道核对指纹")
                         .font(.caption)
                         .foregroundColor(.secondary)
+                    Text(p2pService.fingerprint(forPublicKey: pending.publicKey))
+                        .font(.system(.caption2, design: .monospaced))
+                        .textSelection(.enabled)
+                        .lineLimit(2)
                 }
 
                 Spacer()
 
-                Button {
-                    p2pService.rejectPendingConnection(pending)
-                } label: {
-                    Image(systemName: "xmark")
-                }
-                .buttonStyle(.bordered)
+                VStack(spacing: 6) {
+                    Button("拒绝") {
+                        p2pService.rejectPendingConnection(pending)
+                    }
+                    .buttonStyle(.bordered)
 
-                Button {
-                    p2pService.acceptPendingConnection(pending)
-                } label: {
-                    Image(systemName: "checkmark")
+                    Button("确认并信任") {
+                        p2pService.acceptPendingConnection(pending)
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
-                .buttonStyle(.borderedProminent)
             }
             .padding(.vertical, 4)
         }
@@ -204,8 +220,12 @@ struct P2PSocialView: View {
             Text("创建 P2P 社交身份")
                 .font(.title2)
                 .fontWeight(.bold)
-            Text("创建后可与好友进行端到端加密聊天")
+            Text("创建后可与好友进行应用层端到端加密聊天")
                 .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            Text("裸 TCP 链路本身没有 TLS；请通过另一条渠道核对首次连接指纹。")
+                .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
             P2PCreateIdentityView()

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<string>zh-Hans</string>
 	<key>CFBundleDisplayName</key>
 	<string>智学笔记</string>
 	<key>CFBundleExecutable</key>
@@ -17,16 +17,31 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.0.0</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>100</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.education</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>15.0</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_tcp</string>
+	</array>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>智学笔记需要访问日历，以便将复习计划创建为日历事件。</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright 2026 Skyc8266</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>智学笔记需要访问本地网络，以便连接同一局域网中的 P2P 设备。</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>智学笔记需要访问提醒事项，以便将复习任务创建为提醒。</string>
 </dict>
 </plist>
