@@ -286,6 +286,11 @@
 | `3896532` | feat(blessing): 每日祝福与换一句 | BlessingService.swift, ContentView.swift |
 | `49733d6` | feat(history): 中国近代史离线科普 34 篇 | HistoryArticle.swift, HistoryService.swift, HistoryHomeView.swift, HistoryArticleDetailView.swift, history_catalog.json, StorageService.swift |
 | `a871ac3` | docs: 2.0.0 README 重写与实施笔记同步 | README.md, docs/notes.md |
+| `73e4ad9` | docs: 回填 2.0.0 四个 commit 的实际哈希 | docs/notes.md |
+| `e2c94ab` | fix(history): 修正来源链接与数字口径 | history_catalog.json |
+| `183efcd` | feat(background): 背景图支持图片库与随机轮换 | AppState.swift, StorageService.swift, SettingsView.swift, ContentView.swift |
+| `e909cbf` | feat(wish): 许愿改为独立全屏窗口；白板暂时关闭 | SmartNoteApp.swift, ContentView.swift, WishView.swift |
+| `945ba0f` | docs: 同步背景图库、许愿全屏与白板暂时关闭 | README.md |
 
 发布更新日志与 B 站发布稿位于 `~/Desktop/Update200.md` 和 `~/Desktop/Pub.md`，不属于仓库内容。以上四个 commit 均为本地提交，未 push。
 
@@ -439,3 +444,57 @@ xcodebuild -project SmartNote.xcodeproj -scheme SmartNote \
 - 主题不是对全部旧页面的逐控件重新设计；本轮通过根环境、强调色、主题表面和新增页面完成统一视觉层，保留固定语义页面（许愿星空、白板纸张、WebView 小游戏）的原有配色。
 - 历史科普不提供图片、地图、音频、在线更新或 AI 自动写作；内容来源和授权边界仍需在后续扩充时逐条复核。
 - `historyProgress.json` 是普通本机 JSON，不是加密存储；清除所有数据会按既有受管数据规则删除它。若进度文件解码失败，会保留原文件并隔离副本，不在用户下一次收藏操作时静默覆盖。
+
+---
+
+## 第 19 章 背景图库、许愿全屏与白板暂时关闭
+
+### 背景图片库与随机轮换
+
+- `AppSettings` 新增 `backgroundImageLibrary`、`backgroundImageRandomEnabled`、`backgroundImageActiveName`，并由 `effectiveBackgroundImageName` 决定实际渲染哪一张。随机模式取激活项，指定模式取锁定项 `backgroundImageName`。
+- 旧 `settings.json` 只有 `backgroundImageName` 一个字段，解码时把它收进图片库，因此老用户升级后行为不变，不会出现「原来有背景图，升级后变空」。
+- `AppState` 集中图片库逻辑：`addBackgroundImage` / `selectBackgroundImage` / `removeBackgroundImage` / `setBackgroundImageRandomEnabled` / `pickRandomBackgroundImage` / `syncBackgroundImageLibrary`。磁盘上的增删会同步回内存列表。
+- 随机只在启动时和用户点击「换一张」时发生，不在使用过程中自行变化；`pickRandom` 会避开当前项，图片库只有一张时退回该张而不是取不到值。
+- 模糊半径、透明度等既有效果对两种方式一致生效，`BackgroundImageView` 只改为读取 `effectiveBackgroundImageName`。
+
+### 许愿改为独立全屏窗口
+
+- 新增 `Window("许愿 · 还愿", id: "wish-fullscreen")` 场景，`defaultSize` 1280×800，最小尺寸从 900×540 提到 1000×620。
+- 侧栏「许愿」从 `NavigationLink` 改为 `Button` + `openWindow(id:)`；`openWindow` 对同一 id 复用已有窗口，重复点击不会开出多个窗口。
+- `DetailView` 中的 `case 24` 已移除，许愿不再是侧栏详情页的一项。
+- 保留：许愿的星空背景、左右分栏、渐隐上浮动画和新建弹窗逻辑均未改动，只是承载窗口变大。
+
+### 白板暂时关闭
+
+- 侧栏「白板」`NavigationLink` 加 `.disabled(true)`，进入后显示 `WhiteboardUnavailableView` 占位页，说明维护状态与数据保留情况。
+- `WhiteboardView.swift`、`WhiteboardCanvasView.swift`、`GeometryModel.swift`、`AlgebraEvaluator.swift` 等源文件全部保留未删，`whiteboards.json` 仍登记在 `ManagedDataPath` 中参与存储统计、备份与「清除所有数据」，重新开放后可直接续用。
+- 原因：几何画板存在用户报告的显示异常（含顶部持续存在的模糊空白条）。在未定位根因前先下线入口，避免继续产生半可用状态；`BackgroundImageView` 的模糊层被所有页面共用，不宜在根因未确认时改动。
+
+### 历史内容来源审计
+
+本轮对 34 篇文章的 14 个来源 URL 与全部数字类断言做了逐条核验（curl 复验 + 原始文献比对），修正内容见 `e2c94ab`。要点：
+
+- `gov.cn/guoqing/2020-10/29/content_5555766.htm` 是真死链（站点改版后 404，返回 JS 跳转壳）；改用香港中联办转载的同一文档 `locpg.gov.cn`。该文档只有朝代年代对照，不含条约与事件日期，8 篇文章中「用于核对关键年份」一类 note 相应收窄。
+- `loc.gov/item/2021666890` 原本被标为「数字馆藏与历史地图」并置于《教育、报刊与电影》，实际是 1932 年国际联盟李顿调查团报告书；已改归《九一八事变与局部抗战》，并在原文删除错误条目。
+- 东京审判判决书改用 `tile.loc.gov` 直链（4.3MB / 137 页），避开 `www.loc.gov` 的 Cloudflare 挑战。已下载该 PDF 并用 pypdf 定位到 p.1014 原文：*over 200,000*、*more than 155,000 bodies*。
+- 南京军事法庭判决原文（维基文库《国防部审判战犯军事法庭判决》）确认为「十九万余人」+「十五万余具」+「被害总数达三十万人以上」。
+- `history.state.gov/.../frus1895p1/d203` 在本机网络不可达，但经检索确认为 1895 年《马关条约》英方存档文本，引证正确，保留并把标题改精确。
+- 4 个实质数字口径订正：《辛丑条约》4.5 亿两为本金、本息约 9.8 亿两（据维基文库原文「九百八十二兆二十三万八千一百五十两」）；《南京条约》2100 万银元为第四、五、六款之和；虎门销烟「导火索」改标准术语「导火线」并补三层因果；南京大屠杀删去易引发中外对立的措辞，改按判决时间先后叙述。
+
+**内容性质的边界**：历史正文是依据公开文献整理的导览稿，不是逐句转录的原文抄录。来源链接提供可追溯入口供用户自行核对。数字类表述已逐条核对原始文献，但整个目录的每一句并未与全部学术文献逐条比对，不应宣称「绝对权威」。
+
+### 本轮验证
+
+| 项目 | 结果 |
+|------|------|
+| Debug `xcodebuild build` | 通过 |
+| Release `xcodebuild archive` | 通过，SHA-256 `e58677bf…` |
+| 归档版本 / 构建号 | `2.0.0` / `100` |
+| 归档内 `history_catalog.json` | 34 篇，死链与误位条目均已清除 |
+| 解压后启动冒烟 | 运行中未崩溃 |
+| 背景图随机逻辑 | 单独验证三条不变量：空库返回 nil、单张库排除自身仍取到该张、多张库 3000 次采样分布 983/1003/1014 |
+| 旧 `settings.json` 迁移 | 四种情况（旧版单图 / 未启用 / 无图 / 空对象）锁定项与模糊参数均不丢 |
+| 来源 URL | 14 个中 13 个返回 200；`history.state.gov` 因本机网络不可达无法复验 |
+| 白板下线后无悬空引用 | `WhiteboardView()` 已无调用点，源文件保留 |
+
+`xcodebuild test` 仍不可用：仓库没有 XCTest target，scheme 未配置 test action，本轮不以任何方式伪造测试通过。
