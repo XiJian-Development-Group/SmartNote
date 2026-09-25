@@ -26,6 +26,9 @@
 | AI 视觉 | `URLSession` + AppKit `NSImage` + Vision OCR | 原生视觉仅 OpenAI / Anthropic 路径 |
 | 倒数纪念日 | `Foundation.Calendar` + `UNUserNotificationCenter` | 当前不写系统日历事件 |
 | 星空动画 | `SwiftUI` `TimelineView` + `Canvas` | 粒子系统本地绘制 |
+| 主题系统 | `SwiftUI Environment` + `AppSettings.ThemeID` + `Color` tokens | 经典 / 国庆红 / 祥云金，主题选择持久化 |
+| 节日祝福 | 本地日期索引 + 本地祝福库 | 每日选取与手动换句，不请求网络 |
+| 近代史科普 | `Bundle` JSON 目录 + `HistoryService` + 本地进度 JSON | 1840—1949 离线导览、搜索、收藏、阅读进度和随机学习 |
 | 计算器 | `AlgebraEvaluator` + `Int64` 精确整数路径 | 已弃用旧的 Foundation `NSExpression` 求值路径 |
 
 ---
@@ -273,6 +276,16 @@
 | `6e46efe` | feat(anniversary): 倒数纪念日与提醒 | AnniversaryModel.swift, AnniversaryService.swift, AnniversaryView.swift |
 | `b5c0c66` | feat(siri): App Intents 跳转 + 快速记录 | SmartNoteIntents.swift, QuickNoteStore.swift |
 | `438ee50` | feat(calculator): 标准 / 科学 / 程序员 | CalculatorEngine.swift, CalculatorView.swift |
+| `d3533b9` | chore(release): 1.7.0 — README / notes / 版本号 | README.md, docs/notes.md, project.yml |
+| `5042ed1` | fix(whiteboard): 几何画板修复 | AlgebraEvaluator.swift, WhiteboardCanvasView.swift |
+| `54dadb7` | chore(release): 2.0.0 — 版本与构建配置 | project.yml, Info.plist |
+| `f177183` | fix(security): P2 安全边界 + P3 正确性 + P5 工程卫生 | 多模块安全与正确性修复 |
+| `a0a2ab6` | docs: 同步 README 与实施笔记到真实实现 | README.md, docs/notes.md |
+| `b271997` | feat(diary): 日记加密设置入口 | DiaryEncryptionSettingsView.swift |
+| 待提交 | feat(theme): 2.0.0 国庆版主题系统 | AppTheme.swift, AppState.swift, SmartNoteApp.swift, SettingsView.swift |
+| 待提交 | feat(history): 中国近代史离线科普 34 篇 | HistoryArticle.swift, HistoryService.swift, HistoryHomeView.swift, HistoryArticleDetailView.swift, history_catalog.json |
+| 待提交 | feat(blessing): 每日祝福与换一句 | BlessingService.swift, ContentView.swift |
+| 待提交 | docs: 2.0.0 README 与发布文档 | README.md, docs/notes.md, ~/Desktop/Update200.md, ~/Desktop/Pub.md |
 
 ---
 
@@ -346,3 +359,81 @@
 - **设置开关已接入但有条件**：`showFileExtensions` 已传入 `MaterialsListView` 并控制列表是否显示扩展名；`autoScanDirectories` 已在 `AppState` 启动路径读取，开启且 `scanPaths` 非空时才异步扫描。当前 `SettingsView` 仍没有路径编辑 UI，因此默认空路径不会触发启动扫描。
 
 这些限制是有意的已知边界，不应被 README 的功能列表包装成端到端加密、自动云同步或完整代码签名更新。
+
+---
+
+## 第 18 章 2.0.0 国庆版：主题、祝福与近代史科普
+
+本轮版本定位为 `2.0.0` 国庆版，构建号继续使用 `100`（当前仓库没有已发布的 `v2.0.0` GitHub Release；发布前仍需确认远端资产状态）。
+
+### 主题系统
+
+- `AppSettings.themeID` 新增 `classic`、`nationalDay`、`auspicious` 三个值，并通过手写 `Codable`、默认值和 `Equatable` 持久化到 `settings.json`。
+- `AppState.activeThemeID` / `activeDarkModePreference` 是根场景即时刷新的外观快照；设置页通过 `setTheme` / `setDarkModePreference` 更新并显式保存，避免嵌套 `AppSettings` 的变更无法转发到 `AppState`。
+- `AppTheme` 通过 SwiftUI Environment 注入主窗口、日记编辑器、设置窗口和菜单栏；经典主题不覆盖系统 tint，节庆主题才提供全局强调色。
+- 经典主题继续遵循「跟随系统 / 浅色 / 深色」；两种节庆主题使用自带深色对比度方案，避免红金主题与浅色系统控件混用时失去可读性。
+- 背景图片仍由 `BackgroundImageView` 叠加在主题底色之上，没有改变用户已有的背景图、透明度和模糊设置。
+- 主题切换只改变视觉层，不修改资料、计划、AI、文件处理或 P2P 业务行为。
+
+### 每日祝福
+
+- `BlessingService` 分为全年祝福库和国庆期间祝福库，使用当前日期稳定选取；国庆期间（10 月 1—7 日）显示国庆标签和节庆文案。
+- 「换一句」从当前适用库中排除当前条目后随机选择另一条；祝福不联网、不调用 LLM，也不写入用户资料。
+- 祝福条只在节庆主题或国庆期间显示，避免普通经典主题长期占用主界面空间；长文案显示两行并提供完整提示。
+
+### 中国近代史科普
+
+- `SmartNote/Resources/history_catalog.json` 是随应用打包的只读目录，首批 34 篇文章覆盖 1840—1949 的时间线与主题节点；`HistoryPeriod` 是主题导览分组，不作为严格年份边界，跨时期文章保留在最能帮助理解的主题组中。
+- `HistoryService` 从 `Bundle.main` 读取并校验目录，按标题、摘要、正文、事件、人物、术语和标签搜索；目录为空、缺失或损坏时显示真实错误，不返回固定文章兜底。
+- 收藏、分段已读、整篇完成、最近阅读和随机学习状态独立保存到 `historyProgress.json`；该文件加入 `ManagedDataPath`，因此会参与存储统计、备份和「清除所有数据」。
+- 首页提供最近阅读横向卡片、随机文章提示和带确认的「清空阅读进度」；目录说明、时期主题说明和来源入口均从实际目录/状态读取。
+- 详情页使用现有 `MarkdownText` 和 `SpeechService`，提供来源入口与关联阅读；历史目录是只读内容，不会被资料编辑流程改写。
+- 目录采用本项目明确说明的 1840—1949 分期。重大条约、战争伤亡数字、评价性判断和来源口径保留继续查证入口，不将有限目录描述为完整历史。
+
+### 构建与验证
+
+```bash
+source "$(conda info --base)/etc/profile.d/conda.sh"
+conda activate xijianBase
+xcodegen generate
+xcodebuild -project SmartNote.xcodeproj -scheme SmartNote \
+  -configuration Debug -destination 'platform=macOS' build
+xcodebuild -project SmartNote.xcodeproj -scheme SmartNote \
+  -configuration Release -destination 'platform=macOS' build
+```
+
+本轮还应执行 JSON 结构校验、Release 归档内版本检查、`SmartNote.app.zip` 资源检查和主题/历史/祝福人工冒烟测试；实际结果记录在发布更新日志中。
+
+### 本轮实际执行的验证
+
+| 项目 | 结果 |
+|------|------|
+| Debug `xcodebuild build` | 通过 |
+| Release `xcodebuild build` | 通过 |
+| Release `xcodebuild archive` | 通过 |
+| 归档 `CFBundleShortVersionString` / `CFBundleVersion` | `2.0.0` / `100` |
+| 归档内 `history_catalog.json` | 存在，34 篇，可解析 |
+| ZIP 解压后版本与资源 | `2.0.0` / `100`，资源完整 |
+| 归档架构 | `x86_64 arm64` |
+| 解压后启动冒烟 | 进程可启动并保持运行，无崩溃后停止 |
+| 离线逻辑校验（复用生产源文件） | 1720 项断言全部通过 |
+| `xcodebuild test` | 仓库没有 XCTest target，scheme 未配置 test action；不伪造通过 |
+
+离线逻辑校验的做法：把 `HistoryArticle.swift`、`AppTheme.swift`、`HistoryService.swift`、`BlessingService.swift` 四个生产源文件直接编译为校验程序，只把存储层替换为同语义的临时实现（JSON 编解码、原子写、ISO8601 日期），覆盖目录加载与 ID/关联校验、搜索与时期/标签/收藏筛选、书名号归一化、收藏、分段已读与整篇完成判定、最近阅读去重与上限 8、随机学习、进度持久化往返、损坏文件不被覆盖、清空进度、祝福日期归属（逐日遍历全年）与换句、主题 tint 与未知值回退。该程序只存在于临时目录，不进入仓库，也不替代界面人工验收。
+
+### 本轮修复与内容订正
+
+- 主题原本嵌在 `AppSettings` 内，直接改属性不会让所有 Scene 刷新；改为 `AppState` 单独发布主题与明暗快照，设置页经 `setTheme` / `setDarkModePreference` 更新并显式保存。
+- 经典主题原本也覆盖系统 tint；改为只有节庆主题设置 `tint`，经典主题保持系统观感。
+- 最近阅读此前有数据但没有入口；已补上首页横向卡片。
+- 未知 `themeID` 原本会让整份 `settings.json` 解码失败；`ThemeID.init(from:)` 改为回退 `.classic`。
+- 损坏的 `historyProgress.json` 可能在用户下一次收藏时被静默覆盖；改为保留原文件并提示。
+- 时期文案与年份范围表述不一致；统一为 1840—1949，并说明时期筛选是主题导览分组而非严格边界。
+- 34 篇文章的「预计阅读时长」普遍偏大约 2.5 倍（正文仅约 200 字却标 4—6 分钟）。改为按详情页实际展示文字推算（约 300 字/分钟，下限 2 分钟），`readingMinutes` 不再从 JSON 读取，避免手写数字与内容长度脱节。
+- 3 条来源链接（CASS 近代史研究所、国家图书馆民国专题、全国人大网）保持 `http://`：已实测这三个站点不提供 HTTPS（`https://` 连接直接失败），浏览器 UA 下 `http://` 可正常访问，因此不改写为不存在的 `https://` 地址；README 已知边界中已说明可能出现浏览器安全提示。
+
+### 本轮明确的边界
+
+- 主题不是对全部旧页面的逐控件重新设计；本轮通过根环境、强调色、主题表面和新增页面完成统一视觉层，保留固定语义页面（许愿星空、白板纸张、WebView 小游戏）的原有配色。
+- 历史科普不提供图片、地图、音频、在线更新或 AI 自动写作；内容来源和授权边界仍需在后续扩充时逐条复核。
+- `historyProgress.json` 是普通本机 JSON，不是加密存储；清除所有数据会按既有受管数据规则删除它。若进度文件解码失败，会保留原文件并隔离副本，不在用户下一次收藏操作时静默覆盖。
