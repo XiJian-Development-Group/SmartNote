@@ -25,7 +25,7 @@ struct WishView: View {
                 dualPane
             }
         }
-        .frame(minWidth: 900, minHeight: 540)
+        .frame(minWidth: 1000, minHeight: 620)
         .sheet(isPresented: $showAddSheet) {
             AddWishSheet(
                 content: $newContent,

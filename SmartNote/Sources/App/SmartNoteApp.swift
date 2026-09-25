@@ -70,6 +70,18 @@ struct SmartNoteApp: App {
         }
         .windowResizability(.contentMinSize)
 
+        // 许愿/还愿独立全屏窗口。动态星空需要完整画布，挤在侧边栏详情区会明显受限。
+        // - openWindow(id: "wish-fullscreen") → 复用已有窗口，不重复创建
+        Window("许愿 · 还愿", id: "wish-fullscreen") {
+            WishView()
+                .environmentObject(appState)
+                .environment(\.appTheme, appState.theme)
+                .appTint(appState.theme.tint)
+                .preferredColorScheme(appState.colorScheme)
+        }
+        .windowResizability(.contentMinSize)
+        .defaultSize(width: 1280, height: 800)
+
         Settings {
             SettingsView()
                 .environmentObject(appState)
