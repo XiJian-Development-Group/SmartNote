@@ -4,25 +4,36 @@ import Combine
 
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
+    @Environment(\.appTheme) private var appTheme
     @State private var integrityIssues: [StorageIntegrityIssue] = StorageService.integrityIssues
 
     var body: some View {
         ZStack {
-            BackgroundImageView()
+            ThemeBackdrop(theme: appTheme)
 
-            NavigationSplitView {
-                SidebarView()
-            } detail: {
-                DetailView()
-            }
-            .navigationSplitViewStyle(.balanced)
-            .frame(minWidth: 900, minHeight: 600)
-            .background(Color.clear)
-            .overlay(alignment: .top) {
-                if !integrityIssues.isEmpty {
-                    storageIntegrityBanner
-                        .padding(.horizontal, 12)
-                        .padding(.top, 8)
+            VStack(spacing: 0) {
+                if appTheme.isFestive || appState.blessingService.isNationalDayPeriod {
+                    FestivalBlessingBar(service: appState.blessingService)
+                }
+
+                ZStack {
+                    BackgroundImageView()
+
+                    NavigationSplitView {
+                        SidebarView()
+                    } detail: {
+                        DetailView()
+                    }
+                    .navigationSplitViewStyle(.balanced)
+                    .frame(minWidth: 900, minHeight: 600)
+                    .background(Color.clear)
+                    .overlay(alignment: .top) {
+                        if !integrityIssues.isEmpty {
+                            storageIntegrityBanner
+                                .padding(.horizontal, 12)
+                                .padding(.top, 8)
+                        }
+                    }
                 }
             }
         }
@@ -175,6 +186,12 @@ struct SidebarView: View {
                     Label("白板", systemImage: "square.and.pencil")
                 }
             }
+
+            Section("历史科普") {
+                NavigationLink(value: 27) {
+                    Label("中国近代史", systemImage: "clock.arrow.circlepath")
+                }
+            }
             
             Section("计划") {
                 NavigationLink(value: 13) {
@@ -302,6 +319,8 @@ struct DetailView: View {
                 AnniversaryView()
             case 26:
                 CalculatorView()
+            case 27:
+                HistoryHomeView(service: appState.historyService)
             default:
                 MaterialsListView()
             }
