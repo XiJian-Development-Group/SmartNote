@@ -93,6 +93,7 @@ class StorageService {
         case reviewPlansJSON
         case settingsJSON
         case examCountdownsJSON
+        case historyProgressJSON
         case learningProfileJSON
         case pdfAnnotationsJSON
         case studySessionsJSON
@@ -127,6 +128,7 @@ class StorageService {
             case .reviewPlansJSON: return "reviewPlans.json"
             case .settingsJSON: return "settings.json"
             case .examCountdownsJSON: return "examCountdowns.json"
+            case .historyProgressJSON: return "historyProgress.json"
             case .learningProfileJSON: return "learningProfile.json"
             case .pdfAnnotationsJSON: return "pdfAnnotations.json"
             case .studySessionsJSON: return "studySessions.json"
@@ -204,6 +206,8 @@ class StorageService {
 
     private var examCountdownsFileURL: URL { managedURL(for: .examCountdownsJSON) }
 
+    private var historyProgressFileURL: URL { managedURL(for: .historyProgressJSON) }
+
     private var learningProfileFileURL: URL { managedURL(for: .learningProfileJSON) }
 
     private var pdfAnnotationsFileURL: URL { managedURL(for: .pdfAnnotationsJSON) }
@@ -266,6 +270,32 @@ class StorageService {
 
     func loadExamCountdowns() -> [ExamCountdown] {
         load(from: examCountdownsFileURL) ?? []
+    }
+
+    // MARK: - 中国近代史学习进度
+
+    @discardableResult
+    func saveHistoryProgress(_ progress: HistoryLearningState) -> Bool {
+        save(progress, to: historyProgressFileURL)
+    }
+
+    func loadHistoryProgressResult() -> HistoryProgressLoadResult {
+        let fileExists = fileManager.fileExists(atPath: historyProgressFileURL.path)
+        guard fileExists else {
+            return HistoryProgressLoadResult(state: HistoryLearningState(), fileExists: false, didFailToDecode: false)
+        }
+        guard let state: HistoryLearningState = load(from: historyProgressFileURL) else {
+            return HistoryProgressLoadResult(state: HistoryLearningState(), fileExists: true, didFailToDecode: true)
+        }
+        return HistoryProgressLoadResult(state: state, fileExists: true, didFailToDecode: false)
+    }
+
+    func loadHistoryProgress() -> HistoryLearningState {
+        loadHistoryProgressResult().state
+    }
+
+    func deleteHistoryProgress() {
+        try? fileManager.removeItem(at: historyProgressFileURL)
     }
 
     // MARK: - 启动期 schema 迁移
@@ -897,6 +927,12 @@ class StorageService {
     }
 }
 
+struct HistoryProgressLoadResult {
+    let state: HistoryLearningState
+    let fileExists: Bool
+    let didFailToDecode: Bool
+}
+
 /// 启动迁移结果。仅在 schema 升级或用户首次启动时才有实际内容。
 struct StartupMigrationResult {
     let fromVersion: Int
@@ -919,6 +955,8 @@ class AppSettings: ObservableObject, Codable, Equatable {
     @Published var autoScanDirectories: Bool = true
     @Published var scanPaths: [String] = []
     @Published var darkModePreference: DarkModePreference = .system
+    /// 主题只负责视觉层；经典主题继续遵循“外观”中的明暗模式设置。
+    @Published var themeID: ThemeID = .classic
     @Published var calendarIntegrationEnabled: Bool = true
     @Published var reminderEnabled: Bool = true
     @Published var defaultStudyMinutes: Int = 30
@@ -950,6 +988,7 @@ class AppSettings: ObservableObject, Codable, Equatable {
         lhs.autoScanDirectories == rhs.autoScanDirectories &&
         lhs.scanPaths == rhs.scanPaths &&
         lhs.darkModePreference == rhs.darkModePreference &&
+        lhs.themeID == rhs.themeID &&
         lhs.calendarIntegrationEnabled == rhs.calendarIntegrationEnabled &&
         lhs.reminderEnabled == rhs.reminderEnabled &&
         lhs.defaultStudyMinutes == rhs.defaultStudyMinutes &&
@@ -979,6 +1018,20 @@ class AppSettings: ObservableObject, Codable, Equatable {
         case dark
     }
 
+    enum ThemeID: String, Codable, CaseIterable, Identifiable {
+        case classic
+        case nationalDay
+        case auspicious
+
+        var id: String { rawValue }
+
+        init(from decoder: Decoder) throws {
+            let rawValue = try decoder.singleValueContainer().decode(String.self)
+            // 未来版本新增或误写的值不能让整个 settings.json 解码失败。
+            self = Self(rawValue: rawValue) ?? .classic
+        }
+    }
+
     enum UpdateChannel: String, Codable, Equatable {
         case latest
         case prerelease
@@ -991,6 +1044,7 @@ class AppSettings: ObservableObject, Codable, Equatable {
         case autoScanDirectories
         case scanPaths
         case darkModePreference
+        case themeID
         case calendarIntegrationEnabled
         case reminderEnabled
         case defaultStudyMinutes
@@ -1021,6 +1075,7 @@ class AppSettings: ObservableObject, Codable, Equatable {
         autoScanDirectories = true
         scanPaths = []
         darkModePreference = .system
+        themeID = .classic
         calendarIntegrationEnabled = true
         reminderEnabled = true
         defaultStudyMinutes = 30
@@ -1049,6 +1104,7 @@ class AppSettings: ObservableObject, Codable, Equatable {
         autoScanDirectories = try container.decodeIfPresent(Bool.self, forKey: .autoScanDirectories) ?? true
         scanPaths = try container.decodeIfPresent([String].self, forKey: .scanPaths) ?? []
         darkModePreference = try container.decodeIfPresent(DarkModePreference.self, forKey: .darkModePreference) ?? .system
+        themeID = try container.decodeIfPresent(ThemeID.self, forKey: .themeID) ?? .classic
         calendarIntegrationEnabled = try container.decodeIfPresent(Bool.self, forKey: .calendarIntegrationEnabled) ?? true
         reminderEnabled = try container.decodeIfPresent(Bool.self, forKey: .reminderEnabled) ?? true
         defaultStudyMinutes = try container.decodeIfPresent(Int.self, forKey: .defaultStudyMinutes) ?? 30
@@ -1081,6 +1137,7 @@ class AppSettings: ObservableObject, Codable, Equatable {
         try container.encode(autoScanDirectories, forKey: .autoScanDirectories)
         try container.encode(scanPaths, forKey: .scanPaths)
         try container.encode(darkModePreference, forKey: .darkModePreference)
+        try container.encode(themeID, forKey: .themeID)
         try container.encode(calendarIntegrationEnabled, forKey: .calendarIntegrationEnabled)
         try container.encode(reminderEnabled, forKey: .reminderEnabled)
         try container.encode(defaultStudyMinutes, forKey: .defaultStudyMinutes)

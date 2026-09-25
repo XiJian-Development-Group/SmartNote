@@ -1,0 +1,2369 @@
+{
+  "schemaVersion": 1,
+  "note": "本目录采用中国大陆常用的中国近代史分期（1840—1949），以时间线、关键词和可追溯来源组织离线导览。内容为事实摘要与学习提示，不替代完整教材、档案或专业研究。",
+  "articles": [
+    {
+      "id": "opium-war-1840",
+      "title": "第一次鸦片战争：从贸易冲突到战争",
+      "summary": "1839年虎门销烟后，清政府与英国围绕禁烟、贸易和外交的冲突升级，1840年英国发动战争，1842年清政府战败并进入议和。",
+      "period": "earlyModern",
+      "startYear": 1840,
+      "endYear": 1842,
+      "tags": [
+        "鸦片战争",
+        "虎门销烟",
+        "海防",
+        "外交"
+      ],
+      "searchTerms": [
+        "Opium War",
+        "林则徐",
+        "鸦片贸易",
+        "广州",
+        "虎门"
+      ],
+      "sections": [
+        {
+          "id": "context",
+          "title": "战争为何发生",
+          "bodyMarkdown": "第一次鸦片战争不是由单一事件突然造成的。鸦片贸易、清政府禁烟、英国商人与外交关系、海军与贸易规则以及清英之间的沟通方式，长期累积了矛盾。\n\n1839年林则徐在虎门主持销烟，成为冲突的公开导火索之一。1840年英国发动战争，战事随后扩大。阅读这段历史时，应把禁烟、贸易、外交和军事放在同一条因果链上理解。"
+        },
+        {
+          "id": "result",
+          "title": "战争与议和",
+          "bodyMarkdown": "清政府在军事和外交上未能取得有利结果，1842年进入议和。战后通商和条约体系发生重大变化，中国社会面临新的主权、贸易和边防压力。\n\n学习这段历史时，可以把“战争经过”“条约后果”“社会影响”分开记录，避免只记住一个年份或一个条约名称。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1839,
+          "title": "虎门销烟",
+          "detail": "清政府在广州虎门销毁鸦片，成为清英冲突升级的重要节点。"
+        },
+        {
+          "year": 1840,
+          "title": "英国发动战争",
+          "detail": "战事由沿海海防和通商问题扩展为全面战争。"
+        },
+        {
+          "year": 1842,
+          "title": "进入议和",
+          "detail": "清政府战败，中英谈判形成《南京条约》等不平等条约体系。"
+        }
+      ],
+      "keyFigures": [
+        {
+          "name": "林则徐",
+          "role": "钦差大臣",
+          "contribution": "主持虎门销烟，并在海防与对外交涉中发挥作用。"
+        }
+      ],
+      "glossary": [
+        {
+          "term": "五口通商",
+          "definition": "广州、厦门、福州、宁波、上海成为通商口岸，是《南京条约》的重要条款。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "nanjing-treaty-1842",
+        "taiping-1851"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对近代史分期与事件线索"
+        },
+        {
+          "title": "中国历史纪年简表",
+          "organization": "中国政府网",
+          "url": "https://www.gov.cn/guoqing/2020-10/29/content_5555766.htm",
+          "note": "用于核对年代与基本叙述"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-treaty-1842",
+      "title": "《南京条约》：条约如何改变晚清",
+      "summary": "1842年中英签订《南京条约》，涉及割让香港岛、开放五口通商、赔款和关税等内容，成为晚清条约体系的重要转折。",
+      "period": "earlyModern",
+      "startYear": 1842,
+      "endYear": 1842,
+      "tags": [
+        "条约",
+        "五口通商",
+        "香港",
+        "关税"
+      ],
+      "searchTerms": [
+        "南京条约",
+        "Treaty of Nanking",
+        "香港岛",
+        "协定关税",
+        "领事裁判权"
+      ],
+      "sections": [
+        {
+          "id": "terms",
+          "title": "条约内容与背景",
+          "bodyMarkdown": "《南京条约》于1842年8月29日签订。常见教材会列出香港岛割让、广州等五口通商、2100万银元赔款和关税等内容。\n\n需要注意，1842年原条约与1843年附约并不是同一文件。领事裁判权等条款常在后续附约中确认，不能把所有内容不加区分地归入1842年文本。"
+        },
+        {
+          "id": "impact",
+          "title": "从条约看社会变化",
+          "bodyMarkdown": "条约不仅涉及领土和贸易，也改变了地方治理、海关、外交和司法的运作方式。对当时的人来说，变化并不只发生在外交桌上，也体现在贸易、税收和沿海社会生活中。\n\n“不平等条约”是中国史学常用的概括；学习时最好直接回到具体条款、签约背景和不同群体受到的影响。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1842,
+          "title": "《南京条约》签订",
+          "detail": "条约涉及领土、通商、赔款和关税等重要内容。"
+        }
+      ],
+      "glossary": [
+        {
+          "term": "协定关税",
+          "definition": "关税税率通过条约与外国协商确定，改变了过去清政府自主征税的安排。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "opium-war-1840",
+        "westernization-1860s"
+      ],
+      "sources": [
+        {
+          "title": "《南京条约》相关材料",
+          "organization": "故宫博物院",
+          "url": "https://www.dpm.org.cn/lemmas/241863.html",
+          "note": "用于核对条约基本信息"
+        },
+        {
+          "title": "Nanking Treaty 文本",
+          "organization": "USC China Collections",
+          "url": "https://china.usc.edu/node/20462",
+          "note": "用于查阅英文原文与条款"
+        }
+      ]
+    },
+    {
+      "id": "taiping-1851",
+      "title": "太平天国运动：战争、治理与社会动员",
+      "summary": "1851年金田起义后，太平天国运动在多个省份展开，1853年攻占南京并定都天京，1864年天京陷落。",
+      "period": "earlyModern",
+      "startYear": 1851,
+      "endYear": 1864,
+      "tags": [
+        "太平天国",
+        "金田起义",
+        "天京",
+        "社会史"
+      ],
+      "searchTerms": [
+        "洪秀全",
+        "天京",
+        "农民战争",
+        "太平天国文书"
+      ],
+      "sections": [
+        {
+          "id": "rise",
+          "title": "从金田到天京",
+          "bodyMarkdown": "1851年广西金田起义标志着太平天国运动的开始。1853年攻占南京后改称天京，并建立一套军事与行政体系。\n\n研究这场运动不能只看战场胜负。土地制度、税收、军队组织、地方治理和人口流动，都构成了它的社会历史部分。不同地区和群体的经历也并不相同。"
+        },
+        {
+          "id": "limits",
+          "title": "如何评价这场运动",
+          "bodyMarkdown": "太平天国既表现出强烈的社会动员能力，也发生了强制征收、军事暴力和严重的人口损失。人口数字因统计范围和时间不同而有差异。\n\n较稳妥的学习方式，是把政治组织、军事行动、社会政策与战争代价分别记录，再观察它们之间的张力。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1851,
+          "title": "金田起义",
+          "detail": "运动在广西开始并形成稳定的军事与组织体系。"
+        },
+        {
+          "year": 1853,
+          "title": "定都天京",
+          "detail": "攻占南京后建立政权，战争范围继续扩大。"
+        },
+        {
+          "year": 1864,
+          "title": "天京陷落",
+          "detail": "运动进入尾声，但社会与经济影响延续更长时间。"
+        }
+      ],
+      "keyFigures": [
+        {
+          "name": "洪秀全",
+          "role": "太平天国领导者",
+          "contribution": "金田起义后建立领导核心并推动政权扩张。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "opium-war-1840",
+        "westernization-1860s"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对事件时间线"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于继续查阅学术研究与史料"
+        }
+      ]
+    },
+    {
+      "id": "second-opium-war-1856",
+      "title": "第二次鸦片战争与圆明园",
+      "summary": "1856—1860年英法联军发动战争，清政府先后签订《天津条约》和《北京条约》，1860年圆明园遭到焚毁。",
+      "period": "earlyModern",
+      "startYear": 1856,
+      "endYear": 1860,
+      "tags": [
+        "第二次鸦片战争",
+        "圆明园",
+        "外交",
+        "北京"
+      ],
+      "searchTerms": [
+        "英法联军",
+        "亚罗号",
+        "天津条约",
+        "北京条约",
+        "圆明园"
+      ],
+      "sections": [
+        {
+          "id": "process",
+          "title": "战争的升级",
+          "bodyMarkdown": "第二次鸦片战争与鸦片贸易、外交使节冲突、帝国扩张和清政府对外交与贸易的处置有关。亚罗号事件是升级的重要节点之一，但不能当作全部原因。\n\n1858年《天津条约》、1860年《北京条约》等文件进一步改变外交和通商安排，战争的影响也扩展到北方政治中心。"
+        },
+        {
+          "id": "memory",
+          "title": "圆明园与战争记忆",
+          "bodyMarkdown": "1860年英法联军攻入北京并焚毁圆明园，成为战争暴行与文化破坏的重要记忆。圆明园遗址今天既是历史遗址，也是战争记忆和公共教育的一部分。\n\n阅读相关叙述时，应区分战争行为、历史遗址保护与后世纪念，不要用单一的情绪化结论替代具体史实。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1856,
+          "title": "战争爆发",
+          "detail": "英法联军在沿海和外交冲突中发动战争。"
+        },
+        {
+          "year": 1858,
+          "title": "《天津条约》",
+          "detail": "清政府与英法等国签订新的条约。"
+        },
+        {
+          "year": 1860,
+          "title": "圆明园被焚毁",
+          "detail": "北京陷落，圆明园遭到严重破坏。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "opium-war-1840",
+        "westernization-1860s",
+        "sino-japanese-1894"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对战争与条约线索"
+        },
+        {
+          "title": "鸦片战争教育资料",
+          "organization": "英国国家档案馆",
+          "url": "https://www.nationalarchives.gov.uk/education/resources/hong-kong-and-the-opium-wars/hong-kong-and-the-opium-wars-source-4/",
+          "note": "用于交叉查阅英方档案与教育材料"
+        }
+      ]
+    },
+    {
+      "id": "westernization-1860s",
+      "title": "洋务运动：从“自强”到“求富”",
+      "summary": "19世纪60—90年代，清政府及地方官员创办军事工业、造船、翻译、铁路、电报和新式学堂，洋务运动成为晚清重要改革尝试。",
+      "period": "earlyModern",
+      "startYear": 1860,
+      "endYear": 1895,
+      "tags": [
+        "洋务运动",
+        "江南制造总局",
+        "轮船招商局",
+        "教育",
+        "工业化"
+      ],
+      "searchTerms": [
+        "自强",
+        "求富",
+        "福州船政",
+        "京师同文馆",
+        "电报",
+        "铁路"
+      ],
+      "sections": [
+        {
+          "id": "measures",
+          "title": "主要举措",
+          "bodyMarkdown": "洋务运动包括军事工业、民用企业、海军、翻译和工程教育等多个方向。江南制造总局、福州船政、轮船招商局以及电报、铁路和采矿等，都是观察其制度变化的入口。\n\n“洋务”并不是一个全国统一、执行完全一致的工程。它由中央和地方多个主体推动，目标与成效存在差异。"
+        },
+        {
+          "id": "limits",
+          "title": "成效与局限",
+          "bodyMarkdown": "洋务运动在部分地区建立了近代工业、交通和通信设施，却没有改变晚清整体的政治与社会结构。部分企业受到外国资本、技术和制度环境影响。\n\n因此，不能简单用“成功”或“失败”概括它。更重要的是观察：它改变了哪些基础能力，又留下了哪些未解决的问题。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1862,
+          "title": "京师同文馆创办",
+          "detail": "翻译和西式教育成为改革的一部分。"
+        },
+        {
+          "year": 1865,
+          "title": "江南制造总局",
+          "detail": "军事工业建设推动近代制造体系发展。"
+        },
+        {
+          "year": 1872,
+          "title": "轮船招商局成立",
+          "detail": "民用交通企业成为自强、求富实践的一部分。"
+        }
+      ],
+      "keyFigures": [
+        {
+          "name": "李鸿章",
+          "role": "地方官员与洋务派代表",
+          "contribution": "推动军事、海军、采矿与交通等多项事业。"
+        },
+        {
+          "name": "张之洞",
+          "role": "地方官员",
+          "contribution": "在湖北等地推动新式教育、工业和城市建设。"
+        }
+      ],
+      "glossary": [
+        {
+          "term": "求富",
+          "definition": "洋务派在军事工业之外，试图通过民用企业和商业增加国家财政与实力。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "nanjing-treaty-1842",
+        "sino-japanese-1894",
+        "education-media-1898"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对改革线索"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅洋务企业与教育专题"
+        }
+      ]
+    },
+    {
+      "id": "sino-french-1883",
+      "title": "中法战争：边疆危机与条约安排",
+      "summary": "法国在越南扩张引发中法冲突，战争主要在广西、广东和越南等地展开，1885年清政府与法国签订相关条约。",
+      "period": "earlyModern",
+      "startYear": 1883,
+      "endYear": 1885,
+      "tags": [
+        "中法战争",
+        "越南",
+        "边疆",
+        "外交"
+      ],
+      "searchTerms": [
+        "中法战争",
+        "镇南关",
+        "谅山",
+        "法国",
+        "天津条约"
+      ],
+      "sections": [
+        {
+          "id": "context",
+          "title": "冲突如何扩展",
+          "bodyMarkdown": "法国在越南的扩张与清政府维护边疆秩序的努力发生冲突，冲突逐步延伸到中越边境和广西、广东等地。\n\n研究中法战争时，可以把边疆治理、外交交涉和战场变化放在一起看，而不要只用单一战役解释全部过程。"
+        },
+        {
+          "id": "memory",
+          "title": "战争记忆的多重性",
+          "bodyMarkdown": "中法战争的起止时间在不同叙述中有1883—1885和1884—1885等写法，具体战役胜负和伤亡统计也需要注明时间、战场与来源。\n\n历史记忆会随着政治、文学和纪念活动而变化。查阅不同叙述，是学习这段历史的重要方法。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1883,
+          "title": "冲突扩大",
+          "detail": "中法在越南与广西边疆的军事和外交冲突加剧。"
+        },
+        {
+          "year": 1885,
+          "title": "签订相关条约",
+          "detail": "清政府与法国完成议和。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "westernization-1860s",
+        "sino-japanese-1894"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对近代战争线索"
+        },
+        {
+          "title": "中国历史纪年简表",
+          "organization": "中国政府网",
+          "url": "https://www.gov.cn/guoqing/2020-10/29/content_5555766.htm",
+          "note": "用于核对基本年代"
+        }
+      ]
+    },
+    {
+      "id": "sino-japanese-1894",
+      "title": "甲午战争与《马关条约》",
+      "summary": "1894年日本发动战争，清政府战败，1895年4月17日签订《马关条约》，战争深刻改变了晚清的国际环境和改革讨论。",
+      "period": "lateQing",
+      "startYear": 1894,
+      "endYear": 1895,
+      "tags": [
+        "甲午战争",
+        "马关条约",
+        "台湾",
+        "赔款",
+        "海军"
+      ],
+      "searchTerms": [
+        "甲午中日战争",
+        "黄海海战",
+        "辽东半岛",
+        "台湾",
+        "澎湖",
+        "马关"
+      ],
+      "sections": [
+        {
+          "id": "war",
+          "title": "战争与战败",
+          "bodyMarkdown": "甲午战争涉及朝鲜半岛局势、海军与陆军作战、外交协商和列强利益。战场结果不仅是军事问题，也与财政、交通、情报和组织能力有关。\n\n1895年《马关条约》规定割让台湾全岛及澎湖列岛、辽东半岛、赔款和开设工厂等内容。辽东半岛后来因三国干涉归还，不能与条约原始内容混写。"
+        },
+        {
+          "id": "impact",
+          "title": "战败之后",
+          "bodyMarkdown": "甲午战败显著增强了社会对制度改革、军队、教育和工业化的讨论。战败不等于所有改革都自动产生，但它改变了政治精英和知识精英观察世界的方式。\n\n理解条约时，建议逐条记录“规定内容—实际执行—社会后果”，不要只用一句“丧权辱国”替代分析。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1894,
+          "title": "战争爆发",
+          "detail": "日本发动对华战争，朝鲜半岛和海上战场成为焦点。"
+        },
+        {
+          "year": 1895,
+          "title": "《马关条约》签订",
+          "detail": "清政府接受割地、赔款和开放等条款。"
+        }
+      ],
+      "glossary": [
+        {
+          "term": "三国干涉",
+          "definition": "俄、德、法三国促使日本放弃占领辽东半岛，相关外交过程需要与条约原文分开理解。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "westernization-1860s",
+        "reform-1898",
+        "boxer-1899"
+      ],
+      "sources": [
+        {
+          "title": "《马关条约》相关资料",
+          "organization": "中华人民共和国外交部",
+          "url": "https://www.fmprc.gov.cn/diaoyudao/chn/flfg/gjty/201510/t20151009_8560614.htm",
+          "note": "用于核对条约条款"
+        },
+        {
+          "title": "1895年外交文件",
+          "organization": "美国国务院历史办公室",
+          "url": "https://history.state.gov/historicaldocuments/frus1895p1/d203",
+          "note": "用于交叉核对国际外交背景"
+        }
+      ]
+    },
+    {
+      "id": "reform-1898",
+      "title": "戊戌变法：短促的制度改革尝试",
+      "summary": "1895年甲午战后，康有为、梁启超等推动制度、教育、军事和经济改革；1898年百日维新后发生戊戌政变。",
+      "period": "lateQing",
+      "startYear": 1895,
+      "endYear": 1898,
+      "tags": [
+        "戊戌变法",
+        "百日维新",
+        "制度改革",
+        "教育"
+      ],
+      "searchTerms": [
+        "康有为",
+        "梁启超",
+        "京师大学堂",
+        "戊戌政变",
+        "维新"
+      ],
+      "sections": [
+        {
+          "id": "ideas",
+          "title": "改革主张",
+          "bodyMarkdown": "甲午战败后，维新知识分子讨论制度、教育、军事和商业改革。京师大学堂的创办，是新式教育与制度改革想象的重要象征。\n\n改革方案涉及多个层面，既有国家制度调整，也有教育与具体行政措施。它并不只是单一制度的替换。"
+        },
+        {
+          "id": "limits",
+          "title": "为什么迅速结束",
+          "bodyMarkdown": "百日维新时间短，执行范围和资源有限，改革参与者与反对者之间也存在复杂权力博弈。戊戌政变使改革中断。\n\n解释失败时，除了权力冲突，也应考虑制度条件、财政资源、地方执行和社会支持等因素。历史结果不是单一人物性格的简单产物。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1895,
+          "title": "公车上书",
+          "detail": "战败后改革与救亡讨论进一步公开化。"
+        },
+        {
+          "year": 1898,
+          "title": "百日维新",
+          "detail": "清政府颁布一批改革诏令。"
+        },
+        {
+          "year": 1898,
+          "title": "戊戌政变",
+          "detail": "改革被中断，京师大学堂等部分成果仍延续。"
+        }
+      ],
+      "keyFigures": [
+        {
+          "name": "康有为",
+          "role": "维新派代表",
+          "contribution": "参与推动变法与教育改革讨论。"
+        },
+        {
+          "name": "梁启超",
+          "role": "思想家与报人",
+          "contribution": "通过报刊和文章传播新思想。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "sino-japanese-1894",
+        "qing-new-policies-1901",
+        "xinhai-revolution-1911"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对改革与政变时间线"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅维新思想与制度专题"
+        }
+      ]
+    },
+    {
+      "id": "boxer-1899",
+      "title": "义和团运动、八国联军与《辛丑条约》",
+      "summary": "义和团运动在华北发展，1900年八国联军进入中国并占领北京，清政府于1901年签署《辛丑条约》。",
+      "period": "lateQing",
+      "startYear": 1899,
+      "endYear": 1901,
+      "tags": [
+        "义和团",
+        "八国联军",
+        "辛丑条约",
+        "北京"
+      ],
+      "searchTerms": [
+        "义和团运动",
+        "八国联军侵华",
+        " Boxer Rebellion",
+        "使馆区",
+        "庚子赔款"
+      ],
+      "sections": [
+        {
+          "id": "conflict",
+          "title": "运动与战争",
+          "bodyMarkdown": "义和团运动在华北等地发展，清政府与列强之间的矛盾不断加深。1900年八国联军进入中国，随后占领北京。\n\n这段历史涉及宗教组织、地方社会、外国侵略与清政府政策等多重因素，不能只用单一标签解释。"
+        },
+        {
+          "id": "treaty",
+          "title": "《辛丑条约》的影响",
+          "bodyMarkdown": "1901年《辛丑条约》规定4.5亿两赔款、驻兵、使馆区和相关政治限制等内容。4.5亿两是条约规定的赔款本息计算基础，不应直接等同于中国社会全部经济损失。\n\n条约签订后，清政府的主权与财政空间受到进一步限制，改革也被迫在更复杂的国际环境下展开。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1900,
+          "title": "八国联军进入北京",
+          "detail": "战争造成严重破坏，清政府被迫寻求议和。"
+        },
+        {
+          "year": 1901,
+          "title": "《辛丑条约》签订",
+          "detail": "赔款、驻兵和外交限制等条款加深了晚清困境。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "sino-japanese-1894",
+        "qing-new-policies-1901"
+      ],
+      "sources": [
+        {
+          "title": "中国历史纪年简表",
+          "organization": "中国政府网",
+          "url": "https://www.gov.cn/guoqing/2020-10/29/content_5555766.htm",
+          "note": "用于核对战争和条约时间"
+        },
+        {
+          "title": "义和团与八国联军档案目录",
+          "organization": "JACAR",
+          "url": "https://www.jacar.archives.go.jp/das/meta-en/B02130014500",
+          "note": "用于查阅外交档案目录"
+        }
+      ]
+    },
+    {
+      "id": "qing-new-policies-1901",
+      "title": "清末新政：从科举到预备立宪",
+      "summary": "1901年后清政府在官制、军制、教育、法律和地方治理方面推行新政，1905年废除科举，1906年宣布预备仿行宪政。",
+      "period": "lateQing",
+      "startYear": 1901,
+      "endYear": 1911,
+      "tags": [
+        "清末新政",
+        "废科举",
+        "预备立宪",
+        "咨议局",
+        "教育"
+      ],
+      "searchTerms": [
+        "新政",
+        "废除科举",
+        "新军",
+        "预备立宪",
+        "咨议局"
+      ],
+      "sections": [
+        {
+          "id": "reform",
+          "title": "改革领域",
+          "bodyMarkdown": "清末新政涉及多个领域：新式教育、军制、警察、法律、地方自治和财政。1905年废除科举改变了传统考试与人才选拔，1906年宣布预备仿行宪政，1909—1910年设立咨议局。\n\n新政推进并不均衡，中央与地方、地区与地区之间存在差异。"
+        },
+        {
+          "id": "meaning",
+          "title": "改革与革命的关系",
+          "bodyMarkdown": "新政一方面回应了国家治理和社会变化，另一方面也增加了新式学校、报刊、军队和议政群体的成长空间。\n\n它没有单独决定清朝的结局，却改变了1905—1911年政治参与和社会动员的条件。阅读时可以把“改革内容”和“改革产生的社会后果”放在同一张时间线中。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1905,
+          "title": "废除科举",
+          "detail": "传统考试制度退出，新式学校与教育体系继续扩展。"
+        },
+        {
+          "year": 1906,
+          "title": "预备仿行宪政",
+          "detail": "清政府宣布分阶段推进宪政改革。"
+        },
+        {
+          "year": 1909,
+          "title": "咨议局设立",
+          "detail": "地方议政和立宪实践进入新阶段。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "boxer-1899",
+        "reform-1898",
+        "xinhai-revolution-1911"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对改革与清末时间线"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅清末新政专题"
+        }
+      ]
+    },
+    {
+      "id": "xinhai-revolution-1911",
+      "title": "辛亥革命：帝制终结与共和尝试",
+      "summary": "1911年10月10日武昌起义爆发，各省相继响应，1912年清帝退位，中华民国成立，政治形式发生重大变化。",
+      "period": "lateQing",
+      "startYear": 1911,
+      "endYear": 1912,
+      "tags": [
+        "辛亥革命",
+        "武昌起义",
+        "中华民国",
+        "同盟会",
+        "共和"
+      ],
+      "searchTerms": [
+        "孙中山",
+        "中国同盟会",
+        "武昌起义",
+        "清帝退位",
+        "临时约法"
+      ],
+      "sections": [
+        {
+          "id": "process",
+          "title": "革命如何发生",
+          "bodyMarkdown": "中国同盟会于1905年在东京成立，革命派多次发动起义。1911年10月10日武昌起义爆发后，各省相继宣布独立，清朝统治迅速瓦解。\n\n武昌起义不是唯一原因。革命团体、地方军队、咨议局、社会团体和各省政治选择共同推动了局势。"
+        },
+        {
+          "id": "change",
+          "title": "共和制度与现实",
+          "bodyMarkdown": "1912年1月1日孙中山在南京就任临时大总统，2月12日清帝退位。中华民国成立意味着君主专制制度结束，但并不意味着社会结构立即改变。\n\n随后临时政府迁往北京，袁世凯任临时大总统。理解辛亥革命，需要同时看到制度突破、权力竞争和社会延续。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1911,
+          "title": "武昌起义",
+          "detail": "新军工程营起义成为各省响应的直接导火索。"
+        },
+        {
+          "year": 1912,
+          "title": "中华民国成立",
+          "detail": "共和政体在制度层面取代君主专制。"
+        },
+        {
+          "year": 1912,
+          "title": "清帝退位",
+          "detail": "清朝结束，临时大总统职位随后发生权力转移。"
+        }
+      ],
+      "keyFigures": [
+        {
+          "name": "孙中山",
+          "role": "革命派领袖",
+          "contribution": "推动革命组织与共和政治方案。"
+        }
+      ],
+      "glossary": [
+        {
+          "term": "共和",
+          "definition": "共和是政体与权力来源的组织原则；制度名称的变化不自动等于社会现实立即民主化。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "qing-new-policies-1901",
+        "republic-beiyang-1912",
+        "new-culture-1915"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对辛亥革命叙述"
+        },
+        {
+          "title": "中国历史纪年简表",
+          "organization": "中国政府网",
+          "url": "https://www.gov.cn/guoqing/2020-10/29/content_5555766.htm",
+          "note": "用于核对关键年份"
+        }
+      ]
+    },
+    {
+      "id": "republic-beiyang-1912",
+      "title": "民国初年：北洋政府与权力竞争",
+      "summary": "1912—1928年北洋政府、中央与地方军事集团、议会和宪法试验并存，1928年北伐军进入北京后北洋政府统治结束。",
+      "period": "republic",
+      "startYear": 1912,
+      "endYear": 1928,
+      "tags": [
+        "北洋政府",
+        "军阀政治",
+        "护国运动",
+        "议会",
+        "宪法"
+      ],
+      "searchTerms": [
+        "袁世凯",
+        "护国战争",
+        "北洋军阀",
+        "国会",
+        "约法"
+      ],
+      "sections": [
+        {
+          "id": "structure",
+          "title": "政府与军事集团",
+          "bodyMarkdown": "民国初年，中央政府与地方军事集团之间的关系并不稳定。袁世凯称帝失败后，政治和军事冲突继续发展。\n\n“军阀政治”是常用概括，但不同地区、派系和时期的统治方式差异很大，不能用一个标签覆盖所有人的生活。"
+        },
+        {
+          "id": "society",
+          "title": "政权更替之外的社会",
+          "bodyMarkdown": "尽管政权更替频繁，报刊、教育、商业、城市生活和社会组织仍在继续发展。政治制度的不稳定与社会的日常变化并存。\n\n研究这一时期，可以把政府、军队、议会与城市生活放在不同时间尺度上观察。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1915,
+          "title": "袁世凯称帝",
+          "detail": "称帝尝试引发政治反对。"
+        },
+        {
+          "year": 1915,
+          "title": "护国运动开始",
+          "detail": "地方军事与政治力量反对帝制。"
+        },
+        {
+          "year": 1928,
+          "title": "北洋政府结束",
+          "detail": "北伐军进入北京，政权中心发生转移。"
+        }
+      ],
+      "keyFigures": [
+        {
+          "name": "袁世凯",
+          "role": "临时大总统与北洋政府领导人",
+          "contribution": "推动共和制度实践，也因称帝与权力集中引发冲突。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "xinhai-revolution-1911",
+        "new-culture-1915",
+        "northern-expedition-1926"
+      ],
+      "sources": [
+        {
+          "title": "民国时期文献专题",
+          "organization": "国家图书馆",
+          "url": "http://read.nlc.cn/specialResourse/minguoIndex",
+          "note": "用于查阅报刊与文献线索"
+        },
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对民国初期时间线"
+        }
+      ]
+    },
+    {
+      "id": "new-culture-1915",
+      "title": "新文化运动：语言、教育与思想转型",
+      "summary": "1915年陈独秀创办《青年杂志》，1916年改名《新青年》，白话文、新文学、科学、民主和妇女问题成为重要公共议题。",
+      "period": "republic",
+      "startYear": 1915,
+      "endYear": 1923,
+      "tags": [
+        "新文化运动",
+        "新青年",
+        "白话文",
+        "教育",
+        "思想"
+      ],
+      "searchTerms": [
+        "陈独秀",
+        "胡适",
+        "鲁迅",
+        "德先生",
+        "赛先生",
+        "文学革命"
+      ],
+      "sections": [
+        {
+          "id": "publics",
+          "title": "公共议题的形成",
+          "bodyMarkdown": "《新青年》及其周边刊物推动白话文、新文学、科学、民主和妇女问题等议题进入公共讨论。报刊、翻译、大学和社团共同扩大了思想传播。\n\n新文化运动不是一个组织严密、成员完全一致的单一运动。不同地区、阶层、性别和立场的参与者有差异。"
+        },
+        {
+          "id": "limits",
+          "title": "思想影响与现实限制",
+          "bodyMarkdown": "新文化运动促进了语言、教育和知识结构的更新，但思想传播受到出版制度、社会结构和政治环境的限制。\n\n阅读相关争论时，既要理解其提出问题的能力，也要区分思想主张、社会实践和后来的历史评价。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1915,
+          "title": "《青年杂志》创刊",
+          "detail": "陈独秀在上海创办，成为公共讨论的重要平台。"
+        },
+        {
+          "year": 1916,
+          "title": "改名《新青年》",
+          "detail": "刊物影响继续扩大。"
+        }
+      ],
+      "keyFigures": [
+        {
+          "name": "陈独秀",
+          "role": "编辑与思想倡导者",
+          "contribution": "推动新文化公共讨论和青年教育议题。"
+        },
+        {
+          "name": "鲁迅",
+          "role": "作家",
+          "contribution": "以文学表达社会批判与思想转型。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "republic-beiyang-1912",
+        "may-fourth-1919",
+        "education-media-1898"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对思想文化线索"
+        },
+        {
+          "title": "民国时期文献专题",
+          "organization": "国家图书馆",
+          "url": "http://read.nlc.cn/specialResourse/minguoIndex",
+          "note": "用于查阅报刊与书籍影像"
+        }
+      ]
+    },
+    {
+      "id": "may-fourth-1919",
+      "title": "五四运动：教育、工人与公共政治",
+      "summary": "1919年巴黎和会山东问题引发北京学生抗议，6月后工人、商人等参与，运动扩展为全国性的爱国和社会政治运动。",
+      "period": "republic",
+      "startYear": 1919,
+      "endYear": 1919,
+      "tags": [
+        "五四运动",
+        "巴黎和会",
+        "学生",
+        "工人",
+        "社会运动"
+      ],
+      "searchTerms": [
+        "巴黎和会",
+        "山东问题",
+        "五月四日",
+        "火烧赵家楼",
+        "工人罢工"
+      ],
+      "sections": [
+        {
+          "id": "trigger",
+          "title": "从外交失败到群众行动",
+          "bodyMarkdown": "巴黎和会拒绝中国代表的部分正当要求，山东问题成为运动的重要导火索。5月北京学生率先抗议，6月后工人和商人等群体参与。\n\n运动不是“学生运动”这一单一标签可以概括的，它连接了教育、外交、劳动和商业等多个社会领域。"
+        },
+        {
+          "id": "impact",
+          "title": "影响的多重面向",
+          "bodyMarkdown": "五四运动推动了教育、出版、报刊和公共表达的变化，也提高了工人和学生的社会可见度。\n\n“新民主主义革命开端”属于中国大陆马克思主义史学的重要分期；学习时可以在说明框架的同时，继续从事实、参与者与社会影响三个层面理解运动。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1919,
+          "title": "巴黎和会山东问题",
+          "detail": "外交失败激化国内不满。"
+        },
+        {
+          "year": 1919,
+          "title": "五四运动爆发",
+          "detail": "北京学生抗议，工人和商人随后参与。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "new-culture-1915",
+        "ccp-founded-1921",
+        "worker-movement-1922"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对五四运动时间线"
+        },
+        {
+          "title": "中国历史纪年简表",
+          "organization": "中国政府网",
+          "url": "https://www.gov.cn/guoqing/2020-10/29/content_5555766.htm",
+          "note": "用于核对关键日期"
+        }
+      ]
+    },
+    {
+      "id": "ccp-founded-1921",
+      "title": "中国共产党成立：工人运动中的新组织",
+      "summary": "1921年7月23日中国共产党第一次全国代表大会在上海开幕，会议后转移到嘉兴南湖继续举行。",
+      "period": "republic",
+      "startYear": 1921,
+      "endYear": 1921,
+      "tags": [
+        "中国共产党",
+        "中共一大",
+        "马克思主义",
+        "工人运动",
+        "建党史"
+      ],
+      "searchTerms": [
+        "中共一大",
+        "嘉兴南湖",
+        "上海",
+        "马克思主义",
+        "工人运动"
+      ],
+      "sections": [
+        {
+          "id": "meeting",
+          "title": "会议与转移",
+          "bodyMarkdown": "中共一大于1921年7月23日在上海开幕，会议后期转移到嘉兴南湖继续举行。7月23日通常被作为建党纪念日期，但具体会议地点和过程需要结合档案与研究材料理解。\n\n建党不是脱离社会背景的抽象事件。马克思主义传播、工人运动和救亡讨论共同构成了它的思想与实践条件。"
+        },
+        {
+          "id": "meaning",
+          "title": "组织与道路",
+          "bodyMarkdown": "中国共产党的成立改变了近代政治组织和革命实践的格局。此后，如何把马克思主义与中国的工人、农民和社会实际结合起来，成为长期探索的问题。\n\n这段历史适合同时阅读组织史、工人运动史和思想史，避免只记住一个纪念日期。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1921,
+          "title": "中共一大开幕",
+          "detail": "会议在上海开幕，后转移到嘉兴南湖。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "may-fourth-1919",
+        "worker-movement-1922",
+        "united-front-1924"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对建党与革命线索"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅组织与思想专题"
+        }
+      ]
+    },
+    {
+      "id": "worker-movement-1922",
+      "title": "工人运动：铁路、海员与五卅",
+      "summary": "1922—1925年香港海员罢工、京汉铁路罢工和五卅运动相继发生，工人、学生和商人以不同方式参与反帝与社会诉求。",
+      "period": "republic",
+      "startYear": 1922,
+      "endYear": 1925,
+      "tags": [
+        "工人运动",
+        "五卅",
+        "京汉铁路",
+        "海员",
+        "抵制日货"
+      ],
+      "searchTerms": [
+        "香港海员罢工",
+        "二七",
+        "五卅运动",
+        "工会",
+        "工人"
+      ],
+      "sections": [
+        {
+          "id": "actions",
+          "title": "从行业组织到社会行动",
+          "bodyMarkdown": "海员、铁路工人和学生运动体现了近代城市产业、交通和社会组织的变化。罢工不仅是工资问题，也与民族主义、工会组织和公共秩序相连。\n\n1925年五卅运动中，工人、学生和商人共同参与，但各方诉求并不总是一致。"
+        },
+        {
+          "id": "reading",
+          "title": "如何理解群众运动",
+          "bodyMarkdown": "群众运动有具体的行业、地区、组织和目标，不能把所有参与者都写成单一政党的直接命令。\n\n从史料中可以追踪工会的通告、报刊报道、罢工时间和政府文件，再比较不同叙述对同一事件的解释。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1922,
+          "title": "海员罢工",
+          "detail": "工人组织和谈判能力成为公共议题。"
+        },
+        {
+          "year": 1923,
+          "title": "京汉铁路工潮",
+          "detail": "铁路工人行动与政治组织发生碰撞。"
+        },
+        {
+          "year": 1925,
+          "title": "五卅运动",
+          "detail": "工人、学生和商人参与反帝爱国行动。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "ccp-founded-1921",
+        "united-front-1924",
+        "may-fourth-1919"
+      ],
+      "sources": [
+        {
+          "title": "民国时期文献专题",
+          "organization": "国家图书馆",
+          "url": "http://read.nlc.cn/specialResourse/minguoIndex",
+          "note": "用于查阅报刊与工会资料"
+        },
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对群众运动线索"
+        }
+      ]
+    },
+    {
+      "id": "united-front-1924",
+      "title": "第一次国共合作与北伐",
+      "summary": "1924年国民党一大召开，第一次国共合作形成，随后开展北伐和群众运动，1927年合作破裂。",
+      "period": "republic",
+      "startYear": 1924,
+      "endYear": 1927,
+      "tags": [
+        "国共合作",
+        "北伐",
+        "革命统一战线",
+        "国民革命"
+      ],
+      "searchTerms": [
+        "国民党一大",
+        "国共合作",
+        "北伐战争",
+        "武汉",
+        "革命统一战线"
+      ],
+      "sections": [
+        {
+          "id": "cooperation",
+          "title": "合作如何形成",
+          "bodyMarkdown": "1924年国民党一大召开，第一次国共合作形成，随后开展北伐和群众运动。合作涉及组织、军队、工人运动和反帝目标等多个层面。\n\n第一次国共合作（1924—1927）与后来抗日民族统一战线（1937—1945）属于不同历史阶段，不能混为一谈。"
+        },
+        {
+          "id": "break",
+          "title": "合作破裂与历史记忆",
+          "bodyMarkdown": "1927年合作破裂。组织、阶级、军事和权力关系的变化共同影响了合作进程。\n\n阅读这段历史时，既要关注大会、战争等大事件，也要关注地方组织、工人运动和社会团体的实际选择。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1924,
+          "title": "国民党一大召开",
+          "detail": "第一次国共合作形成。"
+        },
+        {
+          "year": 1926,
+          "title": "北伐开始",
+          "detail": "国民革命军从广东出发，战事向多个省区推进。"
+        },
+        {
+          "year": 1927,
+          "title": "合作破裂",
+          "detail": "组织与权力关系发生剧烈变化。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "ccp-founded-1921",
+        "northern-expedition-1926",
+        "nanjing-government-1927"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对国共合作与北伐线索"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅组织与军事专题"
+        }
+      ]
+    },
+    {
+      "id": "northern-expedition-1926",
+      "title": "北伐战争：从军事推进到政治转折",
+      "summary": "国民革命军于1926年7月从广东出发，1927年战事影响武汉、南京，1928年6月进入北京，北洋政府统治结束。",
+      "period": "republic",
+      "startYear": 1926,
+      "endYear": 1928,
+      "tags": [
+        "北伐",
+        "国民革命军",
+        "武汉",
+        "南京",
+        "统一"
+      ],
+      "searchTerms": [
+        "北伐战争",
+        "国民革命军",
+        "湖南",
+        "武昌",
+        "北京"
+      ],
+      "sections": [
+        {
+          "id": "campaign",
+          "title": "军事与政治结合",
+          "bodyMarkdown": "北伐从广东出发，沿铁路和长江流域推进。军事行动与地方政治、地方社会组织和群众运动相互交织。\n\n1928年进入北京意味着北洋政府的军事与政治中心发生转移，但“全国统一”首先是军事和政治层面的概括。"
+        },
+        {
+          "id": "meaning",
+          "title": "名义统一与社会现实",
+          "bodyMarkdown": "政权更替后，法律、货币、教育、交通和军队仍在不同地区以不同方式运作。\n\n因此，读北伐不能只看行军路线，还要追踪地方政权、财政、税收和社会组织的实际变化。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1926,
+          "title": "北伐开始",
+          "detail": "国民革命军从广东出发。"
+        },
+        {
+          "year": 1928,
+          "title": "进入北京",
+          "detail": "北洋政府统治结束，南京国民政府取得名义上的全国政权地位。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "united-front-1924",
+        "nanjing-government-1927",
+        "republic-beiyang-1912"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对北伐时间线"
+        },
+        {
+          "title": "民国时期文献专题",
+          "organization": "国家图书馆",
+          "url": "http://read.nlc.cn/specialResourse/minguoIndex",
+          "note": "用于查阅战事与地方资料"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-government-1927",
+      "title": "南京国民政府：国家建构的十年",
+      "summary": "南京国民政府于1927年成立，1928年实现名义上的全国统一，随后推进法律、货币、教育、交通和军事制度建设。",
+      "period": "republic",
+      "startYear": 1927,
+      "endYear": 1937,
+      "tags": [
+        "南京国民政府",
+        "国家建构",
+        "币制",
+        "教育",
+        "交通"
+      ],
+      "searchTerms": [
+        "南京十年",
+        "法币改革",
+        "关税",
+        "交通",
+        "教育制度"
+      ],
+      "sections": [
+        {
+          "id": "state",
+          "title": "制度建设",
+          "bodyMarkdown": "南京国民政府在法律、货币、教育、交通和军事方面推进制度建设。南京作为政治中心的影响，也通过铁路、报刊和学校网络延伸到其他地区。\n\n“南京十年”是对1927—1937的概称，不是一个单一的价值判断。"
+        },
+        {
+          "id": "limits",
+          "title": "统一与权利保障",
+          "bodyMarkdown": "名义上的全国统一不等于社会、经济和政治关系已经完全整合。政治参与、权利保障和地方治理受到制度与现实条件的限制。\n\n这一时期的经济、战争和社会运动，为理解1930年代的危机提供了背景。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1927,
+          "title": "南京国民政府成立",
+          "detail": "新的中央政权建立。"
+        },
+        {
+          "year": 1928,
+          "title": "名义统一",
+          "detail": "北伐军进入北京，中央政权的政治地位发生变化。"
+        },
+        {
+          "year": 1935,
+          "title": "法币改革",
+          "detail": "币制和金融政策成为应对经济危机的重要措施。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "northern-expedition-1926",
+        "economy-1930s",
+        "manchurian-1931"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对国家建构与抗战前线索"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅制度与经济专题"
+        }
+      ]
+    },
+    {
+      "id": "education-media-1898",
+      "title": "教育、报刊与电影：近代日常生活的变化",
+      "summary": "京师大学堂于1898年创办，1912年改名北京大学；新式大学、职业教育、报刊、广播、电影和摄影逐步发展。",
+      "period": "republic",
+      "startYear": 1898,
+      "endYear": 1937,
+      "tags": [
+        "教育",
+        "北京大学",
+        "报刊",
+        "电影",
+        "日常生活"
+      ],
+      "searchTerms": [
+        "京师大学堂",
+        "北京大学",
+        "电影",
+        "广播",
+        "报刊",
+        "城市生活"
+      ],
+      "sections": [
+        {
+          "id": "education",
+          "title": "新式教育扩展",
+          "bodyMarkdown": "新式大学、职业教育、中小学改革和留学教育改变了人才与知识传播的方式。报刊、教科书、广播和电影则把新的信息与生活方式带入城市。\n\n教育制度扩展有明显城乡、地区和阶层差异，不能把少数城市的经验描述为全国同步出现。"
+        },
+        {
+          "id": "daily",
+          "title": "媒介与日常",
+          "bodyMarkdown": "电影、摄影、广播和报刊改变了人们获取信息与想象世界的方式，也催生新的职业和消费空间。\n\n理解“现代化”时，既要看技术与制度的增长，也要看谁能够获得这些机会，以及哪些人仍然被排除在外。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1898,
+          "title": "京师大学堂创办",
+          "detail": "新式高等教育制度出现重要节点。"
+        },
+        {
+          "year": 1912,
+          "title": "北京大学",
+          "detail": "京师大学堂改名为北京大学，教育与公共思想联系加强。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "westernization-1860s",
+        "new-culture-1915",
+        "wartime-society-1937"
+      ],
+      "sources": [
+        {
+          "title": "民国时期文献专题",
+          "organization": "国家图书馆",
+          "url": "http://read.nlc.cn/specialResourse/minguoIndex",
+          "note": "用于查阅报刊、书籍与教育资料"
+        },
+        {
+          "title": "数字馆藏与历史地图",
+          "organization": "美国国会图书馆",
+          "url": "https://www.loc.gov/item/2021666890/",
+          "note": "用于查阅地图、照片与馆藏线索"
+        }
+      ]
+    },
+    {
+      "id": "economy-1930s",
+      "title": "1930年代：金融危机与法币改革",
+      "summary": "南京国民政府推进关税、币制和工业政策，1935年实行法币改革；全球危机、白银流动和战争准备加重经济压力。",
+      "period": "republic",
+      "startYear": 1930,
+      "endYear": 1937,
+      "tags": [
+        "法币",
+        "金融危机",
+        "白银",
+        "工业",
+        "通胀"
+      ],
+      "searchTerms": [
+        "1935法币改革",
+        "白银外流",
+        "恶性通货膨胀",
+        "关税",
+        "世界经济危机"
+      ],
+      "sections": [
+        {
+          "id": "policy",
+          "title": "币制改革",
+          "bodyMarkdown": "1935年法币改革改变了货币发行和财政金融安排，是观察国家能力与市场关系的重要节点。关税、工业化政策和战争准备也同时推进。\n\n政策目标、执行方式和社会后果需要分别分析。"
+        },
+        {
+          "id": "impact",
+          "title": "经济后果",
+          "bodyMarkdown": "世界经济危机、白银价格波动、战争准备、交通和贸易变化共同影响了城乡经济。经济后果在不同地区、阶层和时间段并不相同。\n\n不能把危机简单归因于一个政策或一个群体，需要同时考虑国际环境、生产、交通和财政。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1935,
+          "title": "法币改革",
+          "detail": "货币与财政金融体系发生重大调整。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "nanjing-government-1927",
+        "manchurian-1931",
+        "full-resistance-1937"
+      ],
+      "sources": [
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅金融与经济史专题"
+        },
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对战前国家建设线索"
+        }
+      ]
+    },
+    {
+      "id": "manchurian-1931",
+      "title": "九一八事变与局部抗战",
+      "summary": "1931年9月18日发生柳条湖事件，日本关东军扩大占领；1932年扶植建立“满洲国”，局部抗战由此展开。",
+      "period": "antiJapaneseWar",
+      "startYear": 1931,
+      "endYear": 1932,
+      "tags": [
+        "九一八",
+        "柳条湖",
+        "局部抗战",
+        "满洲国",
+        "东北"
+      ],
+      "searchTerms": [
+        "九一八事变",
+        "柳条湖事件",
+        "伪满洲国",
+        "关东军",
+        "东北"
+      ],
+      "sections": [
+        {
+          "id": "occupation",
+          "title": "占领扩大",
+          "bodyMarkdown": "1931年9月18日柳条湖事件后，日本关东军扩大对中国东北的占领。1932年扶植建立“满洲国”，东北地区的政治、军事和社会结构发生剧烈变化。\n\n关于事件原因和责任，应并列查阅不同档案与研究叙述，而不是只采用后来的单一解释。"
+        },
+        {
+          "id": "resistance",
+          "title": "局部抗战",
+          "bodyMarkdown": "东北沦陷后，中国各地开始不同形式的抗日救亡与局部抗战。1931年至1937年的行动，为后来全面抗战积累了经验。\n\n“十四年抗战”和“八年抗战”使用不同起点，阅读时要明确它们分别指什么。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1931,
+          "title": "九一八事变",
+          "detail": "柳条湖事件成为日本扩大占领的节点。"
+        },
+        {
+          "year": 1932,
+          "title": "“满洲国”建立",
+          "detail": "日本关东军扶植的傀儡政权在东北建立。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "full-resistance-1937",
+        "wartime-society-1937",
+        "anti-japanese-victory-1945"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对抗战起点与时间线"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅东北与抗战专题"
+        }
+      ]
+    },
+    {
+      "id": "long-march-1934",
+      "title": "长征：不同路线与战略转移",
+      "summary": "1934年10月中央红军从中央苏区出发，1935年1月召开遵义会议，1935年10月到达陕北，其他红军路线在1936年前后会师。",
+      "period": "antiJapaneseWar",
+      "startYear": 1934,
+      "endYear": 1936,
+      "tags": [
+        "长征",
+        "遵义会议",
+        "红军",
+        "陕北",
+        "战略转移"
+      ],
+      "searchTerms": [
+        "中央红军",
+        "遵义会议",
+        "四渡赤水",
+        "会师",
+        "长征路线"
+      ],
+      "sections": [
+        {
+          "id": "routes",
+          "title": "长征不是一条路线",
+          "bodyMarkdown": "长征由不同路线、不同时间和不同部队组成。中央红军从中央苏区出发，经过遵义、陕北等地；其他红军部队和路线也有各自历程。\n\n出发人数、减员人数和路线细节需要依据研究来源，不宜把单一数字绝对化。"
+        },
+        {
+          "id": "significance",
+          "title": "遵义会议与组织变化",
+          "bodyMarkdown": "1935年遵义会议是红军组织和战略决策变化的重要节点。长征保存了力量，也改变了根据地、军队和领导层的布局。\n\n学习长征时，可以把行军路线、会议决策、军事风险和地方社会分别记录。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1934,
+          "title": "中央红军出发",
+          "detail": "中央红军开始战略转移。"
+        },
+        {
+          "year": 1935,
+          "title": "遵义会议",
+          "detail": "会议作出重要的组织与军事决策。"
+        },
+        {
+          "year": 1935,
+          "title": "到达陕北",
+          "detail": "中央红军抵达陕北革命根据地。"
+        }
+      ],
+      "keyFigures": [
+        {
+          "name": "毛泽东",
+          "role": "红军领导成员",
+          "contribution": "参与遵义会议后的战略和组织决策。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "manchurian-1931",
+        "december-ninth-1935",
+        "xi-an-1936"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对长征与抗战线索"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅长征专题"
+        }
+      ]
+    },
+    {
+      "id": "december-ninth-1935",
+      "title": "一二·九运动：学生与抗日救亡",
+      "summary": "1935年12月9日北京学生举行抗日救国示威，公开提出停止内战、一致抗日等诉求，运动后来扩展到全国。",
+      "period": "antiJapaneseWar",
+      "startYear": 1935,
+      "endYear": 1935,
+      "tags": [
+        "一二·九",
+        "学生运动",
+        "抗日救亡",
+        "停止内战"
+      ],
+      "searchTerms": [
+        "12月9日",
+        "抗日救亡",
+        "学生示威",
+        "停止内战",
+        "北平"
+      ],
+      "sections": [
+        {
+          "id": "movement",
+          "title": "从北平到全国",
+          "bodyMarkdown": "1935年12月9日，北平学生举行示威，提出停止内战、一致抗日等诉求。运动随后扩展到其他地区。\n\n学生运动与报刊、社团和社会组织相连，形成了广泛的抗日救亡公共讨论。"
+        },
+        {
+          "id": "context",
+          "title": "与长征和统一战线相连",
+          "bodyMarkdown": "一二·九运动发生在长征和民族危机加深的历史背景下。它反映了青年、学生和社会组织对国家政策的回应。\n\n理解这段历史，可以把学生行动、报刊宣传、军事危机和党派政策放在同一条时间线上。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1935,
+          "title": "一二·九运动",
+          "detail": "北平学生示威并提出抗日救亡诉求。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "long-march-1934",
+        "xi-an-1936",
+        "full-resistance-1937"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对抗日救亡线索"
+        },
+        {
+          "title": "民国时期文献专题",
+          "organization": "国家图书馆",
+          "url": "http://read.nlc.cn/specialResourse/minguoIndex",
+          "note": "用于查阅报刊与学生运动资料"
+        }
+      ]
+    },
+    {
+      "id": "xi-an-1936",
+      "title": "西安事变：扣留、谈判与和平解决",
+      "summary": "1936年12月12日张学良、杨虎城扣留蒋介石，双方谈判后事变和平解决，第二次国共合作的基础逐步形成。",
+      "period": "antiJapaneseWar",
+      "startYear": 1936,
+      "endYear": 1936,
+      "tags": [
+        "西安事变",
+        "张学良",
+        "杨虎城",
+        "统一战线",
+        "抗日"
+      ],
+      "searchTerms": [
+        "西安事变",
+        "扣蒋",
+        "和平解决",
+        "第二次国共合作",
+        "抗日民族统一战线"
+      ],
+      "sections": [
+        {
+          "id": "facts",
+          "title": "事件经过",
+          "bodyMarkdown": "1936年12月12日，张学良、杨虎城扣留蒋介石。随后各方展开谈判，事变最终和平解决。\n\n“扣留”“谈判”“和平解决”是事实层面的关键词；“挽救了革命”等说法属于评价性判断，不能直接当作无争议事实。"
+        },
+        {
+          "id": "meaning",
+          "title": "合作基础",
+          "bodyMarkdown": "西安事变后，停止内战、团结抗日和第二次国共合作逐步成为政治议题。1937年七七事变后，抗日民族统一战线正式形成。\n\n这段历史提醒我们：重大政治转折往往由多方谈判、军事压力和社会动员共同塑造。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1936,
+          "title": "西安事变发生",
+          "detail": "张学良、杨虎城扣留蒋介石。"
+        },
+        {
+          "year": 1936,
+          "title": "事变和平解决",
+          "detail": "各方谈判形成新的政治安排。"
+        }
+      ],
+      "keyFigures": [
+        {
+          "name": "张学良",
+          "role": "东北军统帅",
+          "contribution": "参与发动事变并推动停止内战、联合抗日。"
+        },
+        {
+          "name": "杨虎城",
+          "role": "西安方面军事与政治人物",
+          "contribution": "参与发动事变和后续谈判。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "december-ninth-1935",
+        "full-resistance-1937",
+        "wartime-society-1937"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对统一战线时间线"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅西安事变与统一战线专题"
+        }
+      ]
+    },
+    {
+      "id": "full-resistance-1937",
+      "title": "七七事变：全面抗战爆发",
+      "summary": "1937年7月7日卢沟桥事变发生，随后中国进入全面抗战，战争持续至1945年。",
+      "period": "antiJapaneseWar",
+      "startYear": 1937,
+      "endYear": 1945,
+      "tags": [
+        "七七事变",
+        "卢沟桥",
+        "全面抗战",
+        "统一战线"
+      ],
+      "searchTerms": [
+        "卢沟桥事变",
+        "7月7日",
+        "全面抗战",
+        "抗日民族统一战线"
+      ],
+      "sections": [
+        {
+          "id": "outbreak",
+          "title": "全面抗战的开始",
+          "bodyMarkdown": "1937年7月7日卢沟桥事变发生，随后战事扩展到华北、华东和其他地区。中国进入全面抗战。\n\n七七事变是全面抗战的开始标志，不等于战争所有层面在同一天同时爆发。"
+        },
+        {
+          "id": "scope",
+          "title": "战场与社会",
+          "bodyMarkdown": "全面抗战既有正面战场，也有敌后战场；既有军队行动，也有城市、农村、工厂、学校和家庭的迁移与坚持。\n\n“十四年抗战”通常从1931年算起，“八年抗战”通常从1937年算起。两种说法对应不同起点与叙事范围。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1937,
+          "title": "卢沟桥事变",
+          "detail": "七七事变发生，全面抗战爆发。"
+        },
+        {
+          "year": 1937,
+          "title": "抗日民族统一战线形成",
+          "detail": "全民族抗战的社会与政治条件进一步形成。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "manchurian-1931",
+        "xi-an-1936",
+        "nanjing-massacre-1937",
+        "anti-japanese-victory-1945"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对全面抗战叙述"
+        },
+        {
+          "title": "中国历史纪年简表",
+          "organization": "中国政府网",
+          "url": "https://www.gov.cn/guoqing/2020-10/29/content_5555766.htm",
+          "note": "用于核对日期与分期"
+        }
+      ]
+    },
+    {
+      "id": "nanjing-massacre-1937",
+      "title": "南京大屠杀：档案、记忆与证据",
+      "summary": "1937年12月13日日军占领南京后，发生大规模屠杀、强奸、抢掠和纵火，相关档案和审判材料至今仍是重要证据来源。",
+      "period": "antiJapaneseWar",
+      "startYear": 1937,
+      "endYear": 1945,
+      "tags": [
+        "南京大屠杀",
+        "战争犯罪",
+        "档案",
+        "12月13日",
+        "记忆"
+      ],
+      "searchTerms": [
+        "南京大屠杀",
+        "远东国际军事法庭",
+        "南京军事法庭",
+        "慰安妇",
+        "战时档案"
+      ],
+      "sections": [
+        {
+          "id": "fact",
+          "title": "基本史实",
+          "bodyMarkdown": "1937年12月13日日军占领南京后，发生大规模屠杀、强奸、抢掠和纵火。南京大屠杀的史实和战争犯罪性质有大量档案、证言、影像和战后审判材料支持。\n\n这是需要准确、克制并尊重受害者记忆的学习主题。"
+        },
+        {
+          "id": "numbers",
+          "title": "数字为何要注明来源",
+          "bodyMarkdown": "远东国际军事法庭使用“20万以上”等表述，中国官方及南京军事法庭相关判决常使用“30万以上”等表述。不同数字对应不同统计范围和证据口径。\n\n这些数字不能相加、平均或互相替代。阅读时，应同时记录来源、时间范围、统计对象和证据类型。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1937,
+          "title": "南京陷落",
+          "detail": "日军于12月13日占领南京，随后发生严重战争暴行。"
+        },
+        {
+          "year": 1945,
+          "title": "战后审判材料形成",
+          "detail": "远东国际军事法庭与中国审判材料保存和记录了相关证据。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "full-resistance-1937",
+        "wartime-society-1937",
+        "anti-japanese-victory-1945"
+      ],
+      "sources": [
+        {
+          "title": "南京大屠杀相关档案",
+          "organization": "UNESCO",
+          "url": "https://media.unesco.org/sites/default/files/webform/mow001/china_nanjing_en.pdf",
+          "note": "用于查找战后调查与档案索引"
+        },
+        {
+          "title": "远东国际军事法庭判决书",
+          "organization": "美国国会图书馆",
+          "url": "https://www.loc.gov/resource/llmlp.Judgment-IMTFE-Vol-II-PartB-Chapter-VIII?st=brief",
+          "note": "用于查阅判决原文与战争犯罪章节"
+        }
+      ]
+    },
+    {
+      "id": "wartime-society-1937",
+      "title": "战争中的社会：内迁、难民与日常生活",
+      "summary": "1937—1945年战争造成大规模人口迁移、难民和城市生活变化，大学与工业内迁，战时文化和女性参与增加，也伴随疾病、物资短缺与占领。",
+      "period": "antiJapaneseWar",
+      "startYear": 1937,
+      "endYear": 1945,
+      "tags": [
+        "战时社会",
+        "难民",
+        "内迁",
+        "西南联大",
+        "女性",
+        "日常生活"
+      ],
+      "searchTerms": [
+        "西南联大",
+        "难民",
+        "战时内迁",
+        "大学内迁",
+        "战时文化",
+        "女性参与"
+      ],
+      "sections": [
+        {
+          "id": "movement",
+          "title": "迁移与坚持",
+          "bodyMarkdown": "战争造成大学、工厂、机关和人口的大规模迁移。西南联大等教育机构在战争环境下延续教学与研究，出版物和文学也持续发展。\n\n“坚持”并不意味着没有困难。迁移中的资源、疾病、物价和安全问题都影响了不同群体的生活。"
+        },
+        {
+          "id": "voices",
+          "title": "不同群体的经验",
+          "bodyMarkdown": "战争体验因地区、阶层、性别、族群和是否处于沦陷区而不同。女性参与生产和公共工作、学生运动、工人运输和难民家庭都有自己的经历。\n\n研究战争社会时，应该让普通人的材料进入叙事，而不只记录将领和会议。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1937,
+          "title": "大规模迁移开始",
+          "detail": "大学、工厂和人口向西南等地区迁移。"
+        },
+        {
+          "year": 1938,
+          "title": "西南联大成立",
+          "detail": "教育机构在战时条件下继续办学。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "full-resistance-1937",
+        "nanjing-massacre-1937",
+        "anti-japanese-victory-1945"
+      ],
+      "sources": [
+        {
+          "title": "民国时期文献专题",
+          "organization": "国家图书馆",
+          "url": "http://read.nlc.cn/specialResourse/minguoIndex",
+          "note": "用于查阅战时报刊、教育与生活资料"
+        },
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对战时社会与抗战线索"
+        }
+      ]
+    },
+    {
+      "id": "anti-japanese-victory-1945",
+      "title": "抗日战争胜利：几个关键日期",
+      "summary": "1945年8月15日日本宣布接受《波茨坦公告》，9月2日签署投降书，9月9日中国战区受降，9月3日成为中国抗战胜利纪念日。",
+      "period": "antiJapaneseWar",
+      "startYear": 1945,
+      "endYear": 1945,
+      "tags": [
+        "抗战胜利",
+        "投降",
+        "受降",
+        "9月3日",
+        "台湾"
+      ],
+      "searchTerms": [
+        "波茨坦公告",
+        "日本投降",
+        "9月2日",
+        "9月9日",
+        "台湾受降"
+      ],
+      "sections": [
+        {
+          "id": "dates",
+          "title": "不要混淆日期",
+          "bodyMarkdown": "8月15日是日本宣布接受《波茨坦公告》的日期；9月2日，日本代表签署投降书；9月9日，中国战区受降仪式在南京举行；9月3日成为中国抗战胜利纪念日。\n\n这些日期分别对应宣布、签署、仪式和纪念活动，不能混为同一个事件。"
+        },
+        {
+          "id": "after",
+          "title": "胜利之后",
+          "bodyMarkdown": "战争结束后，中国仍面临政治协商、接收、经济恢复和军事安排等问题。10月25日台湾举行受降和行政接收仪式。\n\n学习时，应将战争结束、战后接收和后来法律政治发展分开叙述。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1945,
+          "title": "日本宣布投降",
+          "detail": "日本政府宣布接受《波茨坦公告》。"
+        },
+        {
+          "year": 1945,
+          "title": "中国战区受降",
+          "detail": "9月9日南京举行中国战区受降仪式。"
+        },
+        {
+          "year": 1945,
+          "title": "台湾受降",
+          "detail": "10月25日举行台湾受降和行政接收仪式。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "full-resistance-1937",
+        "nanjing-massacre-1937",
+        "chongqing-negotiations-1945"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对抗战胜利时间线"
+        },
+        {
+          "title": "中国历史纪年简表",
+          "organization": "中国政府网",
+          "url": "https://www.gov.cn/guoqing/2020-10/29/content_5555766.htm",
+          "note": "用于核对关键日期"
+        }
+      ]
+    },
+    {
+      "id": "chongqing-negotiations-1945",
+      "title": "重庆谈判与《双十协定》",
+      "summary": "1945年8月28日至10月10日进行重庆谈判，10月10日签署《政府与中共代表会谈纪要》，并约定召开政治协商会议。",
+      "period": "postwar",
+      "startYear": 1945,
+      "endYear": 1945,
+      "tags": [
+        "重庆谈判",
+        "双十协定",
+        "政治协商",
+        "和平",
+        "战后"
+      ],
+      "searchTerms": [
+        "双十协定",
+        "重庆谈判",
+        "政治协商会议",
+        "毛泽东",
+        "国共谈判"
+      ],
+      "sections": [
+        {
+          "id": "agreement",
+          "title": "谈判内容",
+          "bodyMarkdown": "1945年8月28日至10月10日，国共双方在重庆进行谈判，10月10日签署《政府与中共代表会谈纪要》，即通常所说的《双十协定》。\n\n协定涉及政治、军事和召开政治协商会议等安排，但没有解决所有政治、军事和政权问题。"
+        },
+        {
+          "id": "after",
+          "title": "协商为何未止战",
+          "bodyMarkdown": "谈判期间，局部冲突和政治分歧仍在发展。1946年全面内战通常被视为开始，战争与协商由此转入新的阶段。\n\n分析这段历史时，要把协议文本、谈判过程、军事行动和后续制度安排分别核对。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1945,
+          "title": "重庆谈判开始",
+          "detail": "国共代表在重庆展开谈判。"
+        },
+        {
+          "year": 1945,
+          "title": "《双十协定》签署",
+          "detail": "双方签署会谈纪要并约定召开政治协商会议。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "anti-japanese-victory-1945",
+        "civil-war-1946",
+        "three-campaigns-1948"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对战后政治线索"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅重庆谈判专题"
+        }
+      ]
+    },
+    {
+      "id": "civil-war-1946",
+      "title": "全面内战：政治、军事与民生",
+      "summary": "1946年国共谈判破裂后全面内战通常以此为起点，解放区开展土地改革，国民党控制区出现通胀、物资短缺和财政压力。",
+      "period": "postwar",
+      "startYear": 1946,
+      "endYear": 1948,
+      "tags": [
+        "内战",
+        "土地改革",
+        "通胀",
+        "民生",
+        "国共关系"
+      ],
+      "searchTerms": [
+        "全面内战",
+        "土地改革",
+        "恶性通货膨胀",
+        "国民党统治区",
+        "解放区"
+      ],
+      "sections": [
+        {
+          "id": "political",
+          "title": "从谈判到战争",
+          "bodyMarkdown": "国共谈判破裂后，全面内战通常以1946年为起点。军事行动与政治动员、城市治理和地方资源同时变化。\n\n不同叙述对“全面内战”起点和阶段划分有差异，引用时需要注明采用的时间口径。"
+        },
+        {
+          "id": "livelihood",
+          "title": "土地、物价与日常生活",
+          "bodyMarkdown": "解放区开展土地改革，国民党控制区则面临严重通货膨胀、物资短缺、征税和财政压力。经济后果与战争、生产、交通和贸易破坏共同相关。\n\n不要把民生危机简单归因于一个政党或一项政策，需把不同地区的材料放在一起比较。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1946,
+          "title": "全面内战通常被认为开始",
+          "detail": "谈判破裂后，大规模军事冲突扩大。"
+        },
+        {
+          "year": 1947,
+          "title": "人民解放军转入战略进攻",
+          "detail": "军事主动权和战场格局发生变化。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "chongqing-negotiations-1945",
+        "three-campaigns-1948",
+        "founding-1949"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对战后战争与国家建构线索"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅内战与经济专题"
+        }
+      ]
+    },
+    {
+      "id": "three-campaigns-1948",
+      "title": "三大战役：军事结果与政治后果",
+      "summary": "辽沈战役于1948年9月开始，淮海和平津战役在1948年末至1949年初进行，三大战役改变了全国军事和政治格局。",
+      "period": "postwar",
+      "startYear": 1948,
+      "endYear": 1949,
+      "tags": [
+        "辽沈战役",
+        "淮海战役",
+        "平津战役",
+        "战略决战",
+        "政治格局"
+      ],
+      "searchTerms": [
+        "三大战役",
+        "辽沈",
+        "淮海",
+        "平津",
+        "战略决战"
+      ],
+      "sections": [
+        {
+          "id": "campaigns",
+          "title": "三个战场",
+          "bodyMarkdown": "辽沈战役、淮海战役和平津战役在时间上相互衔接又各有战场和战略特点。战役结果改变了双方军事力量对比。\n\n伤亡数字在不同研究中可能不同，引用时应注明统计口径和来源。"
+        },
+        {
+          "id": "consequence",
+          "title": "从军事到政治",
+          "bodyMarkdown": "三大战役加速了全国军事和政治格局的变化，并为后续渡江与政权转移创造条件。\n\n但单一战役不能单独解释1949年的全部变化，还需要结合政治组织、财政、战争动员和国际环境。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1948,
+          "title": "辽沈战役开始",
+          "detail": "东北战区的战略决战展开。"
+        },
+        {
+          "year": 1948,
+          "title": "淮海、平津战役展开",
+          "detail": "华东、华北战场相继发生大规模战役。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "civil-war-1946",
+        "crossing-yangtze-1949",
+        "founding-1949"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对三大战役与建国线索"
+        },
+        {
+          "title": "中国近代史研究资料",
+          "organization": "中国社会科学院近代史研究所",
+          "url": "http://jds.cass.cn/",
+          "note": "用于查阅战役与战后政治专题"
+        }
+      ]
+    },
+    {
+      "id": "crossing-yangtze-1949",
+      "title": "渡江战役与南京解放",
+      "summary": "1949年4月20日解放军渡过长江，4月23日进入南京，国民党政权在大陆的统治中心发生转移。",
+      "period": "postwar",
+      "startYear": 1949,
+      "endYear": 1949,
+      "tags": [
+        "渡江战役",
+        "南京",
+        "长江",
+        "政权转折"
+      ],
+      "searchTerms": [
+        "渡江战役",
+        "南京解放",
+        "4月23日",
+        "长江防线",
+        "全国解放"
+      ],
+      "sections": [
+        {
+          "id": "campaign",
+          "title": "渡江与占领",
+          "bodyMarkdown": "1949年4月20日解放军渡过长江，4月23日进入南京。渡江战役是军事和政治转折的一部分。\n\n占领南京改变了政权中心，但全国范围的政权变化还涉及后续城市接管、组织建立和全国秩序重建。"
+        },
+        {
+          "id": "reading",
+          "title": "不要孤立看一个事件",
+          "bodyMarkdown": "用单一事件解释1949年全部历史，会忽略此前战争、财政、组织和社会动员的长期积累。\n\n阅读这类节点时，可以同时追踪军事行动、行政接管、民众生活和制度建设的线索。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1949,
+          "title": "渡江战役",
+          "detail": "解放军突破长江防线。"
+        },
+        {
+          "year": 1949,
+          "title": "南京解放",
+          "detail": "4月23日南京政权中心发生转移。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "three-campaigns-1948",
+        "founding-1949"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对渡江与建国时间线"
+        },
+        {
+          "title": "中国历史纪年简表",
+          "organization": "中国政府网",
+          "url": "https://www.gov.cn/guoqing/2020-10/29/content_5555766.htm",
+          "note": "用于核对关键日期"
+        }
+      ]
+    },
+    {
+      "id": "founding-1949",
+      "title": "中华人民共和国成立：制度与国家叙事",
+      "summary": "1949年9月中国人民政治协商会议第一届全体会议召开并通过《共同纲领》，10月1日中央人民政府成立并举行开国典礼。",
+      "period": "postwar",
+      "startYear": 1949,
+      "endYear": 1949,
+      "tags": [
+        "中华人民共和国成立",
+        "政协",
+        "共同纲领",
+        "开国大典",
+        "国家建构"
+      ],
+      "searchTerms": [
+        "1949",
+        "共同纲领",
+        "中国人民政治协商会议",
+        "中央人民政府",
+        "开国大典"
+      ],
+      "sections": [
+        {
+          "id": "institutions",
+          "title": "几个制度节点",
+          "bodyMarkdown": "1949年9月21—30日，中国人民政治协商会议第一届全体会议召开，通过《中国人民政治协商会议共同纲领》，并选举中央人民政府委员会。\n\n10月1日中央人民政府成立并举行开国典礼。不同文本中的“成立”可能指不同节点，阅读时要说明所指事件。"
+        },
+        {
+          "id": "transition",
+          "title": "国家重建的开始",
+          "bodyMarkdown": "中华人民共和国成立开启了新的国家建构阶段。军事胜利、制度建设、经济恢复和社会整合并不是同一天完成的，而是长期过程。\n\n学习这一节点，可以把会议文件、行政接管、土地改革、经济恢复和普通人的生活变化分别记录。"
+        }
+      ],
+      "keyEvents": [
+        {
+          "year": 1949,
+          "title": "政协会议召开",
+          "detail": "第一届全体会议通过《共同纲领》并完成重要选举。"
+        },
+        {
+          "year": 1949,
+          "title": "中央人民政府成立",
+          "detail": "10月1日举行开国典礼。"
+        }
+      ],
+      "keyFigures": [
+        {
+          "name": "毛泽东",
+          "role": "中央人民政府主席",
+          "contribution": "参与国家建立与开国典礼等重要历史进程。"
+        }
+      ],
+      "relatedArticleIDs": [
+        "crossing-yangtze-1949",
+        "civil-war-1946",
+        "anti-japanese-victory-1945"
+      ],
+      "sources": [
+        {
+          "title": "“复兴之路”基本陈列",
+          "organization": "中国国家博物馆",
+          "url": "https://www.chnmuseum.cn/portals/0/web/zt/fuxing/intro.html",
+          "note": "用于核对建国历史线索"
+        },
+        {
+          "title": "新中国档案与开国大典资料",
+          "organization": "中国人大网",
+          "url": "http://www.npc.gov.cn/zgrdw/npc/zt/qt/qzjd90zn/2011-06/08/content_1657867.htm",
+          "note": "用于查阅制度与历史影像资料"
+        }
+      ]
+    }
+  ]
+}
