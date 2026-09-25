@@ -312,7 +312,7 @@
 - **第三方 / 远程 HTTP 显式信任**：地址先做 scheme/host 校验；非官方、非回环服务必须将信任绑定到规范化 URL，远程 HTTP 还会显示 API key 明文传输警告，见 `LLMConfiguration.swift`、`LLMSettingsView.swift`。
 - **自更新先校验再旁路切换 + 回滚**：`UpdateService` 下载 ZIP 后先解压到独立临时目录，验证结构、Info.plist、Bundle ID、版本和体积，再复制同卷旁路文件并复验，切换/启动失败保留或恢复旧 App，见 `UpdateService.swift`。
 - **自更新已知限制**：当前没有代码签名信任链；结构校验不能替代 Apple Developer ID / notarization 等签名验证，见 `UpdateService.swift`。
-- **日记 AES-256-GCM 且 fail-closed**：当前日记格式为 `SND2`，正文使用 PBKDF2-HMAC-SHA256 + AES-256-GCM，nonce 每次随机生成，认证失败不会被当作空正文；加密开启但 Keychain 没有密码时保存失败，不降级写明文，见 `DiaryEncryptionService.swift`、`DiaryService.swift`、`DiaryEditorView.swift`。
+- **日记 AES-256-GCM 且 fail-closed**：当前日记格式为 `SND2`，正文使用 PBKDF2-HMAC-SHA256 + AES-256-GCM，nonce 每次随机生成，认证失败不会被当作空正文；加密开启但 Keychain 没有密码时保存失败，不降级写明文，见 `DiaryEncryptionService.swift`、`DiaryService.swift`、`DiaryEditorView.swift`；设置页「通用 → 日记加密」提供启用/关闭入口（`DiaryEncryptionSettingsView.swift`），密码、密保问题与答案只写入钥匙串，启用后立即清空输入框。
 - **日记凭据入 Keychain**：密码、密保问题和答案只写 `KeychainService`；UserDefaults 只保存非敏感开关和迁移后的存在标记，旧明文迁移失败时保留旧数据，见 `DiaryEncryptionService.swift`、`KeychainService.swift`。
 - **P2P 分帧 + AES-GCM + 指纹确认**：`P2PFrameAssembler` 处理 TCP 拆包/粘包和长度上限，`P2PCryptoService` 新消息使用带版本 envelope、随机 nonce 和 GCM tag，提供机密性与完整性；首次身份必须由用户核对 SHA-256 fingerprint 后确认，见 `P2PNetworkService.swift`、`P2PCryptoService.swift`、`P2PService.swift`、`P2PSettingsView.swift`。
 - **图像理解开关真正生效**：关闭时由 `OCRService` 本地识别后只发文本；开启且 provider 支持时才构造多模态请求；不支持的 provider 阻止图片发送，见 `LLMService.swift`、`LLMSettingsView.swift`、`OCRService.swift`、`AIChatView.swift`。

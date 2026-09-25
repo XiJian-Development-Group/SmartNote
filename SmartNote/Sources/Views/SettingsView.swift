@@ -143,6 +143,7 @@ struct SettingsView: View {
                        step: 15)
             }
 
+            DiaryEncryptionSettingsSection()
 
             Section("系统集成") {
                 HStack {
