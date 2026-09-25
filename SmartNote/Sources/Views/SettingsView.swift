@@ -450,13 +450,54 @@ struct SettingsView: View {
             }
             
             Section("显示") {
-                Picker("外观", selection: $appState.appSettings.darkModePreference) {
+                Picker("外观", selection: Binding(
+                    get: { appState.activeDarkModePreference },
+                    set: { appState.setDarkModePreference($0) }
+                )) {
                     Text("跟随系统").tag(AppSettings.DarkModePreference.system)
                     Text("浅色").tag(AppSettings.DarkModePreference.light)
                     Text("深色").tag(AppSettings.DarkModePreference.dark)
                 }
-                
+
                 Toggle("显示文件扩展名", isOn: $appState.appSettings.showFileExtensions)
+            }
+
+            Section("主题") {
+                ForEach(AppSettings.ThemeID.allCases) { themeID in
+                    let theme = AppTheme.theme(for: themeID)
+                    Button {
+                        appState.setTheme(themeID)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: theme.symbol)
+                                .font(.title3)
+                                .foregroundStyle(theme.accent)
+                                .frame(width: 30)
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(theme.name)
+                                    .font(.headline)
+                                Text(theme.summary)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Spacer()
+
+                            if appState.activeThemeID == themeID {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(theme.accent)
+                            }
+                        }
+                        .padding(.vertical, 5)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Text("主题会保存到本机；经典主题遵循上方明暗模式，节庆主题使用自带的对比度方案。")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
             }
         }
         .formStyle(.grouped)

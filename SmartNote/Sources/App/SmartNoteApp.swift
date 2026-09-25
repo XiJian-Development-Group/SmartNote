@@ -23,6 +23,8 @@ struct SmartNoteApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(appState)
+                .environment(\.appTheme, appState.theme)
+                .appTint(appState.theme.tint)
                 .frame(minWidth: 900, minHeight: 600)
                 .preferredColorScheme(appState.colorScheme)
                 .onChange(of: scenePhase) { _, newPhase in
@@ -61,6 +63,8 @@ struct SmartNoteApp: App {
         WindowGroup("日记编辑器", id: "diary-editor", for: UUID.self) { $entryID in
             DiaryEditorView(entryID: entryID)
                 .environmentObject(appState)
+                .environment(\.appTheme, appState.theme)
+                .appTint(appState.theme.tint)
                 .frame(minWidth: 700, minHeight: 600)
                 .preferredColorScheme(appState.colorScheme)
         }
@@ -69,6 +73,9 @@ struct SmartNoteApp: App {
         Settings {
             SettingsView()
                 .environmentObject(appState)
+                .environment(\.appTheme, appState.theme)
+                .appTint(appState.theme.tint)
+                .preferredColorScheme(appState.colorScheme)
         }
 
         // 菜单栏 App（macOS 13+ 原生 MenuBarExtra）。首次启动带 toggle 控制；
@@ -76,6 +83,9 @@ struct SmartNoteApp: App {
         MenuBarExtra("智学笔记", systemImage: "book.fill") {
             MenuBarContentView()
                 .environmentObject(appState)
+                .environment(\.appTheme, appState.theme)
+                .appTint(appState.theme.tint)
+                .preferredColorScheme(appState.colorScheme)
         }
         .menuBarExtraStyle(.menu)
     }

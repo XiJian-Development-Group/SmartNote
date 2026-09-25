@@ -34,11 +34,21 @@ class AppState: ObservableObject {
             }
         }
     }
+    /// AppSettings 是嵌套 ObservableObject；单独发布外观状态，确保主题/明暗切换立即刷新所有 Scene。
+    @Published private(set) var activeThemeID: AppSettings.ThemeID = .classic
+    @Published private(set) var activeDarkModePreference: AppSettings.DarkModePreference = .system
     
     var colorScheme: ColorScheme? {
-        appSettings.darkModePreference.colorScheme
+        // 节庆主题自带对比度方案；经典主题继续尊重“外观”中的明暗选择。
+        activeThemeID == .classic
+            ? activeDarkModePreference.colorScheme
+            : theme.colorScheme
     }
-    
+
+    var theme: AppTheme {
+        AppTheme.theme(for: activeThemeID)
+    }
+
     var llmConfiguration: LLMConfiguration {
         get { appSettings.llmConfiguration }
         set {
@@ -65,6 +75,8 @@ class AppState: ObservableObject {
     let learningAnalysisService = LearningAnalysisService.shared
     let notificationService = NotificationService.shared
     let updateService: UpdateService
+    let blessingService: BlessingService
+    let historyService: HistoryService
     var updateCheckCancellable: AnyCancellable? = nil
     var llmService: LLMService
     private var hasLoadedExamCountdowns: Bool = false
@@ -87,7 +99,11 @@ class AppState: ObservableObject {
         self.llmService = LLMService(configuration: config)
         // initialize update service with configured repo
         self.updateService = UpdateService(owner: settings.updateRepoOwner, repo: settings.updateRepoName)
+        self.blessingService = BlessingService()
+        self.historyService = HistoryService(storageService: probeStorage)
         self.appSettings = settings
+        self.activeThemeID = settings.themeID
+        self.activeDarkModePreference = settings.darkModePreference
         self.lastStartupMigration = migrationResult
         loadSavedData()
 
@@ -125,9 +141,26 @@ class AppState: ObservableObject {
     
     func refreshSettings() {
         let currentExamCountdowns = examCountdowns
-        self.appSettings = storageService.loadSettings()
+        let loadedSettings = storageService.loadSettings()
+        self.appSettings = loadedSettings
+        self.activeThemeID = loadedSettings.themeID
+        self.activeDarkModePreference = loadedSettings.darkModePreference
         // appSettings 的倒计时字段只作为内存镜像，不从旧磁盘快照反向覆盖。
         self.appSettings.examCountdowns = currentExamCountdowns
+    }
+
+    func setTheme(_ themeID: AppSettings.ThemeID) {
+        guard activeThemeID != themeID else { return }
+        appSettings.themeID = themeID
+        activeThemeID = themeID
+        storageService.saveSettings(appSettings)
+    }
+
+    func setDarkModePreference(_ preference: AppSettings.DarkModePreference) {
+        guard activeDarkModePreference != preference else { return }
+        appSettings.darkModePreference = preference
+        activeDarkModePreference = preference
+        storageService.saveSettings(appSettings)
     }
 
     func updateUpdateServiceRepositoryIfNeeded(owner: String, repo: String) {
@@ -198,6 +231,7 @@ class AppState: ObservableObject {
     func loadSavedData() {
         materials = storageService.loadMaterials()
         reviewPlans = storageService.loadReviewPlans()
+        historyService.reloadProgress()
         if !hasLoadedExamCountdowns {
             isRestoringExamCountdowns = true
             // 优先读独立文件；旧版本数据仍在 settings.json 时做一次性迁移
