@@ -977,9 +977,19 @@ class AppSettings: ObservableObject, Codable, Equatable {
     // Background image settings
     @Published var backgroundImageEnabled: Bool = false
     @Published var backgroundImageName: String? = nil
+    /// 手动选择的图片库。随机模式从这里挑选，指定模式只显示当前锁定项。
+    @Published var backgroundImageLibrary: [String] = []
+    @Published var backgroundImageRandomEnabled: Bool = false
+    /// 当前实际显示的图片。随机模式每次启动或手动「换一张」时重算。
+    @Published var backgroundImageActiveName: String? = nil
     @Published var backgroundBlurEnabled: Bool = true
     @Published var backgroundBlurRadius: Double = 20.0
     @Published var backgroundOpacity: Double = 0.3
+
+    /// 实际应当渲染的图片名：随机模式用当前激活项，指定模式用锁定项。
+    var effectiveBackgroundImageName: String? {
+        backgroundImageRandomEnabled ? backgroundImageActiveName : backgroundImageName
+    }
 
     static func == (lhs: AppSettings, rhs: AppSettings) -> Bool {
         lhs.schemaVersion == rhs.schemaVersion &&
@@ -1007,6 +1017,9 @@ class AppSettings: ObservableObject, Codable, Equatable {
         lhs.p2pBackgroundEnabled == rhs.p2pBackgroundEnabled &&
         lhs.backgroundImageEnabled == rhs.backgroundImageEnabled &&
         lhs.backgroundImageName == rhs.backgroundImageName &&
+        lhs.backgroundImageLibrary == rhs.backgroundImageLibrary &&
+        lhs.backgroundImageRandomEnabled == rhs.backgroundImageRandomEnabled &&
+        lhs.backgroundImageActiveName == rhs.backgroundImageActiveName &&
         lhs.backgroundBlurEnabled == rhs.backgroundBlurEnabled &&
         lhs.backgroundBlurRadius == rhs.backgroundBlurRadius &&
         lhs.backgroundOpacity == rhs.backgroundOpacity
@@ -1063,6 +1076,9 @@ class AppSettings: ObservableObject, Codable, Equatable {
         case p2pBackgroundEnabled
         case backgroundImageEnabled
         case backgroundImageName
+        case backgroundImageLibrary
+        case backgroundImageRandomEnabled
+        case backgroundImageActiveName
         case backgroundBlurEnabled
         case backgroundBlurRadius
         case backgroundOpacity
@@ -1089,6 +1105,9 @@ class AppSettings: ObservableObject, Codable, Equatable {
         p2pBackgroundEnabled = false
         backgroundImageEnabled = false
         backgroundImageName = nil
+        backgroundImageLibrary = []
+        backgroundImageRandomEnabled = false
+        backgroundImageActiveName = nil
         backgroundBlurEnabled = true
         backgroundBlurRadius = 20.0
         backgroundOpacity = 0.3
@@ -1123,6 +1142,14 @@ class AppSettings: ObservableObject, Codable, Equatable {
         p2pBackgroundEnabled = try container.decodeIfPresent(Bool.self, forKey: .p2pBackgroundEnabled) ?? false
         backgroundImageEnabled = try container.decodeIfPresent(Bool.self, forKey: .backgroundImageEnabled) ?? false
         backgroundImageName = try container.decodeIfPresent(String.self, forKey: .backgroundImageName)
+        // 旧版本只有一张锁定图片；迁移时把它收进图片库，行为对用户不变。
+        var library = try container.decodeIfPresent([String].self, forKey: .backgroundImageLibrary) ?? []
+        if library.isEmpty, let legacy = backgroundImageName {
+            library = [legacy]
+        }
+        backgroundImageLibrary = library
+        backgroundImageRandomEnabled = try container.decodeIfPresent(Bool.self, forKey: .backgroundImageRandomEnabled) ?? false
+        backgroundImageActiveName = try container.decodeIfPresent(String.self, forKey: .backgroundImageActiveName)
         backgroundBlurEnabled = try container.decodeIfPresent(Bool.self, forKey: .backgroundBlurEnabled) ?? true
         backgroundBlurRadius = try container.decodeIfPresent(Double.self, forKey: .backgroundBlurRadius) ?? 20.0
         backgroundOpacity = try container.decodeIfPresent(Double.self, forKey: .backgroundOpacity) ?? 0.3
@@ -1158,6 +1185,9 @@ class AppSettings: ObservableObject, Codable, Equatable {
         try container.encode(p2pBackgroundEnabled, forKey: .p2pBackgroundEnabled)
         try container.encode(backgroundImageEnabled, forKey: .backgroundImageEnabled)
         try container.encodeIfPresent(backgroundImageName, forKey: .backgroundImageName)
+        try container.encode(backgroundImageLibrary, forKey: .backgroundImageLibrary)
+        try container.encode(backgroundImageRandomEnabled, forKey: .backgroundImageRandomEnabled)
+        try container.encodeIfPresent(backgroundImageActiveName, forKey: .backgroundImageActiveName)
         try container.encode(backgroundBlurEnabled, forKey: .backgroundBlurEnabled)
         try container.encode(backgroundBlurRadius, forKey: .backgroundBlurRadius)
         try container.encode(backgroundOpacity, forKey: .backgroundOpacity)

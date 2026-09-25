@@ -72,6 +72,47 @@ struct SettingsView: View {
         }
     }
     
+    private func backgroundThumbnail(for name: String) -> some View {
+        let url = appState.storageService.getBackgroundImageURL(named: name)
+        let isActive = appState.appSettings.effectiveBackgroundImageName == name
+        let isLocked = appState.appSettings.backgroundImageName == name
+
+        return VStack(spacing: 4) {
+            Group {
+                if FileManager.default.fileExists(atPath: url.path),
+                   let image = NSImage(contentsOf: url) {
+                    Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    Color.secondary.opacity(0.2)
+                        .overlay { Image(systemName: "photo").foregroundColor(.secondary) }
+                }
+            }
+            .frame(height: 56)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+
+            Text(isLocked ? "指定" : (isActive ? "当前" : name.suffix(6).description))
+                .font(.caption2)
+                .lineLimit(1)
+                .foregroundColor(isActive ? .accentColor : .secondary)
+
+            HStack(spacing: 4) {
+                Button("使用") { appState.selectBackgroundImage(name) }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                Button("删除", role: .destructive) { appState.removeBackgroundImage(name) }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+            }
+        }
+        .padding(4)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(isActive ? Color.accentColor : Color.secondary.opacity(0.25), lineWidth: isActive ? 2 : 1)
+        )
+    }
+
     private func handleImageSelection(_ result: Result<[URL], Error>) {
         guard let urls = try? result.get(), let url = urls.first else { return }
         
@@ -87,9 +128,7 @@ struct SettingsView: View {
             let fileName = UUID().uuidString + ".png"
             
             if let savedURL = appState.storageService.saveBackgroundImage(imageData, fileName: fileName) {
-                appState.appSettings.backgroundImageEnabled = true
-                appState.appSettings.backgroundImageName = fileName
-                appState.storageService.saveSettings(appState.appSettings)
+                appState.addBackgroundImage(fileName)
                 selectedImageData = imageData
                 selectedImageName = fileName
             }
@@ -391,36 +430,60 @@ struct SettingsView: View {
         Form {
             Section("背景图片") {
                 Toggle("启用背景图片", isOn: $appState.appSettings.backgroundImageEnabled)
-                
+
                 if appState.appSettings.backgroundImageEnabled {
+                    Toggle(
+                        "随机轮换",
+                        isOn: Binding(
+                            get: { appState.appSettings.backgroundImageRandomEnabled },
+                            set: { appState.setBackgroundImageRandomEnabled($0) }
+                        )
+                    )
+                    .disabled(appState.appSettings.backgroundImageLibrary.count < 2)
+
+                    if appState.appSettings.backgroundImageRandomEnabled {
+                        Text("每次启动会从图片库中随机换一张；也可以随时手动换一张。")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Button("换一张") {
+                            appState.pickRandomBackgroundImage()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+
                     HStack {
-                        Button("选择图片") {
+                        Button("添加图片") {
                             showImagePicker = true
                         }
                         .buttonStyle(.bordered)
-                        
-                        if let imageName = appState.appSettings.backgroundImageName {
-                            let imageURL = appState.storageService.getBackgroundImageURL(named: imageName)
-                            if FileManager.default.fileExists(atPath: imageURL.path),
-                               let image = NSImage(contentsOf: imageURL) {
-                                Image(nsImage: image)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 60, height: 60)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                            }
-                        }
                     }
-                    
-                    if appState.appSettings.backgroundImageName != nil {
-                        Button("移除背景图片", role: .destructive) {
-                            if let imageName = appState.appSettings.backgroundImageName {
-                                appState.storageService.deleteBackgroundImage(named: imageName)
+
+                    if !appState.appSettings.backgroundImageLibrary.isEmpty {
+                        Text("图片库（\(appState.appSettings.backgroundImageLibrary.count) 张）")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        ScrollView {
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 10)], spacing: 10) {
+                                ForEach(appState.appSettings.backgroundImageLibrary, id: \.self) { name in
+                                    backgroundThumbnail(for: name)
+                                }
                             }
-                            appState.appSettings.backgroundImageEnabled = false
-                            appState.appSettings.backgroundImageName = nil
-                            appState.storageService.saveSettings(appState.appSettings)
+                            .padding(.vertical, 4)
                         }
+                        .frame(maxHeight: 190)
+                    }
+
+                    Button("清空图片库", role: .destructive) {
+                        for name in appState.appSettings.backgroundImageLibrary {
+                            appState.storageService.deleteBackgroundImage(named: name)
+                        }
+                        appState.appSettings.backgroundImageLibrary = []
+                        appState.appSettings.backgroundImageName = nil
+                        appState.appSettings.backgroundImageActiveName = nil
+                        appState.appSettings.backgroundImageRandomEnabled = false
+                        appState.appSettings.backgroundImageEnabled = false
+                        appState.storageService.saveSettings(appState.appSettings)
                     }
                 }
             }

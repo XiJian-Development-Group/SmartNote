@@ -106,6 +106,7 @@ class AppState: ObservableObject {
         self.activeDarkModePreference = settings.darkModePreference
         self.lastStartupMigration = migrationResult
         loadSavedData()
+        prepareBackgroundImage()
 
         // 启动扫描走 FileScannerService 的异步路径，避免阻塞主线程。
         if settings.autoScanDirectories && !settings.scanPaths.isEmpty {
@@ -153,6 +154,94 @@ class AppState: ObservableObject {
         guard activeThemeID != themeID else { return }
         appSettings.themeID = themeID
         activeThemeID = themeID
+        storageService.saveSettings(appSettings)
+    }
+
+    // MARK: - 背景图片库
+
+    /// 启动时重算一次随机背景，避免同一张图长期不变。随机只在图片库中已有 ≥2 张时才启用。
+    func prepareBackgroundImage() {
+        guard appSettings.backgroundImageEnabled else { return }
+        syncBackgroundImageLibrary()
+        if appSettings.backgroundImageRandomEnabled {
+            pickRandomBackgroundImage(excluding: appSettings.backgroundImageActiveName)
+        } else if appSettings.backgroundImageActiveName == nil {
+            appSettings.backgroundImageActiveName = appSettings.backgroundImageName
+        }
+    }
+
+    /// 丢弃已不存在于磁盘的条目，并补入磁盘上新增的图片。
+    func syncBackgroundImageLibrary() {
+        let onDisk = storageService.listBackgroundImages()
+        guard !onDisk.isEmpty else { return }
+        let stored = appSettings.backgroundImageLibrary
+        if stored.sorted() != onDisk.sorted() {
+            appSettings.backgroundImageLibrary = onDisk
+        }
+    }
+
+    /// 加入图片库。返回是否成功。
+    @discardableResult
+    func addBackgroundImage(_ fileName: String) -> Bool {
+        guard !appSettings.backgroundImageLibrary.contains(fileName) else {
+            appSettings.backgroundImageName = fileName
+            if !appSettings.backgroundImageRandomEnabled {
+                appSettings.backgroundImageActiveName = fileName
+            }
+            storageService.saveSettings(appSettings)
+            return true
+        }
+        appSettings.backgroundImageLibrary.append(fileName)
+        appSettings.backgroundImageEnabled = true
+        appSettings.backgroundImageName = fileName
+        if !appSettings.backgroundImageRandomEnabled {
+            appSettings.backgroundImageActiveName = fileName
+        }
+        storageService.saveSettings(appSettings)
+        return true
+    }
+
+    /// 指定模式下锁定某一张；随机模式下只是把它设为当前显示。
+    func selectBackgroundImage(_ fileName: String) {
+        appSettings.backgroundImageName = fileName
+        appSettings.backgroundImageActiveName = fileName
+        storageService.saveSettings(appSettings)
+    }
+
+    func removeBackgroundImage(_ fileName: String) {
+        appSettings.backgroundImageLibrary.removeAll { $0 == fileName }
+        if appSettings.backgroundImageName == fileName {
+            appSettings.backgroundImageName = appSettings.backgroundImageLibrary.first
+        }
+        if appSettings.backgroundImageActiveName == fileName {
+            appSettings.backgroundImageActiveName = appSettings.backgroundImageLibrary.first
+        }
+        storageService.deleteBackgroundImage(named: fileName)
+        storageService.saveSettings(appSettings)
+    }
+
+    func setBackgroundImageRandomEnabled(_ enabled: Bool) {
+        appSettings.backgroundImageRandomEnabled = enabled
+        if enabled {
+            pickRandomBackgroundImage(excluding: appSettings.backgroundImageActiveName)
+        } else {
+            appSettings.backgroundImageActiveName = appSettings.backgroundImageName
+        }
+        storageService.saveSettings(appSettings)
+    }
+
+    /// 从图片库随机挑一张，尽量避开 exclude 指定的那张。
+    func pickRandomBackgroundImage(excluding exclude: String? = nil) {
+        syncBackgroundImageLibrary()
+        let library = appSettings.backgroundImageLibrary
+        guard !library.isEmpty else {
+            appSettings.backgroundImageActiveName = nil
+            storageService.saveSettings(appSettings)
+            return
+        }
+        let candidates = library.filter { $0 != exclude }
+        let pool = candidates.isEmpty ? library : candidates
+        appSettings.backgroundImageActiveName = pool.randomElement()
         storageService.saveSettings(appSettings)
     }
 

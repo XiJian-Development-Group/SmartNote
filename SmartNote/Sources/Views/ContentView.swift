@@ -102,12 +102,12 @@ struct ContentView: View {
 
 struct BackgroundImageView: View {
     @EnvironmentObject var appState: AppState
-    
+
     var body: some View {
         let settings = appState.appSettings
-        
+
         if settings.backgroundImageEnabled,
-           let imageName = settings.backgroundImageName {
+           let imageName = settings.effectiveBackgroundImageName {
             let imageURL = appState.storageService.getBackgroundImageURL(named: imageName)
             if let nsImage = NSImage(contentsOf: imageURL) {
                 Image(nsImage: nsImage)
@@ -132,7 +132,8 @@ struct BackgroundImageView: View {
 
 struct SidebarView: View {
     @EnvironmentObject var appState: AppState
-    
+    @Environment(\.openWindow) private var openWindow
+
     var body: some View {
         List(selection: $appState.selectedTab) {
             Section("资料库") {
@@ -185,6 +186,7 @@ struct SidebarView: View {
                 NavigationLink(value: 19) {
                     Label("白板", systemImage: "square.and.pencil")
                 }
+                .disabled(true)
             }
 
             Section("历史科普") {
@@ -237,9 +239,12 @@ struct SidebarView: View {
                     Label("白噪音", systemImage: "speaker.wave.3.fill")
                 }
 
-                NavigationLink(value: 24) {
+                Button {
+                    openWindow(id: "wish-fullscreen")
+                } label: {
                     Label("许愿", systemImage: "moon.stars.fill")
                 }
+                .buttonStyle(.plain)
 
                 NavigationLink(value: 25) {
                     Label("纪念日", systemImage: "calendar.badge.exclamationmark")
@@ -261,9 +266,36 @@ struct SidebarView: View {
     }
 }
 
+/// 白板暂时关闭时的占位页。几何画板正在重做，暂不对外开放。
+/// 已有的白板数据文件不受影响，重新开放后可直接恢复使用。
+struct WhiteboardUnavailableView: View {
+    @Environment(\.appTheme) private var theme
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "square.and.pencil")
+                .font(.system(size: 52, weight: .light))
+                .foregroundStyle(theme.accent)
+
+            VStack(spacing: 6) {
+                Text("白板功能维护中")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(theme.primaryText)
+                Text("几何画板正在重新整理，暂时不开放。你已经创建的画板数据都保留着，恢复后可以直接继续使用。")
+                    .font(.subheadline)
+                    .foregroundStyle(theme.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 420)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(theme.background)
+    }
+}
+
 struct DetailView: View {
     @EnvironmentObject var appState: AppState
-    
+
     var body: some View {
         Group {
             switch appState.selectedTab {
@@ -304,7 +336,7 @@ struct DetailView: View {
             case 18:
                 DiaryListView()
             case 19:
-                WhiteboardView()
+                WhiteboardUnavailableView()
             case 20:
                 TodoListView()
             case 21:
@@ -313,8 +345,6 @@ struct DetailView: View {
                 FileCryptoView()
             case 23:
                 WhiteNoiseView()
-            case 24:
-                WishView()
             case 25:
                 AnniversaryView()
             case 26:
