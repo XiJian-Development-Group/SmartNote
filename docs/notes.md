@@ -282,10 +282,12 @@
 | `f177183` | fix(security): P2 安全边界 + P3 正确性 + P5 工程卫生 | 多模块安全与正确性修复 |
 | `a0a2ab6` | docs: 同步 README 与实施笔记到真实实现 | README.md, docs/notes.md |
 | `b271997` | feat(diary): 日记加密设置入口 | DiaryEncryptionSettingsView.swift |
-| 待提交 | feat(theme): 2.0.0 国庆版主题系统 | AppTheme.swift, AppState.swift, SmartNoteApp.swift, SettingsView.swift |
-| 待提交 | feat(history): 中国近代史离线科普 34 篇 | HistoryArticle.swift, HistoryService.swift, HistoryHomeView.swift, HistoryArticleDetailView.swift, history_catalog.json |
-| 待提交 | feat(blessing): 每日祝福与换一句 | BlessingService.swift, ContentView.swift |
-| 待提交 | docs: 2.0.0 README 与发布文档 | README.md, docs/notes.md, ~/Desktop/Update200.md, ~/Desktop/Pub.md |
+| `e5e96fe` | feat(theme): 2.0.0 国庆版主题系统 | AppTheme.swift, AppState.swift, SmartNoteApp.swift, SettingsView.swift |
+| `3896532` | feat(blessing): 每日祝福与换一句 | BlessingService.swift, ContentView.swift |
+| `49733d6` | feat(history): 中国近代史离线科普 34 篇 | HistoryArticle.swift, HistoryService.swift, HistoryHomeView.swift, HistoryArticleDetailView.swift, history_catalog.json, StorageService.swift |
+| `a871ac3` | docs: 2.0.0 README 重写与实施笔记同步 | README.md, docs/notes.md |
+
+发布更新日志与 B 站发布稿位于 `~/Desktop/Update200.md` 和 `~/Desktop/Pub.md`，不属于仓库内容。以上四个 commit 均为本地提交，未 push。
 
 ---
 
