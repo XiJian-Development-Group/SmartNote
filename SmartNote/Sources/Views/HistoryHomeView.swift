@@ -33,9 +33,17 @@ struct HistoryHomeView: View {
 
                 if let loadError = service.loadError {
                     ThemeSurface {
-                        Label(loadError, systemImage: "exclamationmark.triangle.fill")
-                            .font(.callout)
-                            .foregroundStyle(.orange)
+                        HStack(alignment: .top, spacing: 10) {
+                            Label(loadError, systemImage: "exclamationmark.triangle.fill")
+                                .font(.callout)
+                                .foregroundStyle(.orange)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 8)
+                            // 目录加载失败后此前永不重试，必须重启应用。
+                            // 这里给出重试入口，修复文件后无需重启。
+                            Button("重试") { service.retryLoadCatalog() }
+                                .buttonStyle(.bordered)
+                        }
                     }
                 }
 

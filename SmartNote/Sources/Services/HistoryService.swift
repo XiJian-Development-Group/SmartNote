@@ -162,8 +162,22 @@ final class HistoryService: ObservableObject {
     private func loadCatalogIfNeeded() {
         guard !didLoadCatalog else { return }
         didLoadCatalog = true
+        loadCatalog()
+    }
 
+    /// 重新加载目录。加载失败时 `didLoadCatalog` 会被复位，
+    /// 因此用户修复文件后可以直接重试，不必重启应用。
+    /// - Returns: 是否加载成功。
+    @discardableResult
+    func retryLoadCatalog() -> Bool {
+        didLoadCatalog = false
+        loadCatalogIfNeeded()
+        return loadError == nil
+    }
+
+    private func loadCatalog() {
         guard let url = Bundle.main.url(forResource: "history_catalog", withExtension: "json") else {
+            didLoadCatalog = false
             loadError = "未找到近代史科普内容资源 history_catalog.json。"
             return
         }
@@ -176,6 +190,7 @@ final class HistoryService: ObservableObject {
             }
             let ids = catalog.articles.map(\.id)
             guard Set(ids).count == ids.count else {
+                didLoadCatalog = false
                 loadError = "历史科普目录包含重复的文章 ID，未加载该目录。"
                 return
             }
@@ -185,6 +200,8 @@ final class HistoryService: ObservableObject {
             }
             loadError = nil
         } catch {
+            // 失败时复位标记，允许重试。
+            didLoadCatalog = false
             loadError = "历史科普内容加载失败：\(error.localizedDescription)"
         }
     }

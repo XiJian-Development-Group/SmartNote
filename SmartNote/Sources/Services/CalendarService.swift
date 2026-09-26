@@ -77,42 +77,79 @@ class CalendarService {
         )
     }
     
+    /// 复习计划在日历里的默认开始时刻。
+    /// `dailyPlan.date` 是由年月日拼出的当天零点，直接拿去建事件会被 EventKit
+    /// 判定为「全天事件」，与 estimatedMinutes 无关，闹钟也只按天触发。
+    static let defaultPlanHour: Int = 19
+    static let defaultPlanMinute: Int = 0
+
     func createCalendarEvents(for plan: ReviewPlan) async {
         let hasAccess = await requestAccess()
         guard hasAccess else { return }
-        
+
         let calendar = Calendar.current
-        
+
         for dailyPlan in plan.dailyPlans {
+            // 同一日的多个任务顺延排布，避免全部堆在同一时刻互相覆盖。
+            var offsetMinutes = 0
             for task in dailyPlan.tasks {
+                guard let start = Self.planDateTime(
+                    for: dailyPlan.date,
+                    offsetMinutes: offsetMinutes,
+                    calendar: calendar
+                ) else { continue }
+
                 let event = EKEvent(eventStore: eventStore)
                 event.title = "📚 \(task.title)"
                 event.notes = task.description
-                event.startDate = dailyPlan.date
-                event.endDate = calendar.date(byAdding: .minute, value: task.estimatedMinutes, to: dailyPlan.date)
+                event.startDate = start
+                event.endDate = calendar.date(
+                    byAdding: .minute, value: max(1, task.estimatedMinutes), to: start
+                )
+                event.isAllDay = false
                 event.calendar = eventStore.defaultCalendarForNewEvents
-                
+
                 let alarm = EKAlarm(relativeOffset: -15 * 60)
                 event.addAlarm(alarm)
-                
+
                 do {
                     try eventStore.save(event, span: .thisEvent)
+                    offsetMinutes += max(1, task.estimatedMinutes) + 10
                 } catch {
                     print("Error saving event: \(error)")
                 }
             }
         }
     }
+
+    /// 把「当天零点 + 顺延分钟数」换算成带具体时刻的日期。
+    static func planDateTime(
+        for day: Date,
+        offsetMinutes: Int,
+        calendar: Calendar,
+        hour: Int = defaultPlanHour,
+        minute: Int = defaultPlanMinute
+    ) -> Date? {
+        let startOfDay = calendar.startOfDay(for: day)
+        return calendar.date(
+            bySettingHour: hour, minute: minute, second: 0, of: startOfDay
+        )?.addingTimeInterval(TimeInterval(offsetMinutes * 60))
+    }
     
     func createReminder(for task: ReviewTask, planDate: Date) async {
         let hasAccess = await requestAccess()
         guard hasAccess else { return }
-        
+
         let reminder = EKReminder(eventStore: eventStore)
         reminder.title = "📝 \(task.title)"
         reminder.notes = task.description
         reminder.calendar = eventStore.defaultCalendarForNewReminders()
-        reminder.dueDateComponents = Calendar.current.dateComponents([.year, .month, .day], from: planDate)
+        // 与日历事件保持同一时刻：当天 19:00 到期，而不是零点的「全天」提醒。
+        reminder.dueDateComponents = Calendar.current.dateComponents(
+            [.year, .month, .day, .hour, .minute],
+            from: Self.planDateTime(for: planDate, offsetMinutes: 0, calendar: .current)
+                ?? planDate
+        )
         
         do {
             try eventStore.save(reminder, commit: true)
