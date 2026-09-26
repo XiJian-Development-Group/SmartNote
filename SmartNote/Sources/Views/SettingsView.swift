@@ -737,9 +737,25 @@ struct SettingsView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
                     .textSelection(.enabled)
-                Text("备份是未加密的 ZIP 压缩文件，请妥善保管。")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                // U-15 备份是明文 ZIP，但提示语只在角落一行小字，
+                // 用户很容易把它当「加密快照」直接放进 iCloud / 公共网盘。
+                // 改为显眼的警示块，说明明文性质与正确处理方式。
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.shield.fill")
+                        .foregroundColor(.orange)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("备份未加密，请勿直接存入公共网盘")
+                            .font(.callout.weight(.semibold))
+                        Text("备份是未加密的 ZIP，内含资料、日记正文和复习计划等明文内容。上传到 iCloud、Dropbox 等第三方网盘等同于交给对方服务器保管。若需要额外保护，请自行用系统「加密磁盘映像」或第三方工具二次加密后再存放。")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+
                 if !backupNotice.isEmpty {
                     Text(backupNotice)
                         .font(.caption2)

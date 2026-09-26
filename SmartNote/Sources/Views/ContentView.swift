@@ -219,10 +219,11 @@ struct SidebarView: View {
                     Label("背诵卡片", systemImage: "rectangle.stack")
                 }
                 
+                // 白板维护中：不直接置灰——置灰后点击没有任何反馈，
+                // 用户会以为应用卡住。改为可点击并进入维护说明页。
                 NavigationLink(value: 19) {
                     Label("白板", systemImage: "square.and.pencil")
                 }
-                .disabled(true)
             }
 
             Section("历史科普") {
@@ -315,17 +316,22 @@ struct WhiteboardUnavailableView: View {
                 .font(.system(size: 52, weight: .light))
                 .foregroundStyle(theme.accent)
 
-            VStack(spacing: 6) {
+            VStack(spacing: 8) {
                 Text("白板功能维护中")
                     .font(.title2.weight(.semibold))
                     .foregroundStyle(theme.primaryText)
-                Text("几何画板正在重新整理，暂时不开放。你已经创建的画板数据都保留着，恢复后可以直接继续使用。")
+                Text("几何画板正在重新整理，暂时不开放。")
                     .font(.subheadline)
                     .foregroundStyle(theme.secondaryText)
                     .multilineTextAlignment(.center)
-                    .frame(maxWidth: 420)
+                Text("你已经创建的画板数据都保留着，恢复后可以直接继续使用，不会丢失。")
+                    .font(.caption)
+                    .foregroundStyle(theme.accentSecondary)
+                    .multilineTextAlignment(.center)
             }
+            .frame(maxWidth: 420)
         }
+        .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(theme.background)
     }
