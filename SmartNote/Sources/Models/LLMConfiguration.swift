@@ -104,6 +104,12 @@ struct LLMConfiguration: Codable, Equatable {
             components.host = host.lowercased()
         }
         components.fragment = nil
+        // P3-5 query 不参与「这是不是同一个服务」的判定：
+        // 用户在地址后加 ?debug=1 会让 normalizedServerURL 变化，
+        // 导致 trustedServerURL 突然失配、被迫重新确认信任。
+        // 信任只由 scheme/host/port/path 决定。
+        components.query = nil
+        components.queryItems = nil
 
         var path = components.path
         while path.count > 1 && path.hasSuffix("/") {
@@ -112,6 +118,15 @@ struct LLMConfiguration: Codable, Equatable {
         components.path = path == "/" ? "" : path
 
         return components.url?.absoluteString ?? raw
+    }
+
+    /// 把 maxTokens 夹到本应用支持的区间。
+    /// P3-9：用户可能把值设成 4096 而本地模型只支持 2048，
+    /// 由服务端截断或报错，报错信息又很难懂。这里在进入请求前就夹住。
+    static let supportedMaxTokensRange: ClosedRange<Int> = 256...4096
+    var clampedMaxTokens: Int {
+        min(max(maxTokens, Self.supportedMaxTokensRange.lowerBound),
+            Self.supportedMaxTokensRange.upperBound)
     }
 
     /// 解析后的主机名（小写），供 UI 警告和地址判断使用。

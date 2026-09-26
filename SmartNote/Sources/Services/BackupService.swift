@@ -233,9 +233,20 @@ final class BackupService {
             guard let label = label?.trimmingCharacters(in: .whitespacesAndNewlines), !label.isEmpty else {
                 return ""
             }
-            // 仅保留安全字符，避免路径与命令行转义问题。
-            let allowed = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.中_zh_CN")
-            return String(label.unicodeScalars.filter { allowed.contains($0) || $0 == "_" }.prefix(40))
+            // 仅保留安全字符，避免路径穿越与命令行转义问题。
+            // 原实现写成 "...-_.中_zh_CN"，本意是额外放行汉字，
+            // 但字面量里只有一个「中」：中文标签「期中备份」会被砍成「中」，
+            // 备份文件名将失去可读性。这里显式放行常用汉字范围。
+            let ascii = CharacterSet(charactersIn:
+                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.")
+            // CJK 统一表意文字（含扩展 A）与常用中文标点之外的全角字符一律不放行，
+            // 只保留汉字本身，避免把 shell 元字符的中文变体带进路径。
+            var chinese = CharacterSet()
+            for scalar in UInt32(0x4E00)...UInt32(0x9FFF) {
+                chinese.insert(Unicode.Scalar(scalar)!)
+            }
+            let allowed = ascii.union(chinese)
+            return String(label.unicodeScalars.filter { allowed.contains($0) }.prefix(40))
         }()
 
         let prefix = safeLabel.isEmpty

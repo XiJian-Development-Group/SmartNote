@@ -370,7 +370,7 @@ class LLMService {
                 ["role": "user", "content": user]
             ],
             "temperature": configuration.temperature,
-            "max_tokens": configuration.maxTokens
+            "max_tokens": configuration.clampedMaxTokens
         ]
         
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
@@ -414,7 +414,7 @@ class LLMService {
                 ["role": "user", "content": user]
             ],
             "temperature": configuration.temperature,
-            "max_tokens": configuration.maxTokens,
+            "max_tokens": configuration.clampedMaxTokens,
             "stream": true
         ]
         
@@ -475,7 +475,7 @@ class LLMService {
                 ["role": "user", "content": user]
             ],
             "temperature": configuration.temperature,
-            "max_tokens": configuration.maxTokens,
+            "max_tokens": configuration.clampedMaxTokens,
             "stream": true
         ]
         
@@ -535,7 +535,7 @@ class LLMService {
                 ["role": "user", "content": combinedText]
             ],
             "temperature": configuration.temperature,
-            "max_tokens": configuration.maxTokens,
+            "max_tokens": configuration.clampedMaxTokens,
             "stream": true
         ]
         
@@ -583,7 +583,7 @@ class LLMService {
                 ["role": "user", "content": user]
             ],
             "temperature": configuration.temperature,
-            "max_tokens": configuration.maxTokens
+            "max_tokens": configuration.clampedMaxTokens
         ]
         
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
@@ -626,7 +626,7 @@ class LLMService {
                 ["role": "user", "content": combinedText]
             ],
             "temperature": configuration.temperature,
-            "max_tokens": configuration.maxTokens
+            "max_tokens": configuration.clampedMaxTokens
         ]
         
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
@@ -698,7 +698,7 @@ class LLMService {
                 ["role": "user", "content": contentArray]
             ],
             "temperature": configuration.temperature,
-            "max_tokens": configuration.maxTokens,
+            "max_tokens": configuration.clampedMaxTokens,
             "stream": true
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
@@ -756,7 +756,7 @@ class LLMService {
                 ["role": "user", "content": contentArray]
             ],
             "temperature": configuration.temperature,
-            "max_tokens": configuration.maxTokens
+            "max_tokens": configuration.clampedMaxTokens
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -808,7 +808,7 @@ class LLMService {
             "system": system,
             "messages": [["role": "user", "content": contentArray]],
             "temperature": configuration.temperature,
-            "max_tokens": configuration.maxTokens,
+            "max_tokens": configuration.clampedMaxTokens,
             "stream": true
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
@@ -872,7 +872,7 @@ class LLMService {
             "system": system,
             "messages": [["role": "user", "content": contentArray]],
             "temperature": configuration.temperature,
-            "max_tokens": configuration.maxTokens
+            "max_tokens": configuration.clampedMaxTokens
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
         let (data, response) = try await URLSession.shared.data(for: request)
