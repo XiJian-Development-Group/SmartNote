@@ -297,6 +297,8 @@
 | `5019fe2` | fix(ambient): 修复白噪音点击播放无反应导致进程终止 | AmbientSoundService.swift |
 | `aa8b74b` | fix(ui): 修复祝福条时有时无并加顶部间距 | AppState.swift, ContentView.swift |
 | `9931d4b` | fix(ui): 修复窗口缩放时侧栏变形与内容裁切 | SmartNoteApp.swift, ContentView.swift, WhiteNoiseView.swift 等 |
+| `5058fa1` | fix(ambient): 移除白噪音页面的布局反馈循环 | WhiteNoiseView.swift |
+| `9369db8` | fix(ui): 祝福条改用 safeAreaInset 并压平外观 | BlessingService.swift, ContentView.swift |
 
 发布更新日志与 B 站发布稿位于 `~/Desktop/Update200.md` 和 `~/Desktop/Pub.md`，不属于仓库内容。以上四个 commit 均为本地提交，未 push。
 
@@ -501,7 +503,7 @@ xcodebuild -project SmartNote.xcodeproj -scheme SmartNote \
 - 修复：
   - 移除主窗口与 `NavigationSplitView` 上重复的 900×600，改用 `.defaultSize(width: 1280, height: 820)`；
   - 侧栏只保留 `.frame(minWidth: 190)`，不设固定高度，高度交由 `NavigationSplitView` 分配；
-  - 白噪音用 `GeometryReader` 按可用宽度算列数（每列 ≥220pt，最多 4 列），`minWidth` 降到 480；
+  - ~~白噪音用 `GeometryReader` 按可用宽度算列数~~（**此实现有缺陷，已废弃，见下方复盘**）；
   - 文件加密 900→560、纪念日 720→520、计算器 520→380、重复清理 520→360；
   - 白噪音新增播放错误提示条。
 
@@ -510,6 +512,35 @@ xcodebuild -project SmartNote.xcodeproj -scheme SmartNote \
 - 几何画板的模糊空白条：白板已下线，该现象当前不可复现；`BackgroundImageView` 模糊层被所有页面共用，在根因未确认前不改动。
 - 番茄钟 200pt 计时圈、各处 sheet 的固定尺寸属于设计选择，不影响缩放，保持原样。
 - 界面仍缺人工验收：仓库没有 XCTest target，上述修复依赖独立程序验证与架构分析，无法自动断言渲染结果。
+
+### 复盘：上一轮的白噪音「修复」引入了更严重的缺陷
+
+上面「白噪音用 GeometryReader 算列数」这一条本身是错的，并且它同时解释了后续反馈的三个症状。
+
+- 当时用 `GeometryReader` 包裹整页，再用 `columns(forWidth: geo.size.width)` 决定列数。列数依赖容器宽度，而容器宽度又受列数与卡片最小宽度影响，构成**布局反馈循环**。SwiftUI 无法收敛，持续重排布局。
+- 表现：进入白噪音页面后界面卡死 → 播放按钮点不动（**并非音频问题**）→ 也无法切换到其它功能，只能强退。因此「播放点不了」和「进来了出不来」是同一根因。
+- 修复：改用 `GridItem(.adaptive(minimum: 200, maximum: 320))`，由 SwiftUI 依据可用宽度自行排布，视图不再读取自身尺寸，无反馈环；移除 `columns(forWidth:)` 与 `GeometryReader` 包装；`minWidth/minHeight` 收敛到 420×340。
+- **教训**：在 SwiftUI 中用 `GeometryReader` 读取尺寸后，再据以改变**会影响该尺寸本身**的布局属性（列数、宽度约束等），是高风险反模式。已全局排查其余 `GeometryReader`：`DiaryStatisticsView` 与 `TodoStatisticsView` 只用其宽度绘制固定 16pt 高的进度条，不反影响容器尺寸，安全；`WhiteboardCanvasView` 属白板范畴，暂不处理。
+
+### 祝福条外观与安全区（第二轮修正）
+
+- 上一轮把祝福条作为 `NavigationSplitView` 的**同级兄弟**放进 `VStack`，导致 split view 拿不到正确的安全区 inset，侧栏 `List` 底部被裁掉——这是「菜单栏依旧显示不全」的根因。正确做法是 `.safeAreaInset(edge: .top, spacing: 0)`。
+- 外观臃肿的根因是 **padding 叠加**：`ThemeSurface` 内部已有 16pt，组件自身再加水平 12 / 垂直 8，调用处再加顶部 8，实际垂直达 32pt、水平 28pt。改为不使用 `ThemeSurface` 的单层扁平板（10pt 圆角、1pt 描边、无阴影），内边距只在一处设置。
+- 文案由 `caption` 降为 `caption2`，标题与正文各限一行；换一句按钮改为无边框图标，避免撑宽窄条。
+
+### 本轮验证结果
+
+| 项目 | 结果 |
+|------|------|
+| Debug `xcodebuild build` | 通过 |
+| Release `xcodebuild archive` | 通过，SHA-256 `377e88db…` |
+| 归档版本 / 构建号 | `2.0.0` / `100` |
+| 解压后启动冒烟 | 运行中未崩溃，无异常日志 |
+| 白噪音页面无 `GeometryReader` | 确认（仅注释中出现） |
+| 祝福条无 `ThemeSurface` 叠加 | 确认 |
+| 音频链路按生产代码复测 | forest 声源 529,200 帧 / 30 次鸟鸣生成正常，`scheduleBuffer` 与 `play()` 成功，`isPlaying=true` |
+
+**需要写清的判断**：白噪音「播放点不了」不是音频缺陷，而是上一轮布局缺陷导致页面无响应。音频服务本身此前已修好（`connect` 格式），本轮复测确认仍然正常。
 
 ### 历史内容来源审计
 
