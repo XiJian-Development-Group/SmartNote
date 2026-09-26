@@ -72,10 +72,19 @@ struct SettingsView: View {
         }
     }
     
+    /// 用户自己的图片数量（不含内置素材），用于随机开关的可用性判断。
+    private var userBackgroundCount: Int {
+        appState.appSettings.backgroundImageLibrary
+            .filter { !StorageService.isBundledBackground($0) }
+            .count
+    }
+
     private func backgroundThumbnail(for name: String) -> some View {
         let url = appState.storageService.getBackgroundImageURL(named: name)
+        let isBundled = StorageService.isBundledBackground(name)
         let isActive = appState.appSettings.effectiveBackgroundImageName == name
         let isLocked = appState.appSettings.backgroundImageName == name
+        let themeLocked = appState.isBackgroundLockedByTheme
 
         return VStack(spacing: 4) {
             Group {
@@ -91,19 +100,36 @@ struct SettingsView: View {
             }
             .frame(height: 56)
             .clipShape(RoundedRectangle(cornerRadius: 6))
+            .overlay(alignment: .topTrailing) {
+                if isBundled {
+                    Image(systemName: "lock.fill")
+                        .font(.caption2)
+                        .foregroundColor(.white)
+                        .padding(3)
+                        .background(Color.black.opacity(0.45), in: Circle())
+                        .padding(3)
+                }
+            }
 
-            Text(isLocked ? "指定" : (isActive ? "当前" : name.suffix(6).description))
+            Text(label(for: name, isBundled: isBundled, isLocked: isLocked, isActive: isActive))
                 .font(.caption2)
                 .lineLimit(1)
                 .foregroundColor(isActive ? .accentColor : .secondary)
 
-            HStack(spacing: 4) {
-                Button("使用") { appState.selectBackgroundImage(name) }
-                    .buttonStyle(.bordered)
-                    .controlSize(.mini)
-                Button("删除", role: .destructive) { appState.removeBackgroundImage(name) }
-                    .buttonStyle(.bordered)
-                    .controlSize(.mini)
+            if isBundled {
+                Text("主题自带")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            } else {
+                HStack(spacing: 4) {
+                    Button("使用") { appState.selectBackgroundImage(name) }
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
+                        .disabled(themeLocked)
+                    Button("删除", role: .destructive) { appState.removeBackgroundImage(name) }
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
+                }
             }
         }
         .padding(4)
@@ -111,6 +137,13 @@ struct SettingsView: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(isActive ? Color.accentColor : Color.secondary.opacity(0.25), lineWidth: isActive ? 2 : 1)
         )
+    }
+
+    private func label(for name: String, isBundled: Bool, isLocked: Bool, isActive: Bool) -> String {
+        if isLocked { return isBundled ? "当前主题" : "指定" }
+        if isActive { return "当前" }
+        if isBundled { return "主题自带" }
+        return name.suffix(6).description
     }
 
     private func handleImageSelection(_ result: Result<[URL], Error>) {
@@ -429,67 +462,74 @@ struct SettingsView: View {
     private var appearanceSection: some View {
         Form {
             Section("背景图片") {
-                Toggle("启用背景图片", isOn: $appState.appSettings.backgroundImageEnabled)
-
-                if appState.appSettings.backgroundImageEnabled {
-                    Toggle(
-                        "随机轮换",
-                        isOn: Binding(
-                            get: { appState.appSettings.backgroundImageRandomEnabled },
-                            set: { appState.setBackgroundImageRandomEnabled($0) }
-                        )
-                    )
-                    .disabled(appState.appSettings.backgroundImageLibrary.count < 2)
-
-                    if appState.appSettings.backgroundImageRandomEnabled {
-                        Text("每次启动会从图片库中随机换一张；也可以随时手动换一张。")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Button("换一张") {
-                            appState.pickRandomBackgroundImage()
+                if let locked = appState.lockedBundledBackgroundName {
+                    // 节庆主题强制使用自带背景，此处不提供任何修改入口。
+                    HStack(spacing: 10) {
+                        Image(systemName: "lock.fill")
+                            .foregroundColor(.orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("当前主题已锁定背景")
+                                .font(.subheadline.weight(.semibold))
+                            Text("「\(appState.theme.name)」主题使用自带背景图。切回「经典」主题后可自行选择或随机轮换。")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
-                        .buttonStyle(.bordered)
                     }
+                } else {
+                    Toggle("启用背景图片", isOn: $appState.appSettings.backgroundImageEnabled)
 
-                    HStack {
+                    if appState.appSettings.backgroundImageEnabled {
+                        Toggle(
+                            "随机轮换",
+                            isOn: Binding(
+                                get: { appState.appSettings.backgroundImageRandomEnabled },
+                                set: { appState.setBackgroundImageRandomEnabled($0) }
+                            )
+                        )
+                        .disabled(userBackgroundCount < 2)
+
+                        if appState.appSettings.backgroundImageRandomEnabled {
+                            Text("每次启动会从你的图片中随机换一张；也可以随时手动换一张。")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Button("换一张") {
+                                appState.pickRandomBackgroundImage()
+                            }
+                            .buttonStyle(.bordered)
+                        }
+
                         Button("添加图片") {
                             showImagePicker = true
                         }
                         .buttonStyle(.bordered)
                     }
+                }
 
-                    if !appState.appSettings.backgroundImageLibrary.isEmpty {
-                        Text("图片库（\(appState.appSettings.backgroundImageLibrary.count) 张）")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                if !appState.appSettings.backgroundImageLibrary.isEmpty {
+                    Text("图片库（\(appState.appSettings.backgroundImageLibrary.count) 张）")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
 
-                        ScrollView {
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 10)], spacing: 10) {
-                                ForEach(appState.appSettings.backgroundImageLibrary, id: \.self) { name in
-                                    backgroundThumbnail(for: name)
-                                }
+                    ScrollView {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 10)], spacing: 10) {
+                            ForEach(appState.appSettings.backgroundImageLibrary, id: \.self) { name in
+                                backgroundThumbnail(for: name)
                             }
-                            .padding(.vertical, 4)
                         }
-                        .frame(maxHeight: 190)
+                        .padding(.vertical, 4)
                     }
+                    .frame(maxHeight: 190)
 
-                    Button("清空图片库", role: .destructive) {
-                        for name in appState.appSettings.backgroundImageLibrary {
-                            appState.storageService.deleteBackgroundImage(named: name)
-                        }
-                        appState.appSettings.backgroundImageLibrary = []
-                        appState.appSettings.backgroundImageName = nil
-                        appState.appSettings.backgroundImageActiveName = nil
-                        appState.appSettings.backgroundImageRandomEnabled = false
-                        appState.appSettings.backgroundImageEnabled = false
-                        appState.storageService.saveSettings(appState.appSettings)
+                    Button("清空我的图片", role: .destructive) {
+                        appState.clearUserBackgroundLibrary()
                     }
                 }
             }
             
             if appState.appSettings.backgroundImageEnabled {
                 Section("背景效果") {
+                    Toggle("启用模糊效果", isOn: $appState.appSettings.backgroundBlurEnabled)
                     Toggle("启用模糊效果", isOn: $appState.appSettings.backgroundBlurEnabled)
                     
                     if appState.appSettings.backgroundBlurEnabled {
@@ -526,10 +566,9 @@ struct SettingsView: View {
             }
 
             Section("主题") {
-                ForEach(AppSettings.ThemeID.allCases) { themeID in
-                    let theme = AppTheme.theme(for: themeID)
+                ForEach(AppTheme.all) { theme in
                     Button {
-                        appState.setTheme(themeID)
+                        appState.setTheme(theme.id)
                     } label: {
                         HStack(spacing: 12) {
                             Image(systemName: theme.symbol)
@@ -547,7 +586,7 @@ struct SettingsView: View {
 
                             Spacer()
 
-                            if appState.activeThemeID == themeID {
+                            if appState.activeThemeID == theme.id {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundStyle(theme.accent)
                             }
@@ -558,7 +597,7 @@ struct SettingsView: View {
                     .buttonStyle(.plain)
                 }
 
-                Text("主题会保存到本机；经典主题遵循上方明暗模式，节庆主题使用自带的对比度方案。")
+                Text("经典主题不改变背景，可使用你自己的图片或留空；三个节庆主题各自锁定一张自带背景图。")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
@@ -605,6 +644,25 @@ struct SettingsView: View {
                     clearAllData()
                 }
                 .foregroundColor(.red)
+            }
+
+            if let missing = appState.restorationFailedBundledImage {
+                Section {
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("主题背景恢复失败")
+                                .font(.subheadline.weight(.semibold))
+                            Text("未能从应用包恢复 \(missing)，请重新安装应用。")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Button("知道了") { appState.clearRestorationFailure() }
+                            .buttonStyle(.borderless)
+                    }
+                }
             }
         }
         .formStyle(.grouped)

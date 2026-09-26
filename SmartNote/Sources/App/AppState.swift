@@ -159,40 +159,109 @@ class AppState: ObservableObject {
         self.appSettings.examCountdowns = currentExamCountdowns
     }
 
+    /// 切换主题。节庆主题会强制锁定到它自带的背景图。
     func setTheme(_ themeID: AppSettings.ThemeID) {
         guard activeThemeID != themeID else { return }
         appSettings.themeID = themeID
         activeThemeID = themeID
+        applyThemeBackgroundLock(for: themeID)
         storageService.saveSettings(appSettings)
     }
 
+    /// 节庆主题锁定背景：强制启用背景并指向自带素材，关闭随机轮换。
+    /// 切回经典主题时恢复用户此前的随机/指定设置。
+    private func applyThemeBackgroundLock(for themeID: AppSettings.ThemeID) {
+        let target = AppTheme.theme(for: themeID)
+        guard let bundled = target.bundledBackgroundName else {
+            // 经典主题：解除锁定，用户设置继续生效。
+            appSettings.backgroundImageActiveName = appSettings.backgroundImageName
+            storageService.saveSettings(appSettings)
+            return
+        }
+        // 素材被删除过（清空数据或手动删文件）时先恢复。
+        if !storageService.installBundledBackground(named: bundled) {
+            restorationFailedBundledImage = bundled
+            return
+        }
+        appSettings.backgroundImageEnabled = true
+        appSettings.backgroundImageRandomEnabled = false
+        appSettings.backgroundImageName = bundled
+        appSettings.backgroundImageActiveName = bundled
+        if !appSettings.backgroundImageLibrary.contains(bundled) {
+            appSettings.backgroundImageLibrary.append(bundled)
+        }
+        storageService.saveSettings(appSettings)
+    }
+
+    /// 内置素材恢复失败时提示用户；成功或未触发时为 nil。
+    @Published private(set) var restorationFailedBundledImage: String?
+
     // MARK: - 背景图片库
 
-    /// 启动时重算一次随机背景，避免同一张图长期不变。随机只在图片库中已有 ≥2 张时才启用。
+    /// 启动时处理背景图：先补回缺失的内置素材，再按主题决定是否锁定。
     func prepareBackgroundImage() {
-        guard appSettings.backgroundImageEnabled else { return }
-        syncBackgroundImageLibrary()
-        if appSettings.backgroundImageRandomEnabled {
-            pickRandomBackgroundImage(excluding: appSettings.backgroundImageActiveName)
-        } else if appSettings.backgroundImageActiveName == nil {
-            appSettings.backgroundImageActiveName = appSettings.backgroundImageName
+        // 内置素材被删除后自动从应用包恢复，主题才不会因为缺图而失效。
+        storageService.restoreBundledBackgroundsIfMissing()
+        let bundled = theme.bundledBackgroundName
+        if let bundled {
+            // 启动时若停留在节庆主题，继续保持锁定状态。
+            if !storageService.installBundledBackground(named: bundled) {
+                restorationFailedBundledImage = bundled
+            } else {
+                appSettings.backgroundImageEnabled = true
+                appSettings.backgroundImageRandomEnabled = false
+                appSettings.backgroundImageName = bundled
+                appSettings.backgroundImageActiveName = bundled
+                if !appSettings.backgroundImageLibrary.contains(bundled) {
+                    appSettings.backgroundImageLibrary.append(bundled)
+                }
+            }
+        } else {
+            restorationFailedBundledImage = nil
         }
+        syncBackgroundImageLibrary()
+        if bundled == nil {
+            guard appSettings.backgroundImageEnabled else {
+                storageService.saveSettings(appSettings)
+                return
+            }
+            if appSettings.backgroundImageRandomEnabled {
+                pickRandomBackgroundImage(excluding: appSettings.backgroundImageActiveName)
+            } else if appSettings.backgroundImageActiveName == nil {
+                appSettings.backgroundImageActiveName = appSettings.backgroundImageName
+            }
+        }
+        // 主题锁定与素材恢复的结论必须落盘，否则下次启动读到的仍是旧值。
+        storageService.saveSettings(appSettings)
     }
 
     /// 丢弃已不存在于磁盘的条目，并补入磁盘上新增的图片。
+    /// 内置素材始终保留在列表中，避免被磁盘清理误伤。
     func syncBackgroundImageLibrary() {
         let onDisk = storageService.listBackgroundImages()
         guard !onDisk.isEmpty else { return }
-        let stored = appSettings.backgroundImageLibrary
-        if stored.sorted() != onDisk.sorted() {
-            appSettings.backgroundImageLibrary = onDisk
+        var merged = onDisk
+        for bundled in StorageService.bundledBackgroundNames where !merged.contains(bundled) {
+            merged.append(bundled)
+        }
+        if appSettings.backgroundImageLibrary.sorted() != merged.sorted() {
+            appSettings.backgroundImageLibrary = merged
         }
     }
 
-    /// 加入图片库。返回是否成功。
+    /// 是否处于主题锁定状态：节庆主题下背景被强制占用。
+    var isBackgroundLockedByTheme: Bool { theme.bundledBackgroundName != nil }
+
+    /// 当前锁定背景的主题素材名。
+    var lockedBundledBackgroundName: String? { theme.bundledBackgroundName }
+
+    func clearRestorationFailure() { restorationFailedBundledImage = nil }
+
+    /// 加入图片库。节庆主题锁定期间不生效。
     @discardableResult
     func addBackgroundImage(_ fileName: String) -> Bool {
-        guard !appSettings.backgroundImageLibrary.contains(fileName) else {
+        guard !isBackgroundLockedByTheme else { return false }
+        if appSettings.backgroundImageLibrary.contains(fileName) {
             appSettings.backgroundImageName = fileName
             if !appSettings.backgroundImageRandomEnabled {
                 appSettings.backgroundImageActiveName = fileName
@@ -211,13 +280,17 @@ class AppState: ObservableObject {
     }
 
     /// 指定模式下锁定某一张；随机模式下只是把它设为当前显示。
+    /// 节庆主题锁定期间无效。
     func selectBackgroundImage(_ fileName: String) {
+        guard !isBackgroundLockedByTheme else { return }
         appSettings.backgroundImageName = fileName
         appSettings.backgroundImageActiveName = fileName
         storageService.saveSettings(appSettings)
     }
 
+    /// 内置素材受保护，不可删除。
     func removeBackgroundImage(_ fileName: String) {
+        guard !StorageService.isBundledBackground(fileName) else { return }
         appSettings.backgroundImageLibrary.removeAll { $0 == fileName }
         if appSettings.backgroundImageName == fileName {
             appSettings.backgroundImageName = appSettings.backgroundImageLibrary.first
@@ -229,7 +302,37 @@ class AppState: ObservableObject {
         storageService.saveSettings(appSettings)
     }
 
+    /// 清空用户图片库；内置素材始终保留，并在缺失时自动恢复。
+    func clearUserBackgroundLibrary() {
+        for name in appSettings.backgroundImageLibrary
+        where !StorageService.isBundledBackground(name) {
+            storageService.deleteBackgroundImage(named: name)
+        }
+        storageService.restoreBundledBackgroundsIfMissing()
+        syncBackgroundImageLibrary()
+        if isBackgroundLockedByTheme {
+            if let bundled = theme.bundledBackgroundName {
+                appSettings.backgroundImageName = bundled
+                appSettings.backgroundImageActiveName = bundled
+            }
+        } else {
+            let userImages = appSettings.backgroundImageLibrary
+                .filter { !StorageService.isBundledBackground($0) }
+            appSettings.backgroundImageName = userImages.first
+            appSettings.backgroundImageActiveName = userImages.first
+            appSettings.backgroundImageRandomEnabled = false
+            if userImages.isEmpty {
+                appSettings.backgroundImageEnabled = false
+            }
+        }
+        storageService.saveSettings(appSettings)
+    }
+
     func setBackgroundImageRandomEnabled(_ enabled: Bool) {
+        guard !isBackgroundLockedByTheme else {
+            appSettings.backgroundImageRandomEnabled = false
+            return
+        }
         appSettings.backgroundImageRandomEnabled = enabled
         if enabled {
             pickRandomBackgroundImage(excluding: appSettings.backgroundImageActiveName)
@@ -240,16 +343,19 @@ class AppState: ObservableObject {
     }
 
     /// 从图片库随机挑一张，尽量避开 exclude 指定的那张。
+    /// 节庆主题锁定期间无效；只从用户图片中随机，不动内置素材。
     func pickRandomBackgroundImage(excluding exclude: String? = nil) {
+        guard !isBackgroundLockedByTheme else { return }
         syncBackgroundImageLibrary()
-        let library = appSettings.backgroundImageLibrary
-        guard !library.isEmpty else {
-            appSettings.backgroundImageActiveName = nil
+        let userLibrary = appSettings.backgroundImageLibrary
+            .filter { !StorageService.isBundledBackground($0) }
+        guard !userLibrary.isEmpty else {
+            appSettings.backgroundImageActiveName = appSettings.backgroundImageName
             storageService.saveSettings(appSettings)
             return
         }
-        let candidates = library.filter { $0 != exclude }
-        let pool = candidates.isEmpty ? library : candidates
+        let candidates = userLibrary.filter { $0 != exclude }
+        let pool = candidates.isEmpty ? userLibrary : candidates
         appSettings.backgroundImageActiveName = pool.randomElement()
         storageService.saveSettings(appSettings)
     }
