@@ -42,6 +42,8 @@ final class AmbientSoundService: ObservableObject {
     @Published private(set) var volumes: [String: Double] = [:]
     /// 已注册的全部声源（含内置 + 用户导入）
     @Published private(set) var sounds: [Sound] = []
+    /// 播放失败时的真实原因；成功播放后清空。界面据此给出提示，而不是让按钮静默无反应。
+    @Published private(set) var lastError: String?
 
     private let engine = AVAudioEngine()
     /// player node 与声源 id 的映射
@@ -105,7 +107,10 @@ final class AmbientSoundService: ObservableObject {
             try scheduleBufferIfNeeded(for: id, sound: sound, on: player)
             player.play()
             playingIDs.insert(id)
+            lastError = nil
         } catch {
+            // 内置声源不应该走到这里；用户文件格式不受支持时会到这里。
+            lastError = "\(sound.name) 播放失败：\(error.localizedDescription)"
             print("播放失败 \(id): \(error)")
         }
     }
@@ -122,6 +127,10 @@ final class AmbientSoundService: ObservableObject {
             nodes[id]?.stop()
         }
         playingIDs.removeAll()
+    }
+
+    func clearError() {
+        lastError = nil
     }
 
     func toggle(_ id: String) {
@@ -185,10 +194,25 @@ final class AmbientSoundService: ObservableObject {
         if nodes[id] != nil { return }
         let player = AVAudioPlayerNode()
         engine.attach(player)
-        engine.connect(player, to: engine.mainMixerNode, format: nil)
+        // 必须显式传入与 buffer 一致的 mono 格式。
+        // 传 nil 会让 player 采用 mainMixerNode 的输出格式（本机为 48kHz 立体声），
+        // 而内置声源与用户文件的 buffer 是单声道；scheduleBuffer 时
+        // AVAudioPlayerNode 会抛出无法被 Swift 捕获的 ObjC 异常
+        // （required condition is false: _outputFormat.channelCount == buffer.format.channelCount），
+        // 直接终止进程，表现为「点播放没反应 / 应用闪退」。
+        // 立体声混音交给 mainMixerNode 完成。
+        engine.connect(player, to: engine.mainMixerNode, format: Self.monoFormat)
         nodes[id] = player
         player.volume = Float(volumes[id] ?? 0.6)
     }
+
+    /// 统一使用 44.1kHz 单声道作为 player 的输入格式。
+    private static let monoFormat: AVAudioFormat = {
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: 44_100, channels: 1) else {
+            fatalError("无法创建 44.1kHz 单声道音频格式")
+        }
+        return format
+    }()
 
     private func scheduleBufferIfNeeded(for id: String, sound: Sound, on player: AVAudioPlayerNode) throws {
         // 用户声源：每次播放前 scheduleBuffer 一次（因为 loops）
