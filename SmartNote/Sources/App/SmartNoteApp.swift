@@ -8,7 +8,13 @@ struct SmartNoteApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
-        _appState = StateObject(wrappedValue: AppState())
+        let state = AppState()
+        _appState = StateObject(wrappedValue: state)
+        // 通知点击路由：需要 AppState 就绪后才能切换页面，因此先建 AppState 再注册。
+        MainActor.assumeIsolated {
+            NotificationRouter.shared.attach(appState: state)
+            NotificationRouter.shared.register()
+        }
         // 使用无队列的观察者，确保 willTerminate 通知处理在退出前同步完成。
         _ = NotificationCenter.default.addObserver(
             forName: NSApplication.willTerminateNotification,
