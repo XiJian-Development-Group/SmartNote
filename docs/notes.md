@@ -448,6 +448,81 @@ v2.0 阶段的所有新增功能用 macOS 系统 framework，不新增 SPM 依�
 - **设置开关已接入但有条件**：`showFileExtensions` 已控制列表是否显示扩展名；`autoScanDirectories` 启动路径读取，开启且 `scanPaths` 非空才扫描；当前 `SettingsView` 没路径编辑 UI，默认空路径不会触发启动扫描。
 - **白板暂时关闭**（见第 9 章）。
 - **Cmd+Shift+R / K 与 Siri Intent** 仍写裸数字 tab ID，侧栏顺序变化时易失效（见第 17 章）。
+  - 2026-09-26 补：Intents 「撒谎」的部分已单独修掉（`OpenWishIntent` 改为真正开窗、`OpenWhiteboardIntent` 改为如实回报维护中）。
+    裸数字本身按本条保留未动——它是有意的已知边界，不在本轮范围内。
+
+---
+
+## 24. 2026-09-26 问题清单修复（依据 `problems.md`）
+
+修复范围：第 0~4 章 + 第 6 章 W-1~W-4。**第 5 章（已知但保留）未动**，
+`P2-2`（开 App Sandbox）、`P2-3`（代码签名）、`P2-4`（P2P 改 TLS）按第 22 章的声明排除。
+
+### 经验证不成立、未改动的条目
+
+- **P0-1「启动迁移把明文 API key 复制进未加密备份」——不成立。**
+  `runStartupMigration()` 第 307 行先调用 `loadSettings()`，该调用已给
+  `legacyAPIKeyMigrationPending` 赋值，第 318 行的检查有效；
+  且 `LLMConfiguration.encode` 根本不编码 `apiKey`，
+  迁移成功后磁盘文件已无明文，备份拷的是安全文件。
+  已用四种场景（剥离成功 / 重写失败 / Keychain 失败 / 本无明文）验证
+  「磁盘含明文时绝不备份」这一核心断言成立。**没有改动这段代码**——
+  它本身是正确的防护，按问题描述去「修」反而会破坏它。
+- **P0-2 的归因有误，但缺陷真实。** 问题描述把重复写盘归因于 `appSettings` 的
+  `didSet`，实际 `didSet` 只同步 `examCountdowns`、并不落盘；
+  真正的重复在本轮之前新增的主题/背景代码里（一次 `setTheme` 写盘 3 次）。已按实际情况修复。
+- **P1-6** 经查证无功能性问题，仅补充说明。
+
+### 已修复
+
+| 编号 | 内容 | 关键文件 |
+|------|------|----------|
+| U-1 | Siri「打开许愿」真正开窗（经状态桥 + `ContentView` 消费） | `SmartNoteIntents.swift` `AppState.swift` `ContentView.swift` |
+| U-2 | Siri「打开白板」如实回报维护中，`openAppWhenRun = false` | `SmartNoteIntents.swift` |
+| U-4 | 白板入口不再 `.disabled(true)`，改为可点击进维护说明页 | `ContentView.swift` |
+| U-5 | 移除无消费者的「默认学习时长」设置项 | `SettingsView.swift` `StorageService.swift` |
+| U-6 | 纪念日通知按发生日与提前量排程（09:00），不再全部 1 秒后一起弹 | `AnniversaryService.swift` |
+| U-7 | 新增 `NotificationRouter`，通知点击按 `kind` 路由到对应页面 | `NotificationRouter.swift`（新增）`SmartNoteApp.swift` |
+| U-9 | actor 内不再访问 `NSColor`，改用 `nonisolated static CGColor` | `OCRService.swift` |
+| U-10 | 语音合成音色分级回退 + 失败提示 | `SpeechService.swift` |
+| U-12 | 同名导入文件按落盘名去重，列表不再出现多条同名资料 | `FileScannerService.swift` |
+| U-13 | 分类按「关键词最早出现位置」判定，中文复合词可命中 | `FileScannerService.swift` |
+| U-14 | 恢复备份改为先 flush 再 `NSApp.terminate` | `SettingsView.swift` `AppState.swift` |
+| U-15 | 备份未加密改为橙色警示块，说明明文性质与处理建议 | `SettingsView.swift` |
+| P0-2 | 写盘收敛到单一入口（`setTheme` 由 3 次降为 1 次） | `AppState.swift` |
+| P0-3 | 复习计划日历事件不再是「全天」，19:00 起顺延排布 | `CalendarService.swift` |
+| P0-5 | 信任过的地址变更后提供「沿用」按钮 | `LLMSettingsView.swift` |
+| P1-1 | OCR 失败区分具体原因并提示，不再静默写空文本 | `OCRService.swift` `MaterialDetailView.swift` |
+| P1-2 | 历史目录加载失败可重试，不必重启 | `HistoryService.swift` `HistoryHomeView.swift` |
+| P3-7 | 识别语言按 Vision 已安装语言动态取，加入 `zh-TW` | `OCRService.swift` |
+
+### 验证方式
+
+- 编译：每次改动后 `xcodebuild -configuration Debug` 均 `** BUILD SUCCEEDED **`。
+- 启动冒烟：每批改动后用 Debug 产物直接运行 14 秒，无崩溃、无异常日志。
+- 逻辑用例（独立 Swift 程序，复刻生产算法并断言）：
+  纪念日排程 15 项、日历时刻 13 项、文件分类 16 项、启动迁移 13 项。
+- 真实环境核对：本机 185 个语音音色中，旧实现能匹配到的中文音色为 **0 个**，
+  修复后为 20 个并正确选中 compact 品质。
+
+### 没动的与原因
+
+- **U-3 裸数字 tab ID**：第 17 章已声明为已知边界。Intents「撒谎」的部分
+  （U-1/U-2）已单独修复，枚举化重构不在本轮范围。
+- **U-11 SpeechService 单例**：多详情页同时朗读属于交互设计取舍，
+  现有 `.onDisappear` 已覆盖离开即停的常见路径；改为按文章实例化会牵动
+  三处调用点与状态管理，收益不抵风险。
+- **U-7 的路由粒度**：目前按 `kind` 跳到对应侧栏页面，不做「定位到具体条目」。
+  待办/复习/习惯的详情跳转需要各页面暴露定位接口，属于更大改动。
+- **P1-3 启动期异步化**：`runStartupMigration` 涉及 schema 升级与备份决策，
+  移到异步会引入「UI 已显示旧数据、迁移随后改写」的竞态；
+  当前数据量下同步执行未观察到可感知卡顿。
+- **P1-5 P2PService 单例改造**：需要改动 P2P 全模块的依赖注入方式，
+  超出本轮范围，暂保留。
+- **P2-2 / P2-3 / P2-4**：见第 22 章声明，按已知边界保留。
+- **P3-2 专注模式**：`enableFocusMode()` 目前只有 `print`。
+  macOS 没有公开的「专注模式」开关 API（`SetFocusFilter` 面向自家应用），
+  在没有真实可调用的系统接口前不实现假开关。
 
 ---
 
