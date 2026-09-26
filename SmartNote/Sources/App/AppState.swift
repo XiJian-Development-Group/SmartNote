@@ -368,6 +368,19 @@ class AppState: ObservableObject {
         storageService.saveSettings(appSettings)
     }
 
+    /// 恢复备份前把内存中尚未落盘的数据写回磁盘。
+    ///
+    /// 待办、习惯、日记、许愿、纪念日等由各自 Service 在每次写操作后立即落盘，
+    /// 这里不重复处理；需要兜底的是 AppState 自己持有、依赖视图侧显式保存的数组，
+    /// 以及设置与历史阅读进度。
+    func flushPendingChangesBeforeTerminate() {
+        storageService.saveMaterials(materials)
+        storageService.saveReviewPlans(reviewPlans)
+        storageService.saveSettings(appSettings)
+        historyService.flushProgress()
+        WhiteboardService.shared.flushPendingSave()
+    }
+
     func setDarkModePreference(_ preference: AppSettings.DarkModePreference) {
         guard activeDarkModePreference != preference else { return }
         appSettings.darkModePreference = preference

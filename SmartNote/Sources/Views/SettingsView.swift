@@ -879,7 +879,11 @@ struct SettingsView: View {
         do {
             try appState.backupService.replaceDataDirectory(withExtractedBackupAt: tempDir)
             // 目录切换、复验与旧目录清理全部完成后再退出，启动时才会读取新数据。
-            exit(0)
+            // 退出前先把内存中尚未落盘的内容写回，再走 NSApp.terminate 的正常退出流程：
+            // exit(0) 会绕过 NSApplication 的 willTerminate 通知与状态保存，
+            // 且 Mac App Store 的审核标准不允许直接调用 exit()。
+            appState.flushPendingChangesBeforeTerminate()
+            NSApp.terminate(nil)
         } catch {
             if shouldResumePomodoro {
                 pomodoro.resume()

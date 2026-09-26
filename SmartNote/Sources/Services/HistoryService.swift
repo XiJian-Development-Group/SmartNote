@@ -211,6 +211,12 @@ final class HistoryService: ObservableObject {
         }
     }
 
+    /// 退出前把当前进度写盘。进度本来就在每次操作后落盘，
+    /// 这里用于恢复备份等需要确保「内存态已同步」的场景。
+    func flushProgress() {
+        persistProgress()
+    }
+
     private static func normalizedSearchTerms(_ query: String) -> [String] {
         normalize(query)
             .split(separator: " ")
