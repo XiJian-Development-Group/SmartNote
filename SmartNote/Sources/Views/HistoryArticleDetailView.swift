@@ -122,6 +122,14 @@ struct HistoryArticleDetailView: View {
                         }
                         .buttonStyle(.bordered)
                     }
+
+                    // 音色缺失或合成失败时说明原因，避免「点了没反应」。
+                    if let speechError = speechService.lastError {
+                        Label(speechError, systemImage: "speaker.slash.fill")
+                            .font(.caption)
+                            .foregroundStyle(theme.accentSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
         }

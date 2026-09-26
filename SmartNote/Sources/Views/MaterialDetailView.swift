@@ -8,6 +8,8 @@ struct MaterialDetailView: View {
     @State var material: StudyMaterial
     @State private var extractedText: String = ""
     @State private var isProcessingOCR = false
+    /// OCR 失败原因。修复前 OCR 失败会静默写入空文本，用户看不出是图片坏了还是没识别到字。
+    @State private var ocrErrorMessage: String? = nil
     @State private var isExtractingKeywords = false
     @State private var isEditingCategory = false
     @State private var isEditingKeywords = false
@@ -301,6 +303,28 @@ struct MaterialDetailView: View {
         .padding()
         .background(Color(nsColor: .controlBackgroundColor))
         .cornerRadius(8)
+        .overlay(alignment: .top) {
+            if let ocrErrorMessage {
+                ocrErrorBanner(ocrErrorMessage)
+                    .padding(.horizontal, 10)
+                    .padding(.top, 8)
+            }
+        }
+    }
+
+    private func ocrErrorBanner(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.orange)
+            Text(message)
+                .font(.caption)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            Button("关闭") { ocrErrorMessage = nil }
+                .buttonStyle(.borderless)
+        }
+        .padding(10)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
     }
     
     private var speechButtons: some View {
@@ -505,12 +529,20 @@ struct MaterialDetailView: View {
             }
 
             let text = await appState.ocrService.recognizeText(from: url)
+            // OCRService 现在会区分「文件坏了」和「没识别出文字」，
+            // 失败时不再静默写入空串，而是把原因告诉用户。
+            let ocrError = await appState.ocrService.lastError
             await MainActor.run {
-                if let index = appState.materials.firstIndex(where: { $0.id == material.id }) {
-                    appState.materials[index].extractedText = text
-                    material = appState.materials[index]
-                    extractedText = text
-                    appState.storageService.saveMaterials(appState.materials)
+                if let ocrError {
+                    ocrErrorMessage = ocrError.userMessage
+                } else {
+                    ocrErrorMessage = nil
+                    if let index = appState.materials.firstIndex(where: { $0.id == material.id }) {
+                        appState.materials[index].extractedText = text
+                        material = appState.materials[index]
+                        extractedText = text
+                        appState.storageService.saveMaterials(appState.materials)
+                    }
                 }
                 isProcessingOCR = false
             }
