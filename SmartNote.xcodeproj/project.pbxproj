@@ -18,6 +18,7 @@
 		259D26655254DCD43393EFBB /* ThumbnailProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF7CBC0492E3C8A63E9E7691 /* ThumbnailProvider.swift */; };
 		268DDF1724C0158B44778F82 /* DiaryEncryptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 677C192800FE87ECC35092EC /* DiaryEncryptionService.swift */; };
 		26E36D156DF354C79863FC60 /* WhiteBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF0F9399D305DF370C71A6C /* WhiteBoardView.swift */; };
+		28FAEBBACC529EF3E247F9DE /* NotificationRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ADFA51CC4BF751859B44E0E /* NotificationRouter.swift */; };
 		2F98FE09BB19688189632973 /* StudyMaterial.swift in Sources */ = {isa = PBXBuildFile; fileRef = D54F87F628B7AE589BEFF23D /* StudyMaterial.swift */; };
 		329452853E950533BAE8A7C3 /* PomodoroTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52DB2C22BCC415B73BF84A48 /* PomodoroTimer.swift */; };
 		34D9205B28A70BBE00763929 /* FlashCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E16F5008A6E6C57E3DCF9CC0 /* FlashCard.swift */; };
@@ -153,6 +154,7 @@
 		52BECAF4FB7DB740C6A89043 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		52DB2C22BCC415B73BF84A48 /* PomodoroTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroTimer.swift; sourceTree = "<group>"; };
 		59AD75CCE073CFD5DDE5346A /* P2PNetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PNetworkService.swift; sourceTree = "<group>"; };
+		5ADFA51CC4BF751859B44E0E /* NotificationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationRouter.swift; sourceTree = "<group>"; };
 		5B8C1B44A2A61CA79BD48879 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5C46EB71CC98B2EB3FDFE9A6 /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
 		5F1B3B40B30D47334E7C4666 /* HistoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryService.swift; sourceTree = "<group>"; };
@@ -316,6 +318,7 @@
 				EDECE7F741B10883BAD49248 /* LearningAnalysisService.swift */,
 				7F7C84D4C3172F01CA4E7215 /* LearningPreferenceAutoTuner.swift */,
 				F3552CF8976544956A158CCD /* LLMService.swift */,
+				5ADFA51CC4BF751859B44E0E /* NotificationRouter.swift */,
 				01A74D231E413B5F996B5308 /* NotificationService.swift */,
 				CCEEF4F30835C4BD18D390FD /* OCRService.swift */,
 				2A0C0B9F554192EC67B33B58 /* P2PCryptoService.swift */,
@@ -630,6 +633,7 @@
 				E38E22182C6E3505A22E7BCF /* MaterialDetailView.swift in Sources */,
 				86654172C280D417E594730D /* MaterialsListView.swift in Sources */,
 				7552F0F047F504FF73B489EF /* MenuBarContentView.swift in Sources */,
+				28FAEBBACC529EF3E247F9DE /* NotificationRouter.swift in Sources */,
 				EF6FDF917407F1948B782F62 /* NotificationService.swift in Sources */,
 				BDE72A44A8EEA5D1556594A4 /* OCRService.swift in Sources */,
 				CFE3C567BC505E93A8FA5E4A /* P2PAddFriendView.swift in Sources */,
