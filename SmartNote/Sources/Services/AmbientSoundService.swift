@@ -98,20 +98,41 @@ final class AmbientSoundService: ObservableObject {
 
     func play(_ id: String) {
         guard let sound = sounds.first(where: { $0.id == id }) else { return }
-        ensureEngineStarted()
+
+        // 顺序要求：先把节点接进引擎图，再启动引擎，最后才让 player 播放。
+        //
+        // 原来这里是 ensureEngineStarted() → ensurePlayer()，即**先启动一个空引擎**。
+        // AVAudioEngine 在图里没有任何已连接节点时调用 start()，会在
+        // AVAudioEngineGraph::Initialize 抛出 ObjC 异常：
+        //   required condition is false: inputNode != nullptr || outputNode != nullptr
+        // 该异常**无法被 Swift 的 do/catch 捕获**，直接 SIGABRT 终止进程，
+        // 表现为点「播放」后应用僵死/闪退，且没有任何声音。
         ensurePlayer(for: id)
         guard let player = nodes[id] else { return }
         if player.isPlaying { return }
 
         do {
             try scheduleBufferIfNeeded(for: id, sound: sound, on: player)
-            player.play()
-            playingIDs.insert(id)
-            lastError = nil
         } catch {
             // 内置声源不应该走到这里；用户文件格式不受支持时会到这里。
             lastError = "\(sound.name) 播放失败：\(error.localizedDescription)"
-            print("播放失败 \(id): \(error)")
+            print("排程失败 \(id): \(error)")
+            return
+        }
+
+        // 图已就绪，这时启动引擎才是安全的。
+        startEngineIfNeeded()
+        guard engine.isRunning else {
+            lastError = "\(sound.name) 播放失败：音频引擎无法启动，请检查系统的音频输出设备。"
+            return
+        }
+
+        player.play()
+        if player.isPlaying {
+            playingIDs.insert(id)
+            lastError = nil
+        } else {
+            lastError = "\(sound.name) 播放失败：音频引擎拒绝了播放请求。"
         }
     }
 
@@ -174,7 +195,12 @@ final class AmbientSoundService: ObservableObject {
         }
         stop(id)
         buffers.removeValue(forKey: id)
-        nodes[id]?.stop()
+        // 必须从引擎图上摘掉节点，否则它会一直挂在引擎里被反复混音，
+        // 删得越多图越臃肿。这里在 stop 之后、移除字典引用之前 detach。
+        if let node = nodes[id] {
+            node.stop()
+            engine.detach(node)
+        }
         nodes.removeValue(forKey: id)
         sounds.removeAll { $0.id == id }
         volumes.removeValue(forKey: id)
@@ -182,11 +208,25 @@ final class AmbientSoundService: ObservableObject {
 
     // MARK: - 引擎与 buffer
 
-    private func ensureEngineStarted() {
-        if !engine.isRunning {
-            do { try engine.start() } catch {
-                print("AVAudioEngine 启动失败：\(error)")
-            }
+    /// 启动音频引擎。
+    ///
+    /// **必须在至少一个 player 已经 attach + connect 之后调用。**
+    /// 空图上调用 `AVAudioEngine.start()` 会在 `AVAudioEngineGraph::Initialize`
+    /// 抛出 ObjC 异常 `inputNode != nullptr || outputNode != nullptr`，
+    /// 该异常 Swift 无法捕获，直接终止进程。
+    /// 因此这里的 `do/catch` 只是兜底 Swift 错误（如设备被独占），
+    /// 真正防崩溃靠的是调用方保证图非空，以及下面这道守卫。
+    private func startEngineIfNeeded() {
+        guard !engine.isRunning else { return }
+        guard !nodes.isEmpty else {
+            // 理论上不会走到：play() 已先建图。留作防御。
+            print("AVAudioEngine 拒绝启动：图中没有任何已连接节点")
+            return
+        }
+        do {
+            try engine.start()
+        } catch {
+            print("AVAudioEngine 启动失败：\(error)")
         }
     }
 

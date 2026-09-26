@@ -5,6 +5,10 @@ import Combine
 final class WishService: ObservableObject {
 
     @Published private(set) var wishes: [Wish] = []
+    /// 最近一次写盘失败的原因；成功后清空。
+    /// 修复前 save() 只 print，界面无从得知愿望到底存没存上，
+    /// 用户表现为「许愿后不知道是否成功」。
+    @Published private(set) var saveError: String?
 
     private let fileURL: URL
 
@@ -23,27 +27,37 @@ final class WishService: ObservableObject {
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
             wishes = try decoder.decode([Wish].self, from: data)
+            saveError = nil
         } catch {
             print("许愿读取失败：\(error)")
             wishes = []
+            saveError = "读取已保存的愿望失败：\(error.localizedDescription)"
         }
     }
 
-    private func save() {
+    @discardableResult
+    private func save() -> Bool {
         do {
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
             encoder.outputFormatting = .prettyPrinted
             let data = try encoder.encode(wishes)
             try data.write(to: fileURL, options: .atomic)
+            saveError = nil
+            return true
         } catch {
             print("许愿保存失败：\(error)")
+            saveError = "愿望没能保存到磁盘：\(error.localizedDescription)"
+            return false
         }
     }
 
-    func add(_ wish: Wish) {
+    func clearSaveError() { saveError = nil }
+
+    @discardableResult
+    func add(_ wish: Wish) -> Bool {
         wishes.insert(wish, at: 0)
-        save()
+        return save()
     }
 
     func update(_ wish: Wish) {

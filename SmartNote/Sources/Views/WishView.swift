@@ -13,6 +13,9 @@ struct WishView: View {
     @State private var newAccent: Wish.AccentColor = .gold
     @State private var showAddSheet: Bool = false
     @State private var editingWishID: UUID?
+    /// 许愿成功后的短时提示。修复前提交只是静默关掉弹窗，
+    /// 愿望列表又不刷新，用户完全无从判断成没成功。
+    @State private var confirmation: String?
 
     var body: some View {
         ZStack {
@@ -22,25 +25,82 @@ struct WishView: View {
             VStack(spacing: 0) {
                 header
                 Divider().background(Color.white.opacity(0.2))
+
+                // 写盘失败必须显式告知，不能让用户以为愿望已经存下
+                if let saveError = appState.wishService.saveError {
+                    saveErrorBanner(saveError)
+                }
+
                 dualPane
+            }
+
+            // 成功提示浮在顶部中央，2 秒后自动消失
+            if let confirmation {
+                VStack {
+                    confirmationToast(confirmation)
+                    Spacer()
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .allowsHitTesting(false)
             }
         }
         .frame(minWidth: 1000, minHeight: 620)
+        .animation(.easeInOut(duration: 0.2), value: confirmation)
+        // 提示显示 2 秒后自动消失。confirmation 每次变化都会重启这个 task，
+        // 因此连续许愿时计时也会重新开始，不会出现提示提前消失。
+        .task(id: confirmation) {
+            guard confirmation != nil else { return }
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            if !Task.isCancelled { confirmation = nil }
+        }
         .sheet(isPresented: $showAddSheet) {
             AddWishSheet(
                 content: $newContent,
                 accent: $newAccent,
                 onCommit: {
-                    if !newContent.trimmingCharacters(in: .whitespaces).isEmpty {
-                        let wish = Wish(content: newContent, status: .wish, accent: newAccent)
-                        appState.wishService.add(wish)
-                        newContent = ""
-                        showAddSheet = false
-                    }
+                    let trimmed = newContent.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+                    let wish = Wish(content: trimmed, status: .wish, accent: newAccent)
+                    let saved = appState.wishService.add(wish)
+                    newContent = ""
+                    showAddSheet = false
+                    // 只有真正落盘才报成功；失败原因由 saveError 横幅显示
+                    if saved { showConfirmation("愿望已记下") }
                 },
                 onCancel: { showAddSheet = false }
             )
         }
+    }
+
+    private func showConfirmation(_ message: String) {
+        confirmation = message
+    }
+
+    private func confirmationToast(_ message: String) -> some View {
+        Label(message, systemImage: "checkmark.circle.fill")
+            .font(.callout)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 10)
+            .background(.green.opacity(0.85), in: Capsule())
+            .shadow(radius: 6, y: 3)
+            .padding(.top, 16)
+    }
+
+    private func saveErrorBanner(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+            Text(message)
+                .font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            Button("知道了") { appState.wishService.clearSaveError() }
+                .buttonStyle(.borderless)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color.orange.opacity(0.18))
     }
 
     private var header: some View {

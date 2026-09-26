@@ -146,6 +146,19 @@ class AppState: ObservableObject {
         // 但背景图这类字段没有对应的顶层属性，只能在这里统一转发。
         // 把 AppSettings 自身的变更转发为 AppState 的变更（详见 rebindAppSettingsObservation）
         rebindAppSettingsObservation()
+        // 同样把各嵌套 ObservableObject 的变更转发上来，否则白噪音播放状态、
+        // 许愿提交结果、纪念日与朗读图标都不会刷新（详见 forwardNestedChanges）
+        forwardNestedChanges(of: ambientSoundService)
+        forwardNestedChanges(of: wishService)
+        forwardNestedChanges(of: anniversaryService)
+        forwardNestedChanges(of: blessingService)
+        forwardNestedChanges(of: historyService)
+        forwardNestedChanges(of: speechService)
+        forwardNestedChanges(of: notificationService)
+        forwardNestedChanges(of: learningAnalysisService)
+        forwardNestedChanges(of: updateService)
+        forwardNestedChanges(of: launchAtLoginService)
+
         // 把自己桥给 Siri / Shortcuts intent 用
         MainActor.assumeIsolated {
             SharedAppStateProxy.shared.bind(self)
@@ -167,14 +180,40 @@ class AppState: ObservableObject {
     /// 只会触发 `AppSettings.objectWillChange`，不会触发 `AppState.objectWillChange`，
     /// 于是所有 `@EnvironmentObject var appState: AppState` 的视图都不重渲染——
     /// 表现是「改了背景图要重启才生效」。
-    /// 主题与明暗模式之前是靠手工再写一份顶层 `@Published` 快照绕过的，
-    /// 但背景图这类字段没有对应的顶层属性，只能在这里统一转发。
     ///
     /// **每次整体替换 `appSettings` 后都必须重新调用**，
     /// 否则订阅会留在已被丢弃的旧对象上，变更不再转发。
     private func rebindAppSettingsObservation() {
         appSettingsCancellable = appSettings.objectWillChange
             .sink { [weak self] in self?.objectWillChange.send() }
+    }
+
+    /// 转发嵌套 ObservableObject 的变更，见 `forwardNestedChanges(of:)`。
+    private var nestedCancellables: [AnyCancellable] = []
+
+    /// 把某个嵌套 `ObservableObject` 的 `objectWillChange` 转发为 `AppState` 的变更。
+    ///
+    /// 与 `appSettings` 同源的问题：视图通过 `@EnvironmentObject var appState: AppState`
+    /// 观察 `AppState`，因此只认 `AppState.objectWillChange`。
+    /// 而 `appState.ambientSoundService.playingIDs` 这类嵌套服务上的 `@Published`
+    /// 只会触发它自己的 `objectWillChange`，视图完全收不到通知。
+    ///
+    /// 实际症状（都曾真实发生过）：
+    /// - 白噪音点了播放，界面不显示播放中，像「没反应」
+    /// - 许愿提交后愿望列表不刷新，也不知道成没成功
+    /// - 纪念日、习惯打卡、朗读状态的图标不跟随变化
+    ///
+    /// 以前只能靠手工再写一份顶层 `@Published` 快照绕过个别字段
+    /// （如 `activeThemeID`、`isNationalDayPeriod`），漏一处就暗一处。
+    /// 这里统一转发，从根上去掉这类问题。
+    private func forwardNestedChanges<T: ObservableObject>(of service: T) {
+        // eraseToAnyPublisher 是必需的：泛型 T 的 objectWillChange 关联类型
+        // 在编译期无法确定，sink 的闭包签名因而无法推断。
+        nestedCancellables.append(
+            service.objectWillChange
+                .eraseToAnyPublisher()
+                .sink { [weak self] _ in self?.objectWillChange.send() }
+        )
     }
 
     func refreshSettings() {
