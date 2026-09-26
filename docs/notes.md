@@ -291,6 +291,12 @@
 | `183efcd` | feat(background): 背景图支持图片库与随机轮换 | AppState.swift, StorageService.swift, SettingsView.swift, ContentView.swift |
 | `e909cbf` | feat(wish): 许愿改为独立全屏窗口；白板暂时关闭 | SmartNoteApp.swift, ContentView.swift, WishView.swift |
 | `945ba0f` | docs: 同步背景图库、许愿全屏与白板暂时关闭 | README.md |
+| `9c94a62` | docs: 新增第 19 章记录本轮改动 | docs/notes.md |
+| `8e22762` | chore: 排除 .DS_Store 并取消跟踪 | .gitignore |
+| `a1baaf3` | chore: 取消跟踪 xcuserdata 并加入忽略 | .gitignore |
+| `5019fe2` | fix(ambient): 修复白噪音点击播放无反应导致进程终止 | AmbientSoundService.swift |
+| `aa8b74b` | fix(ui): 修复祝福条时有时无并加顶部间距 | AppState.swift, ContentView.swift |
+| `9931d4b` | fix(ui): 修复窗口缩放时侧栏变形与内容裁切 | SmartNoteApp.swift, ContentView.swift, WhiteNoiseView.swift 等 |
 
 发布更新日志与 B 站发布稿位于 `~/Desktop/Update200.md` 和 `~/Desktop/Pub.md`，不属于仓库内容。以上四个 commit 均为本地提交，未 push。
 
@@ -469,6 +475,41 @@ xcodebuild -project SmartNote.xcodeproj -scheme SmartNote \
 - 侧栏「白板」`NavigationLink` 加 `.disabled(true)`，进入后显示 `WhiteboardUnavailableView` 占位页，说明维护状态与数据保留情况。
 - `WhiteboardView.swift`、`WhiteboardCanvasView.swift`、`GeometryModel.swift`、`AlgebraEvaluator.swift` 等源文件全部保留未删，`whiteboards.json` 仍登记在 `ManagedDataPath` 中参与存储统计、备份与「清除所有数据」，重新开放后可直接续用。
 - 原因：几何画板存在用户报告的显示异常（含顶部持续存在的模糊空白条）。在未定位根因前先下线入口，避免继续产生半可用状态；`BackgroundImageView` 的模糊层被所有页面共用，不宜在根因未确认时改动。
+
+---
+
+## 第 20 章 UI 布局与白噪音播放修复
+
+本轮按用户实测反馈修复。四个问题分属两类根因：嵌套 `ObservableObject` 的读取时机，以及互相冲突的最小尺寸约束。
+
+### 白噪音点击播放无反应（真实崩溃，非无响应）
+
+- 根因不是按钮失效，而是**进程被 AVAudioPlayerNode 抛出 ObjC 异常直接终止**。`ensurePlayer` 用 `engine.connect(player, to: mixer, format: nil)`，player 因此采用 `mainMixerNode` 的输出格式（本机为 48kHz 立体声），而内置声源与用户文件的 buffer 是 44.1kHz 单声道。`scheduleBuffer` 时前置条件 `_outputFormat.channelCount == buffer.format.channelCount` 不成立，抛出 Swift `try` **无法捕获**的 NSException，进程 abort。
+- 已用独立程序逐个验证三种接法（每种单独进程，避免异常中断整批）：`format: nil` → 崩溃；`format: mixer.outputFormat`（48k/2ch）→ 同样崩溃；`format: 44.1kHz mono` → 正常，`isPlaying=true` 持续。
+- 修复：`connect` 显式传入 44.1kHz 单声道，与 buffer 一致；立体声混音交给 `mainMixerNode`。修正后按生产链路复测 10 步全通过（engine 启动、schedule、播放、停止）。
+- 同时新增 `AmbientSoundService.lastError`：播放失败时写真实原因，界面顶部显示橙色提示条并可关闭，不再静默无反应。
+
+### 祝福条时有时无
+
+- 根因同属嵌套 `ObservableObject`：`ContentView` 的 `@EnvironmentObject` 是 `AppState`，而 body 里直接读 `appState.blessingService.isNationalDayPeriod`。`BlessingService` 变化不会让只 observe `AppState` 的视图重算，国庆期间可能出现整条不出现。
+- 修复：`AppState` 新增 `@Published isNationalDayPeriod` 快照与 `shouldShowBlessingBar`，在 `init` 与 `loadSavedData()` 中同步；`ContentView` 改读 `appState.shouldShowBlessingBar`。这与第 18 章处理 `themeID` 的做法一致。
+- 另按反馈给祝福条加 `.padding(.top, 8)`，不再贴着窗口标题栏。
+
+### 窗口缩放时侧栏变形、内容显示不全
+
+- 根因是尺寸约束层层叠加：`SmartNoteApp` 主窗口 `.frame(minWidth: 900, minHeight: 600)`，`ContentView` 的 `NavigationSplitView` 又重复一次 `.frame(minWidth: 900, minHeight: 600)`，而各详情页还有各自更大的 min（文件加密 900、白噪音 800、许愿 1000）。SwiftUI 取最大者作为实际下限，窗口被强行撑大，缩小时侧栏被挤压变形、卡片被裁切。
+- 修复：
+  - 移除主窗口与 `NavigationSplitView` 上重复的 900×600，改用 `.defaultSize(width: 1280, height: 820)`；
+  - 侧栏只保留 `.frame(minWidth: 190)`，不设固定高度，高度交由 `NavigationSplitView` 分配；
+  - 白噪音用 `GeometryReader` 按可用宽度算列数（每列 ≥220pt，最多 4 列），`minWidth` 降到 480；
+  - 文件加密 900→560、纪念日 720→520、计算器 520→380、重复清理 520→360；
+  - 白噪音新增播放错误提示条。
+
+### 仍未处理
+
+- 几何画板的模糊空白条：白板已下线，该现象当前不可复现；`BackgroundImageView` 模糊层被所有页面共用，在根因未确认前不改动。
+- 番茄钟 200pt 计时圈、各处 sheet 的固定尺寸属于设计选择，不影响缩放，保持原样。
+- 界面仍缺人工验收：仓库没有 XCTest target，上述修复依赖独立程序验证与架构分析，无法自动断言渲染结果。
 
 ### 历史内容来源审计
 
