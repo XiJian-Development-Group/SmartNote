@@ -12,6 +12,21 @@ struct LLMSettingsView: View {
         _config = State(initialValue: LLMConfiguration())
     }
 
+    /// 配置里已记录的受信任地址。当前地址与它不一致时，
+    /// 说明用户之前信任过别的地址，可以选择是否一键沿用。
+    private var previouslyTrustedServerURL: String? {
+        let stored = config.trustedServerURL
+        return stored.isEmpty ? nil : stored
+    }
+
+    private static func displayHost(_ urlString: String) -> String {
+        let components = URLComponents(string: urlString)
+        if let host = components?.host, let port = components?.port {
+            return "\(host):\(port)"
+        }
+        return components?.host ?? urlString
+    }
+
     var body: some View {
         Form {
             Section {
@@ -69,6 +84,21 @@ struct LLMSettingsView: View {
                                 Text("保存或测试连接前，请先确认 API key 会发送到此服务。")
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
+                                // 信任是绑定到地址的：把 URL 改一下再改回来，
+                                // 旧确认不会自动沿用。这里明确告诉用户可以一键沿用。
+                                if let previous = previouslyTrustedServerURL,
+                                   previous != config.normalizedServerURL {
+                                    HStack(spacing: 8) {
+                                        Text("你之前信任过 \(Self.displayHost(previous))，是否沿用该信任？")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                        Button("沿用") {
+                                            config.trustedServerURL = previous
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .controlSize(.mini)
+                                    }
+                                }
                             }
                         }
                     }

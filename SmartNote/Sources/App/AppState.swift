@@ -160,6 +160,9 @@ class AppState: ObservableObject {
     }
 
     /// 切换主题。节庆主题会强制锁定到它自带的背景图。
+    ///
+    /// 写盘收敛到这一处：`applyThemeBackgroundLock` 只改内存状态，不自己保存，
+    /// 否则一次切主题会连续写盘三次。
     func setTheme(_ themeID: AppSettings.ThemeID) {
         guard activeThemeID != themeID else { return }
         appSettings.themeID = themeID
@@ -170,12 +173,12 @@ class AppState: ObservableObject {
 
     /// 节庆主题锁定背景：强制启用背景并指向自带素材，关闭随机轮换。
     /// 切回经典主题时恢复用户此前的随机/指定设置。
+    /// 只修改内存状态，落盘由调用方负责。
     private func applyThemeBackgroundLock(for themeID: AppSettings.ThemeID) {
         let target = AppTheme.theme(for: themeID)
         guard let bundled = target.bundledBackgroundName else {
             // 经典主题：解除锁定，用户设置继续生效。
             appSettings.backgroundImageActiveName = appSettings.backgroundImageName
-            storageService.saveSettings(appSettings)
             return
         }
         // 素材被删除过（清空数据或手动删文件）时先恢复。
@@ -190,7 +193,6 @@ class AppState: ObservableObject {
         if !appSettings.backgroundImageLibrary.contains(bundled) {
             appSettings.backgroundImageLibrary.append(bundled)
         }
-        storageService.saveSettings(appSettings)
     }
 
     /// 内置素材恢复失败时提示用户；成功或未触发时为 nil。
@@ -229,17 +231,18 @@ class AppState: ObservableObject {
         }
         syncBackgroundImageLibrary()
         if bundled == nil {
-            guard appSettings.backgroundImageEnabled else {
-                storageService.saveSettings(appSettings)
-                return
-            }
-            if appSettings.backgroundImageRandomEnabled {
-                pickRandomBackgroundImage(excluding: appSettings.backgroundImageActiveName)
-            } else if appSettings.backgroundImageActiveName == nil {
-                appSettings.backgroundImageActiveName = appSettings.backgroundImageName
+            if appSettings.backgroundImageEnabled {
+                if appSettings.backgroundImageRandomEnabled {
+                    // pickRandomBackgroundImage 内部已落盘
+                    pickRandomBackgroundImage(excluding: appSettings.backgroundImageActiveName)
+                    return
+                } else if appSettings.backgroundImageActiveName == nil {
+                    appSettings.backgroundImageActiveName = appSettings.backgroundImageName
+                }
             }
         }
         // 主题锁定与素材恢复的结论必须落盘，否则下次启动读到的仍是旧值。
+        // 走随机分支时上面已 return，不会重复写。
         storageService.saveSettings(appSettings)
     }
 
@@ -339,6 +342,7 @@ class AppState: ObservableObject {
     func setBackgroundImageRandomEnabled(_ enabled: Bool) {
         guard !isBackgroundLockedByTheme else {
             appSettings.backgroundImageRandomEnabled = false
+            storageService.saveSettings(appSettings)
             return
         }
         appSettings.backgroundImageRandomEnabled = enabled
@@ -347,7 +351,7 @@ class AppState: ObservableObject {
         } else {
             appSettings.backgroundImageActiveName = appSettings.backgroundImageName
         }
-        storageService.saveSettings(appSettings)
+        // pickRandomBackgroundImage 内已落盘，这里不再重复写。
     }
 
     /// 从图片库随机挑一张，尽量避开 exclude 指定的那张。
