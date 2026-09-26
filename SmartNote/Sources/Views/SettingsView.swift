@@ -10,6 +10,10 @@ struct SettingsView: View {
     @State private var selectedImageName: String? = nil
     @ObservedObject private var notificationService = NotificationService.shared
 
+    // 清除所有数据：二次确认 + 手动输入「清除」
+    @State private var showClearAllConfirmation: Bool = false
+    @State private var clearAllConfirmInput: String = ""
+
     // 备份与恢复面板
     @State private var backupLabel: String = ""
     @State private var isMakingBackup: Bool = false
@@ -69,6 +73,9 @@ struct SettingsView: View {
             allowsMultipleSelection: false
         ) { result in
             handleImageSelection(result)
+        }
+        .sheet(isPresented: $showClearAllConfirmation) {
+            clearAllConfirmationDialog
         }
     }
     
@@ -640,10 +647,9 @@ struct SettingsView: View {
             }
             
             Section {
-                Button("清除所有数据") {
-                    clearAllData()
+                Button("清除所有数据", role: .destructive) {
+                    showClearAllConfirmation = true
                 }
-                .foregroundColor(.red)
             }
 
             if let missing = appState.restorationFailedBundledImage {
@@ -947,5 +953,37 @@ struct SettingsView: View {
         appState.materials.removeAll()
         appState.reviewPlans.removeAll()
         appState.storageService.clearAllData()
+    }
+
+    /// 清除所有数据的二次确认。
+    /// 这是不可逆操作：会删除资料、复习计划、日记、待办、习惯、历史阅读进度、
+    /// 主题背景和 Keychain 里的 API key / 文件密码，因此必须显式确认，
+    /// 且要求手动输入「清除」二字，避免误触或脚本误调用。
+    private var clearAllConfirmationDialog: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("此操作无法撤销")
+                .font(.headline)
+            Text("将永久删除本机上的资料、复习计划、日记、待办、习惯打卡、历史阅读进度，以及钥匙串中保存的 API key 与文件密码。建议先在下方「备份与恢复」中导出一份备份。")
+                .font(.callout)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            TextField("输入「清除」以确认", text: $clearAllConfirmInput)
+                .textFieldStyle(.roundedBorder)
+
+            HStack {
+                Spacer()
+                Button("取消", role: .cancel) {
+                    clearAllConfirmInput = ""
+                }
+                Button("永久删除", role: .destructive) {
+                    clearAllConfirmInput = ""
+                    clearAllData()
+                }
+                .disabled(clearAllConfirmInput != "清除")
+            }
+        }
+        .padding(20)
+        .frame(width: 420)
     }
 }
