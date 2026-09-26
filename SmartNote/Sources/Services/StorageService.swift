@@ -678,6 +678,79 @@ class StorageService {
     func getBackgroundImageURL(named fileName: String) -> URL {
         return backgroundImagesDirectory.appendingPathComponent(fileName)
     }
+
+    // MARK: - 主题内置背景图
+
+    /// 全部内置背景图文件名。顺序与 `AppTheme.all` 中节庆主题一致。
+    static let bundledBackgroundNames: [String] = [
+        "nationalDay.png",
+        "auspicious.png",
+        "snowDawn.png"
+    ]
+
+    /// 判断某个文件名是否为受保护的内置素材。
+    /// 内置素材不允许通过「删除图片」或「清空图片库」被移除。
+    static func isBundledBackground(_ fileName: String) -> Bool {
+        bundledBackgroundNames.contains(fileName)
+    }
+
+    /// 在应用包中定位内置背景图。
+    /// 资源由 XcodeGen 拷到 `Contents/Resources` 根目录，因此不指定 subdirectory；
+    /// 同时兼容未来改用子目录打包的情况。
+    private func bundledBackgroundURL(named fileName: String) -> URL? {
+        let stem = (fileName as NSString).deletingPathExtension
+        let ext = (fileName as NSString).pathExtension
+        if let url = Bundle.main.url(forResource: stem, withExtension: ext) { return url }
+        return Bundle.main.url(forResource: stem, withExtension: ext, subdirectory: "ThemeBackgrounds")
+    }
+
+    /// 把应用包内的内置背景图拷贝到本机资源目录。
+    /// 供主题解锁时使用：主题要求显示的图必须存在于本机目录中。
+    /// - Returns: 是否成功。
+    @discardableResult
+    func installBundledBackground(named fileName: String) -> Bool {
+        guard Self.isBundledBackground(fileName) else { return false }
+        let destination = backgroundImagesDirectory.appendingPathComponent(fileName)
+        if fileManager.fileExists(atPath: destination.path) { return true }
+        guard let source = bundledBackgroundURL(named: fileName) else {
+            print("Error: 内置背景图缺失于应用包 \(fileName)")
+            return false
+        }
+        do {
+            if !fileManager.fileExists(atPath: backgroundImagesDirectory.path) {
+                try fileManager.createDirectory(
+                    at: backgroundImagesDirectory, withIntermediateDirectories: true
+                )
+            }
+            try fileManager.copyItem(at: source, to: destination)
+            setFilePermissions(destination)
+            return true
+        } catch {
+            print("Error: 拷贝内置背景图失败 \(fileName): \(error)")
+            return false
+        }
+    }
+
+    /// 校验全部内置素材是否完好，缺失的从应用包恢复。
+    ///
+    /// 在每次启动、以及「清除所有数据」之后调用。主题在运行时被强制使用
+    /// 对应背景图，因此素材一旦丢失会导致主题无背景，必须能自动补回。
+    /// - Returns: 被恢复的文件名。
+    @discardableResult
+    func restoreBundledBackgroundsIfMissing() -> [String] {
+        var restored: [String] = []
+        for name in Self.bundledBackgroundNames {
+            let destination = backgroundImagesDirectory.appendingPathComponent(name)
+            if fileManager.fileExists(atPath: destination.path) { continue }
+            if installBundledBackground(named: name) {
+                restored.append(name)
+            }
+        }
+        if !restored.isEmpty {
+            setDirectoryPermissions(backgroundImagesDirectory)
+        }
+        return restored
+    }
     
     @discardableResult
     private func save<T: Encodable>(_ object: T, to url: URL) -> Bool {
@@ -1035,6 +1108,7 @@ class AppSettings: ObservableObject, Codable, Equatable {
         case classic
         case nationalDay
         case auspicious
+        case snowDawn
 
         var id: String { rawValue }
 

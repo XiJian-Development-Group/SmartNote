@@ -79,11 +79,46 @@ struct AppTheme: Identifiable {
         isFestive: true
     )
 
+    /// 雪山晨曦。配冷调背景图，accent 用晨光金，与蓝色背景形成冷暖对比。
+    static let snowDawn = AppTheme(
+        id: .snowDawn,
+        name: "雪山晨曦",
+        summary: "冷调靛蓝与晨光金，清爽而克制",
+        symbol: "sunrise.fill",
+        background: Color(red: 0.045, green: 0.060, blue: 0.105),
+        backgroundSecondary: Color(red: 0.090, green: 0.115, blue: 0.185),
+        surface: Color(red: 0.075, green: 0.100, blue: 0.160),
+        surfaceElevated: Color(red: 0.110, green: 0.140, blue: 0.215),
+        primaryText: Color(red: 0.94, green: 0.96, blue: 1.00),
+        secondaryText: Color(red: 0.74, green: 0.80, blue: 0.90),
+        accent: Color(red: 0.98, green: 0.84, blue: 0.52),
+        accentSecondary: Color(red: 0.62, green: 0.80, blue: 0.98),
+        border: Color.white.opacity(0.14),
+        shadowColor: Color.black.opacity(0.26),
+        colorScheme: .dark,
+        isFestive: true
+    )
+
     static func theme(for id: AppSettings.ThemeID) -> AppTheme {
         switch id {
         case .classic: return .classic
         case .nationalDay: return .nationalDay
         case .auspicious: return .auspicious
+        case .snowDawn: return .snowDawn
+        }
+    }
+
+    /// 全部主题，按界面展示顺序：经典在前，节庆主题在后。
+    static var all: [AppTheme] { [.classic, .nationalDay, .auspicious, .snowDawn] }
+
+    /// 该主题强制使用的内置背景图文件名。
+    /// 经典主题返回 nil —— 留空或使用用户自己选的图片。
+    var bundledBackgroundName: String? {
+        switch id {
+        case .classic: return nil
+        case .nationalDay: return "nationalDay.png"
+        case .auspicious: return "auspicious.png"
+        case .snowDawn: return "snowDawn.png"
         }
     }
 }
