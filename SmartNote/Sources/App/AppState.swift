@@ -196,6 +196,14 @@ class AppState: ObservableObject {
     /// 内置素材恢复失败时提示用户；成功或未触发时为 nil。
     @Published private(set) var restorationFailedBundledImage: String?
 
+    /// 许愿窗口的待打开请求。由 Siri / Shortcuts 置位，持有 `openWindow` 的视图消费。
+    @Published var wishWindowRequestToken: Int = 0
+
+    /// 置位一次「打开许愿窗口」请求。重复调用会推进 token，保证每次都能触发。
+    func deliverWishWindowRequest() {
+        wishWindowRequestToken &+= 1
+    }
+
     // MARK: - 背景图片库
 
     /// 启动时处理背景图：先补回缺失的内置素材，再按主题决定是否锁定。

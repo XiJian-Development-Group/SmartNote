@@ -5,6 +5,7 @@ import Combine
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.appTheme) private var appTheme
+    @Environment(\.openWindow) private var openWindow
     @State private var integrityIssues: [StorageIntegrityIssue] = StorageService.integrityIssues
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
     /// 侧栏实测宽度。底部祝福条据此左对齐，避免压住侧栏项目。
@@ -48,6 +49,10 @@ struct ContentView: View {
         }
         .onPreferenceChange(SidebarWidthKey.self) { newValue in
             if abs(newValue - sidebarWidth) > 0.5 { sidebarWidth = newValue }
+        }
+        // Siri / Shortcuts 请求打开许愿窗口。许愿不在侧栏 tab 里，只有这里有 openWindow。
+        .onChange(of: appState.wishWindowRequestToken) { _, token in
+            if token > 0 { openWindow(id: "wish-fullscreen") }
         }
         .overlay(alignment: .top) {
             if !integrityIssues.isEmpty {

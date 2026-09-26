@@ -18,11 +18,20 @@ struct OpenPageIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let n = Int(page.tabIndex)
-        SharedAppStateProxy.shared.selectedTab = n
-        NSApp.activate(ignoringOtherApps: true)
         let pageName = page.displayName
-        return .result(dialog: "已打开 \(pageName)")
+        // 许愿与白板不走侧栏 tab：前者是独立窗口，后者当前未开放。
+        switch page {
+        case .wish:
+            SharedAppStateProxy.shared.requestWishWindow()
+            NSApp.activate(ignoringOtherApps: true)
+            return .result(dialog: "已打开\(pageName)")
+        case .whiteboard:
+            return .result(dialog: "白板功能维护中，暂时无法打开。")
+        default:
+            SharedAppStateProxy.shared.selectedTab = page.tabIndex
+            NSApp.activate(ignoringOtherApps: true)
+            return .result(dialog: "已打开\(pageName)")
+        }
     }
 }
 
@@ -55,13 +64,16 @@ struct OpenTodoIntent: AppIntent {
         return .result(dialog: "已打开待办清单")
     }
 }
+/// 白板当前处于维护中（见 docs/notes.md 第 9 章）。
+/// 这里不再切 tab——侧栏入口已 disabled，设了 tab 也只会停在原页面，
+/// 却在对话里回答「已打开白板」，属于对用户报错状态。
 struct OpenWhiteboardIntent: AppIntent {
     static var title: LocalizedStringResource = "打开白板"
-    static var openAppWhenRun: Bool = true
+    static var description = IntentDescription("白板功能维护中，暂时无法打开。")
+    /// 不启动应用：打开它也没有可看的页面，只回报真实状态。
+    static var openAppWhenRun: Bool = false
     @MainActor func perform() async throws -> some IntentResult & ProvidesDialog {
-        SharedAppStateProxy.shared.selectedTab = 19
-        NSApp.activate(ignoringOtherApps: true)
-        return .result(dialog: "已打开白板")
+        .result(dialog: "白板功能维护中，暂时无法打开。")
     }
 }
 struct OpenFileCryptoIntent: AppIntent {
@@ -73,11 +85,14 @@ struct OpenFileCryptoIntent: AppIntent {
         return .result(dialog: "已打开文件加密")
     }
 }
+/// 许愿在独立全屏窗口中（`Window(id: "wish-fullscreen")`），不再是侧栏详情页，
+/// 因此不能再靠设置 `selectedTab` 跳转。改为向状态桥登记「待打开许愿窗口」，
+/// 由持有 `openWindow` 的视图消费（见 ContentView）。
 struct OpenWishIntent: AppIntent {
     static var title: LocalizedStringResource = "打开许愿"
     static var openAppWhenRun: Bool = true
     @MainActor func perform() async throws -> some IntentResult & ProvidesDialog {
-        SharedAppStateProxy.shared.selectedTab = 24
+        SharedAppStateProxy.shared.requestWishWindow()
         NSApp.activate(ignoringOtherApps: true)
         return .result(dialog: "已打开许愿")
     }
@@ -248,19 +263,39 @@ struct SmartNoteShortcutsProvider: AppShortcutsProvider {
 /// Siri / Shortcuts intent 需要跟主 app 的状态交互；这里用一个单例代理：
 ///  - AppState 在 init 时把自身写到这里
 ///  - Intent perform 时读 selectedTab 来切侧边栏
+///
+/// 许愿是独立 SwiftUI 窗口，Intent 无法直接拿到 `openWindow`，
+/// 因此在这里登记一个待办标记，由视图侧消费。
+/// 标记刻意保存在代理自身而不只是 AppState：`openAppWhenRun` 只保证应用被启动，
+/// 不保证 `AppState.init` 已经跑完 `bind`；存在代理里可以跨过这个时序。
 @MainActor
 final class SharedAppStateProxy {
     static let shared = SharedAppStateProxy()
     private init() {}
 
     private weak var appState: AppState?
+    private var pendingWishWindow = false
 
     func bind(_ state: AppState) {
         appState = state
+        // 绑定发生在 Intent 之后时，把挂起的请求补交给 AppState。
+        if pendingWishWindow {
+            pendingWishWindow = false
+            state.deliverWishWindowRequest()
+        }
     }
 
     var selectedTab: Int {
         get { appState?.selectedTab ?? 0 }
         set { appState?.selectedTab = newValue }
+    }
+
+    /// 请求打开许愿窗口。已绑定时直接转发，未绑定时先挂起。
+    func requestWishWindow() {
+        guard let appState else {
+            pendingWishWindow = true
+            return
+        }
+        appState.deliverWishWindowRequest()
     }
 }
