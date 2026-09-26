@@ -130,9 +130,10 @@ struct FestivalBlessingBar: View {
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .stroke(theme.border, lineWidth: 1)
         )
-        // 自身外再留 8pt 顶部间距，避免贴住窗口标题栏
-        .padding(.top, 8)
+        // 固定在窗口顶部安全区下方：左侧留 12pt 与侧栏文字对齐，
+        // 顶部留 14pt 使其完全落在标题栏之下，不随窗口尺寸变化而偏移。
         .padding(.horizontal, 12)
+        .padding(.top, 14)
         .padding(.bottom, 6)
     }
 }

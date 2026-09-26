@@ -8,34 +8,34 @@ struct ContentView: View {
     @State private var integrityIssues: [StorageIntegrityIssue] = StorageService.integrityIssues
 
     var body: some View {
-        ZStack {
-            ThemeBackdrop(theme: appTheme)
-
+        // NavigationSplitView 必须是根视图。
+        // 之前它被包在 ZStack 里，split view 拿不到窗口的正确安全区，
+        // 侧栏 List 底部无法滚到底，最后几项（计算器、重复清理）看不到。
+        // 背景用 .background 承载：它按视图尺寸绘制且不参与布局，不会挤压 split view。
+        NavigationSplitView {
+            SidebarView()
+        } detail: {
+            DetailView()
+        }
+        .navigationSplitViewStyle(.balanced)
+        .background {
             ZStack {
+                ThemeBackdrop(theme: appTheme)
                 BackgroundImageView()
-
-                NavigationSplitView {
-                    SidebarView()
-                } detail: {
-                    DetailView()
-                }
-                .navigationSplitViewStyle(.balanced)
-                .background(Color.clear)
-                // 祝福条必须用 safeAreaInset 挂在 split view 上。
-                // 之前把它作为 NavigationSplitView 的同级兄弟放进 VStack，
-                // 会让 split view 拿不到正确的安全区，侧栏 List 底部被裁掉。
-                .safeAreaInset(edge: .top, spacing: 0) {
-                    if appState.shouldShowBlessingBar {
-                        FestivalBlessingBar(service: appState.blessingService)
-                    }
-                }
-                .overlay(alignment: .top) {
-                    if !integrityIssues.isEmpty {
-                        storageIntegrityBanner
-                            .padding(.horizontal, 12)
-                            .padding(.top, 8)
-                    }
-                }
+            }
+        }
+        // 祝福条挂在 split view 的顶部安全区：位置固定在窗口顶部下方，
+        // 不随窗口尺寸变化而偏移。
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if appState.shouldShowBlessingBar {
+                FestivalBlessingBar(service: appState.blessingService)
+            }
+        }
+        .overlay(alignment: .top) {
+            if !integrityIssues.isEmpty {
+                storageIntegrityBanner
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
             }
         }
         .sheet(isPresented: $appState.showFileImporter) {
@@ -264,10 +264,9 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
-        // 只约束最小宽度，不设固定高度；高度由 NavigationSplitView 分配。
-        // 之前 minWidth 200 叠加各详情页的 minWidth（如白噪音 800），
-        // 会把窗口下限顶到 900 以上，导致缩放时侧栏被挤压变形。
-        .frame(minWidth: 190)
+        // 只约束最小宽度。必须让 List 占满 split view 分配的整列高度，
+        // 否则滚动容器高度不足，尾部项目（计算器、重复清理）滚不出来。
+        .frame(minWidth: 190, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
         .navigationTitle("智学笔记")
         .background(Color.clear)
     }
