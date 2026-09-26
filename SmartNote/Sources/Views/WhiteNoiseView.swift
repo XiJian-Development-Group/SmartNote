@@ -7,56 +7,57 @@ struct WhiteNoiseView: View {
     @State private var showImporter: Bool = false
     @State private var importError: String?
 
+    /// 自适应列：SwiftUI 按可用宽度自动决定每行放几张。
+    /// 不使用 GeometryReader —— 列数依赖 geo.size.width、而宽度又依赖列数，
+    /// 会形成布局反馈循环，导致进入页面后视图无法收敛（表现为卡住且退不出）。
+    private var adaptiveColumns: [GridItem] {
+        [GridItem(.adaptive(minimum: 200, maximum: 320), spacing: 16)]
+    }
+
     var body: some View {
-        // 卡片列数随可用宽度自适应，窄窗口也不会被裁掉。
-        GeometryReader { geo in
-            let columns = Self.columns(forWidth: geo.size.width)
+        VStack(spacing: 0) {
+            header
+            Divider()
 
-            VStack(spacing: 0) {
-                header
-                    .layoutPriority(1)
-                Divider()
+            if let error = appState.ambientSoundService.lastError {
+                playbackErrorBanner(error)
+            }
 
-                if let error = appState.ambientSoundService.lastError {
-                    playbackErrorBanner(error)
+            ScrollView {
+                LazyVGrid(columns: adaptiveColumns, spacing: 16) {
+                    ForEach(builtinSounds) { sound in
+                        SoundCard(
+                            sound: sound,
+                            isPlaying: appState.ambientSoundService.playingIDs.contains(sound.id),
+                            volume: appState.ambientSoundService.volumes[sound.id] ?? 0.5,
+                            onToggle: { appState.ambientSoundService.toggle(sound.id) },
+                            onVolume: { v in appState.ambientSoundService.setVolume(sound.id, volume: v) }
+                        )
+                    }
                 }
+                .padding(16)
 
-                ScrollView {
-                    LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(builtinSounds) { sound in
-                            SoundCard(
+                if !userSounds.isEmpty {
+                    Divider().padding(.vertical, 8)
+                    SectionTitle("我的声源（用户导入）")
+                    LazyVGrid(columns: adaptiveColumns, spacing: 16) {
+                        ForEach(userSounds) { sound in
+                            UserSoundCard(
                                 sound: sound,
                                 isPlaying: appState.ambientSoundService.playingIDs.contains(sound.id),
                                 volume: appState.ambientSoundService.volumes[sound.id] ?? 0.5,
                                 onToggle: { appState.ambientSoundService.toggle(sound.id) },
-                                onVolume: { v in appState.ambientSoundService.setVolume(sound.id, volume: v) }
+                                onVolume: { v in appState.ambientSoundService.setVolume(sound.id, volume: v) },
+                                onRemove: { appState.ambientSoundService.removeUserSound(sound.id) }
                             )
                         }
                     }
-                    .padding(16)
-
-                    if !userSounds.isEmpty {
-                        Divider().padding(.vertical, 8)
-                        SectionTitle("我的声源（用户导入）")
-                        LazyVGrid(columns: columns, spacing: 16) {
-                            ForEach(userSounds) { sound in
-                                UserSoundCard(
-                                    sound: sound,
-                                    isPlaying: appState.ambientSoundService.playingIDs.contains(sound.id),
-                                    volume: appState.ambientSoundService.volumes[sound.id] ?? 0.5,
-                                    onToggle: { appState.ambientSoundService.toggle(sound.id) },
-                                    onVolume: { v in appState.ambientSoundService.setVolume(sound.id, volume: v) },
-                                    onRemove: { appState.ambientSoundService.removeUserSound(sound.id) }
-                                )
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
-                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
                 }
             }
         }
-        .frame(minWidth: 480, minHeight: 380)
+        .frame(minWidth: 420, minHeight: 340)
         .fileImporter(
             isPresented: $showImporter,
             allowedContentTypes: [.audio, .mp3, .wav, .mpeg4Audio],
@@ -64,14 +65,6 @@ struct WhiteNoiseView: View {
         ) { result in
             handleImport(result)
         }
-    }
-
-    /// 按可用宽度决定列数：每列不窄于 220pt，最多 4 列。
-    /// 之前固定 3 列且整体 minWidth 800，窗口缩小时卡片被裁切。
-    private static func columns(forWidth width: CGFloat) -> [GridItem] {
-        let minCardWidth: CGFloat = 220
-        let count = max(1, min(4, Int(width / minCardWidth)))
-        return Array(repeating: GridItem(.flexible(), spacing: 16), count: count)
     }
 
     private func playbackErrorBanner(_ message: String) -> some View {
