@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0082D7FC668F353D74721046 /* nationalDay.png in Resources */ = {isa = PBXBuildFile; fileRef = 7A70C9FC0EA6C065C83A57A8 /* nationalDay.png */; };
 		01278A3F060B847D549DDE83 /* LLMSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F332C2BF2D9E8D571CB00EFA /* LLMSettingsView.swift */; };
 		06E37348180920D3401A9DB1 /* DiaryStatisticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DFF31A424BF91F803292D395 /* DiaryStatisticsView.swift */; };
 		0C98C3911CC3654B9C1E07CD /* FileCryptoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3912FAE33D257AA267412B4 /* FileCryptoService.swift */; };
@@ -19,13 +20,13 @@
 		26E36D156DF354C79863FC60 /* WhiteBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FF0F9399D305DF370C71A6C /* WhiteBoardView.swift */; };
 		2F98FE09BB19688189632973 /* StudyMaterial.swift in Sources */ = {isa = PBXBuildFile; fileRef = D54F87F628B7AE589BEFF23D /* StudyMaterial.swift */; };
 		329452853E950533BAE8A7C3 /* PomodoroTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52DB2C22BCC415B73BF84A48 /* PomodoroTimer.swift */; };
-		348B19165EF94B5FA37081CA /* DiaryEncryptionSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA13B093B94944B785C44FFE /* DiaryEncryptionSettingsView.swift */; };
 		34D9205B28A70BBE00763929 /* FlashCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E16F5008A6E6C57E3DCF9CC0 /* FlashCard.swift */; };
 		36972F90F0E8E74A9A18AD47 /* WrongQuestion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3416A6F06F0A71B9E8C68 /* WrongQuestion.swift */; };
 		3892090038E102693EDA7002 /* MarkdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B1163580FC0527F161967C0 /* MarkdownView.swift */; };
 		38F0C9833BC554FEC874B39C /* LearningAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDECE7F741B10883BAD49248 /* LearningAnalysisService.swift */; };
 		3A67E92D2163F2CB2D2AE96D /* Whiteboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 894FE930FEE63A60AD1A8934 /* Whiteboard.swift */; };
 		3B2018B38460052DF82BF855 /* HistoryArticle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 021AEBBF9174C381BFEEACC8 /* HistoryArticle.swift */; };
+		3DFA229F8021701D4DF68186 /* snowDawn.png in Resources */ = {isa = PBXBuildFile; fileRef = DCDFAD77DB0EB039D7025D6E /* snowDawn.png */; };
 		401FEEFEBD57E1CE1F49D5D8 /* WhiteboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C503288E45F021D992D5259D /* WhiteboardService.swift */; };
 		40D8F5530409BB0A1D42322C /* AlgebraEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50886F601DF21C774F283D54 /* AlgebraEvaluator.swift */; };
 		41B61849E433C92F3630126A /* LLMConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEF8E19044ACFD37E7466B8F /* LLMConfiguration.swift */; };
@@ -52,6 +53,7 @@
 		7293AEE96B617125F76D2670 /* WishService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7CE766764800A24D1EF1446 /* WishService.swift */; };
 		7552F0F047F504FF73B489EF /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD7A7FCD6AE8A9178378E9E6 /* MenuBarContentView.swift */; };
 		78869D9414CB1FFE8E0DA398 /* HabitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86654A145D30D6948855CF39 /* HabitService.swift */; };
+		7A043234D2080231CBB0ACC0 /* auspicious.png in Resources */ = {isa = PBXBuildFile; fileRef = F7565F21759656F7BD89BA32 /* auspicious.png */; };
 		7BBD0FACD5978D7ECF7703FE /* ExamCountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20D77772B153256013321672 /* ExamCountdownView.swift */; };
 		7E21801EB2DB6F679E2C20F0 /* StorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12987FCC65DCD2D306F5CCB3 /* StorageService.swift */; };
 		7E55A9BF32BD91003C73C3D6 /* KeyPointsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92C67150FE8E22E2AEAC4C82 /* KeyPointsView.swift */; };
@@ -78,6 +80,7 @@
 		A83592B1242E65D43DD45C35 /* CreateMaterialView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4575EE9184B750B4B671582 /* CreateMaterialView.swift */; };
 		A84C48636F0867DA16E06229 /* WishModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E0A2D50FCFB61851082B545 /* WishModel.swift */; };
 		A8DC49BD20C525E43FE77C09 /* DuplicateScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83656D0505253324AD314B29 /* DuplicateScanner.swift */; };
+		A91A6E6A959836CE54CE58C0 /* DiaryEncryptionSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A25C3C9E4D8FC5823896C510 /* DiaryEncryptionSettingsView.swift */; };
 		AA896DAFCA3BCD7B8C1FB398 /* Habit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D7073CBB84285BA6FACD1F5 /* Habit.swift */; };
 		AADD190F79B79514A050BD7B /* UserLearningProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 183A64BA18C98E763E093D8C /* UserLearningProfile.swift */; };
 		AF44A4684FCEFA9A9B8455E1 /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = 44E819ACF011BFB1CBCEC366 /* Markdown */; };
@@ -165,6 +168,7 @@
 		73DA60CFB77A276CCCB9BCD1 /* SmartNote.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SmartNote.entitlements; sourceTree = "<group>"; };
 		75B7484EF8E90D3649A6A5FA /* MaterialsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialsListView.swift; sourceTree = "<group>"; };
 		79806AD5018667A8DE0ED3FE /* AnniversaryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryModel.swift; sourceTree = "<group>"; };
+		7A70C9FC0EA6C065C83A57A8 /* nationalDay.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = nationalDay.png; sourceTree = "<group>"; };
 		7B84A92646B9E0330B2CFE8A /* CalculatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatorView.swift; sourceTree = "<group>"; };
 		7F7C84D4C3172F01CA4E7215 /* LearningPreferenceAutoTuner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningPreferenceAutoTuner.swift; sourceTree = "<group>"; };
 		81E7459E7FE5DC39CDD074EA /* LearningProfileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningProfileSettingsView.swift; sourceTree = "<group>"; };
@@ -182,6 +186,7 @@
 		9464589DFE947D8322A0AD6B /* GeometryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeometryModel.swift; sourceTree = "<group>"; };
 		94DD5632A3044E4E7C86E85C /* HistoryArticleDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryArticleDetailView.swift; sourceTree = "<group>"; };
 		A1BF99288F70ED636D3AAB01 /* AIChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatView.swift; sourceTree = "<group>"; };
+		A25C3C9E4D8FC5823896C510 /* DiaryEncryptionSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryEncryptionSettingsView.swift; sourceTree = "<group>"; };
 		AA0863EA110BC965E52DEF48 /* DiaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryService.swift; sourceTree = "<group>"; };
 		AE6B781C89797E2A26CB86A2 /* TodoListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoListView.swift; sourceTree = "<group>"; };
 		B3912FAE33D257AA267412B4 /* FileCryptoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCryptoService.swift; sourceTree = "<group>"; };
@@ -209,6 +214,7 @@
 		D54F87F628B7AE589BEFF23D /* StudyMaterial.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyMaterial.swift; sourceTree = "<group>"; };
 		D5A56F3D9C89D292DF37A1E7 /* SmartNoteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartNoteApp.swift; sourceTree = "<group>"; };
 		DB2A1ABC3F53C6BD569E7B9A /* FlashCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlashCardView.swift; sourceTree = "<group>"; };
+		DCDFAD77DB0EB039D7025D6E /* snowDawn.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = snowDawn.png; sourceTree = "<group>"; };
 		DD7A7FCD6AE8A9178378E9E6 /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		DFF31A424BF91F803292D395 /* DiaryStatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryStatisticsView.swift; sourceTree = "<group>"; };
 		E16F5008A6E6C57E3DCF9CC0 /* FlashCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlashCard.swift; sourceTree = "<group>"; };
@@ -221,9 +227,9 @@
 		F332C2BF2D9E8D571CB00EFA /* LLMSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMSettingsView.swift; sourceTree = "<group>"; };
 		F3552CF8976544956A158CCD /* LLMService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMService.swift; sourceTree = "<group>"; };
 		F4575EE9184B750B4B671582 /* CreateMaterialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateMaterialView.swift; sourceTree = "<group>"; };
+		F7565F21759656F7BD89BA32 /* auspicious.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = auspicious.png; sourceTree = "<group>"; };
 		F77F9236E0D091628720FB7A /* TodoStatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoStatisticsView.swift; sourceTree = "<group>"; };
 		F8D8BD98EC7FF3BD5FD28E14 /* DiaryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryListView.swift; sourceTree = "<group>"; };
-		FA13B093B94944B785C44FFE /* DiaryEncryptionSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryEncryptionSettingsView.swift; sourceTree = "<group>"; };
 		FB48612064787A1A1154B175 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		FCE4AC128765C446DF922DCB /* P2PCreateIdentityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PCreateIdentityView.swift; sourceTree = "<group>"; };
 		FD1E5B0EE3EA703F874316BC /* MaterialDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialDetailView.swift; sourceTree = "<group>"; };
@@ -281,6 +287,7 @@
 				305C107E745BD7BD5FF36CB1 /* history_catalog.json */,
 				CD313CBF3D39729DE87A2BD7 /* Info.plist */,
 				73DA60CFB77A276CCCB9BCD1 /* SmartNote.entitlements */,
+				9759BF41663F3663F72948BD /* ThemeBackgrounds */,
 			);
 			name = Resources;
 			path = SmartNote/Resources;
@@ -329,6 +336,16 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		9759BF41663F3663F72948BD /* ThemeBackgrounds */ = {
+			isa = PBXGroup;
+			children = (
+				F7565F21759656F7BD89BA32 /* auspicious.png */,
+				7A70C9FC0EA6C065C83A57A8 /* nationalDay.png */,
+				DCDFAD77DB0EB039D7025D6E /* snowDawn.png */,
+			);
+			path = ThemeBackgrounds;
+			sourceTree = "<group>";
+		};
 		990A293B192AAFEA630CDDEE /* App */ = {
 			isa = PBXGroup;
 			children = (
@@ -355,10 +372,8 @@
 				5B8C1B44A2A61CA79BD48879 /* ContentView.swift */,
 				F4575EE9184B750B4B671582 /* CreateMaterialView.swift */,
 				F26CA084D90A23CA66459BF9 /* DiaryEditorView.swift */,
+				A25C3C9E4D8FC5823896C510 /* DiaryEncryptionSettingsView.swift */,
 				F8D8BD98EC7FF3BD5FD28E14 /* DiaryListView.swift */,
-				FA13B093B94944B785C44FFE /* DiaryEncryptionSettingsView.swift */,
-				94DD5632A3044E4E7C86E85C /* HistoryArticleDetailView.swift */,
-				28DD910101A83ADA7EC1490E /* HistoryHomeView.swift */,
 				DFF31A424BF91F803292D395 /* DiaryStatisticsView.swift */,
 				84839B0FC350C553762798B0 /* DuplicateScannerView.swift */,
 				20D77772B153256013321672 /* ExamCountdownView.swift */,
@@ -366,6 +381,8 @@
 				270C3E3C779EA0B469949129 /* FileImportView.swift */,
 				DB2A1ABC3F53C6BD569E7B9A /* FlashCardView.swift */,
 				6536CFEF783784FA9E9B460F /* HabitTrackerView.swift */,
+				94DD5632A3044E4E7C86E85C /* HistoryArticleDetailView.swift */,
+				28DD910101A83ADA7EC1490E /* HistoryHomeView.swift */,
 				92C67150FE8E22E2AEAC4C82 /* KeyPointsView.swift */,
 				81E7459E7FE5DC39CDD074EA /* LearningProfileSettingsView.swift */,
 				F332C2BF2D9E8D571CB00EFA /* LLMSettingsView.swift */,
@@ -522,7 +539,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				65F6A70AAF8886E06BCA9D7C /* Assets.xcassets in Resources */,
+				7A043234D2080231CBB0ACC0 /* auspicious.png in Resources */,
 				9AD7563606D8B6A87D2C3167 /* history_catalog.json in Resources */,
+				0082D7FC668F353D74721046 /* nationalDay.png in Resources */,
+				3DFA229F8021701D4DF68186 /* snowDawn.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -537,13 +557,11 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/ciallo",
 			);
 			name = "Copy Ciallo Web Files";
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(TARGET_BUILD_DIR)/$(CONTENTS_FOLDER_PATH)/Resources/ciallo",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -575,12 +593,12 @@
 				9212FED957EB7BE89CB44D96 /* Diary.swift in Sources */,
 				EE7E152B7390070BBD45661A /* DiaryEditorView.swift in Sources */,
 				268DDF1724C0158B44778F82 /* DiaryEncryptionService.swift in Sources */,
+				A91A6E6A959836CE54CE58C0 /* DiaryEncryptionSettingsView.swift in Sources */,
 				66B59954535C5BF449686A57 /* DiaryListView.swift in Sources */,
 				89E322B839246189D7DC2772 /* DiaryService.swift in Sources */,
 				06E37348180920D3401A9DB1 /* DiaryStatisticsView.swift in Sources */,
 				A8DC49BD20C525E43FE77C09 /* DuplicateScanner.swift in Sources */,
 				137C3BB73D6E4E4BBFCBFD50 /* DuplicateScannerView.swift in Sources */,
-				348B19165EF94B5FA37081CA /* DiaryEncryptionSettingsView.swift in Sources */,
 				D3AF9A33FA1E726319056CEC /* ExamCountdown.swift in Sources */,
 				7BBD0FACD5978D7ECF7703FE /* ExamCountdownView.swift in Sources */,
 				0C98C3911CC3654B9C1E07CD /* FileCryptoService.swift in Sources */,
@@ -730,20 +748,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				AUTOMATION_APPLE_EVENTS = NO;
 				CODE_SIGN_ENTITLEMENTS = SmartNote/Resources/SmartNote.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 100;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -751,12 +763,6 @@
 				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.smartnote;
 				PRODUCT_NAME = SmartNote;
-				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
-				RUNTIME_EXCEPTION_ALLOW_JIT = YES;
-				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
-				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
-				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
-				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -765,20 +771,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				AUTOMATION_APPLE_EVENTS = NO;
 				CODE_SIGN_ENTITLEMENTS = SmartNote/Resources/SmartNote.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 100;
-				ENABLE_HARDENED_RUNTIME = YES;
-				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
-				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
-				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SmartNote/Resources/Info.plist;
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -786,12 +786,6 @@
 				MARKETING_VERSION = 2.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.smartnote;
 				PRODUCT_NAME = SmartNote;
-				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
-				RUNTIME_EXCEPTION_ALLOW_JIT = YES;
-				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;
-				RUNTIME_EXCEPTION_DEBUGGING_TOOL = NO;
-				RUNTIME_EXCEPTION_DISABLE_EXECUTABLE_PAGE_PROTECTION = NO;
-				RUNTIME_EXCEPTION_DISABLE_LIBRARY_VALIDATION = NO;
 				SDKROOT = macosx;
 			};
 			name = Release;
