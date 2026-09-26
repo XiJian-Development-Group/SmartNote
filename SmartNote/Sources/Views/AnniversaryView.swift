@@ -36,7 +36,7 @@ struct AnniversaryView: View {
                 .listStyle(.inset)
             }
         }
-        .frame(minWidth: 720, minHeight: 480)
+        .frame(minWidth: 520, minHeight: 400)
         .sheet(isPresented: $showAddSheet) {
             AnniversaryEditorSheet(
                 existing: editingAnniversaryID.flatMap { id in

@@ -392,7 +392,7 @@ struct CleanupConfirmationView: View {
             }
         }
         .padding(24)
-        .frame(minWidth: 520, minHeight: 360)
+        .frame(minWidth: 420, minHeight: 320)
         .interactiveDismissDisabled(isCleaning)
     }
 }

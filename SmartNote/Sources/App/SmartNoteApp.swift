@@ -25,7 +25,6 @@ struct SmartNoteApp: App {
                 .environmentObject(appState)
                 .environment(\.appTheme, appState.theme)
                 .appTint(appState.theme.tint)
-                .frame(minWidth: 900, minHeight: 600)
                 .preferredColorScheme(appState.colorScheme)
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .background {
@@ -36,6 +35,7 @@ struct SmartNoteApp: App {
         }
         .windowStyle(.automatic)
         .windowResizability(.contentMinSize)
+        .defaultSize(width: 1280, height: 820)
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("导入资料") {

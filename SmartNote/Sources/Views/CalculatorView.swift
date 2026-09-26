@@ -29,7 +29,7 @@ struct CalculatorView: View {
                 programmerPad
             }
         }
-        .frame(minWidth: 520, minHeight: 580)
+        .frame(minWidth: 380, minHeight: 420)
     }
 
     // MARK: - 顶部

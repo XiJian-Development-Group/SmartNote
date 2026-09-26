@@ -7,51 +7,56 @@ struct WhiteNoiseView: View {
     @State private var showImporter: Bool = false
     @State private var importError: String?
 
-    private let columns: [GridItem] = [
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16)
-    ]
-
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            Divider()
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: 16) {
-                    ForEach(builtinSounds) { sound in
-                        SoundCard(
-                            sound: sound,
-                            isPlaying: appState.ambientSoundService.playingIDs.contains(sound.id),
-                            volume: appState.ambientSoundService.volumes[sound.id] ?? 0.5,
-                            onToggle: { appState.ambientSoundService.toggle(sound.id) },
-                            onVolume: { v in appState.ambientSoundService.setVolume(sound.id, volume: v) }
-                        )
-                    }
-                }
-                .padding(16)
+        // 卡片列数随可用宽度自适应，窄窗口也不会被裁掉。
+        GeometryReader { geo in
+            let columns = Self.columns(forWidth: geo.size.width)
 
-                if !userSounds.isEmpty {
-                    Divider().padding(.vertical, 8)
-                    SectionTitle("我的声源（用户导入）")
+            VStack(spacing: 0) {
+                header
+                    .layoutPriority(1)
+                Divider()
+
+                if let error = appState.ambientSoundService.lastError {
+                    playbackErrorBanner(error)
+                }
+
+                ScrollView {
                     LazyVGrid(columns: columns, spacing: 16) {
-                        ForEach(userSounds) { sound in
-                            UserSoundCard(
+                        ForEach(builtinSounds) { sound in
+                            SoundCard(
                                 sound: sound,
                                 isPlaying: appState.ambientSoundService.playingIDs.contains(sound.id),
                                 volume: appState.ambientSoundService.volumes[sound.id] ?? 0.5,
                                 onToggle: { appState.ambientSoundService.toggle(sound.id) },
-                                onVolume: { v in appState.ambientSoundService.setVolume(sound.id, volume: v) },
-                                onRemove: { appState.ambientSoundService.removeUserSound(sound.id) }
+                                onVolume: { v in appState.ambientSoundService.setVolume(sound.id, volume: v) }
                             )
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
+                    .padding(16)
+
+                    if !userSounds.isEmpty {
+                        Divider().padding(.vertical, 8)
+                        SectionTitle("我的声源（用户导入）")
+                        LazyVGrid(columns: columns, spacing: 16) {
+                            ForEach(userSounds) { sound in
+                                UserSoundCard(
+                                    sound: sound,
+                                    isPlaying: appState.ambientSoundService.playingIDs.contains(sound.id),
+                                    volume: appState.ambientSoundService.volumes[sound.id] ?? 0.5,
+                                    onToggle: { appState.ambientSoundService.toggle(sound.id) },
+                                    onVolume: { v in appState.ambientSoundService.setVolume(sound.id, volume: v) },
+                                    onRemove: { appState.ambientSoundService.removeUserSound(sound.id) }
+                                )
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                    }
                 }
             }
         }
-        .frame(minWidth: 800, minHeight: 540)
+        .frame(minWidth: 480, minHeight: 380)
         .fileImporter(
             isPresented: $showImporter,
             allowedContentTypes: [.audio, .mp3, .wav, .mpeg4Audio],
@@ -59,6 +64,31 @@ struct WhiteNoiseView: View {
         ) { result in
             handleImport(result)
         }
+    }
+
+    /// 按可用宽度决定列数：每列不窄于 220pt，最多 4 列。
+    /// 之前固定 3 列且整体 minWidth 800，窗口缩小时卡片被裁切。
+    private static func columns(forWidth width: CGFloat) -> [GridItem] {
+        let minCardWidth: CGFloat = 220
+        let count = max(1, min(4, Int(width / minCardWidth)))
+        return Array(repeating: GridItem(.flexible(), spacing: 16), count: count)
+    }
+
+    private func playbackErrorBanner(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(.orange)
+            Text(message)
+                .font(.caption)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            Button("关闭") { appState.ambientSoundService.clearError() }
+                .buttonStyle(.borderless)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.orange.opacity(0.12))
     }
 
     private var builtinSounds: [AmbientSoundService.Sound] {

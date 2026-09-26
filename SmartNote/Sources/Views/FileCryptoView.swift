@@ -62,7 +62,7 @@ struct FileCryptoView: View {
                     .frame(maxWidth: .infinity)
             }
         }
-        .frame(minWidth: 900, minHeight: 540)
+        .frame(minWidth: 560, minHeight: 420)
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             refreshKeychainAccounts()
