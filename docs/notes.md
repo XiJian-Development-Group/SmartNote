@@ -299,6 +299,13 @@
 | `9931d4b` | fix(ui): 修复窗口缩放时侧栏变形与内容裁切 | SmartNoteApp.swift, ContentView.swift, WhiteNoiseView.swift 等 |
 | `5058fa1` | fix(ambient): 移除白噪音页面的布局反馈循环 | WhiteNoiseView.swift |
 | `9369db8` | fix(ui): 祝福条改用 safeAreaInset 并压平外观 | BlessingService.swift, ContentView.swift |
+| `2bb9375` | fix(ui): 侧栏可滚到底，祝福条下移并固定位置 | ContentView.swift, BlessingService.swift |
+| `e9528b7` | chore: 同步 Xcode 自动写入的工程设置 | project.pbxproj, entitlements |
+| `c0c76f0` | docs: 恢复 README 原结构，仅补充新功能说明 | README.md |
+| `fd315dc` | feat(theme): 三个节庆主题各绑定一张内置背景图 | AppTheme.swift, StorageService.swift, ThemeBackgrounds |
+| `ba4b26f` | feat(theme): 节庆主题锁定背景并保护内置素材 | AppState.swift, SettingsView.swift |
+| `a6cd827` | fix(blessing): 祝福条移到底部并避让侧栏 | ContentView.swift, BlessingService.swift |
+| `aa7301a` | chore: 注册 ThemeBackgrounds 资源目录 | project.pbxproj |
 
 发布更新日志与 B 站发布稿位于 `~/Desktop/Update200.md` 和 `~/Desktop/Pub.md`，不属于仓库内容。以上四个 commit 均为本地提交，未 push。
 
@@ -541,6 +548,56 @@ xcodebuild -project SmartNote.xcodeproj -scheme SmartNote \
 | 音频链路按生产代码复测 | forest 声源 529,200 帧 / 30 次鸟鸣生成正常，`scheduleBuffer` 与 `play()` 成功，`isPlaying=true` |
 
 **需要写清的判断**：白噪音「播放点不了」不是音频缺陷，而是上一轮布局缺陷导致页面无响应。音频服务本身此前已修好（`connect` 格式），本轮复测确认仍然正常。
+
+---
+
+## 第 21 章 主题背景绑定、锁定与自动恢复
+
+### 主题结构调整
+
+- `AppSettings.ThemeID` 新增 `snowDawn`；`AppTheme` 补上「雪山晨曦」（冷调靛蓝 + 晨光金），与「国庆红」「祥云金」构成**三个节庆主题**，经典主题保持无背景绑定。
+- `AppTheme.all` 提供界面展示顺序；`AppTheme.bundledBackgroundName` 声明该主题强制使用的素材名，经典主题返回 `nil`（留空或用用户自己的图）。
+- 三张国庆主题图放入 `SmartNote/Resources/ThemeBackgrounds/`，随应用打包。XcodeGen 将其拷到 `Contents/Resources` 根目录，因此 `StorageService.bundledBackgroundURL` 先按根目录查找、再回退到子目录，避免因打包路径变化导致找不到。
+
+### 锁定行为
+
+- `setTheme` 触发 `applyThemeBackgroundLock`：节庆主题强制启用背景、关闭随机、把指定与当前图都指向自带素材，并确保该素材在图片库中。
+- 切回经典主题时解除锁定，恢复用户此前的随机与指定设置。
+- 锁定期间 `addBackgroundImage` / `selectBackgroundImage` / `setBackgroundImageRandomEnabled` / `pickRandomBackgroundImage` 全部提前返回，界面对应控件同步禁用。
+- `pickRandomBackgroundImage` 改为只在用户图片中挑选，不会随机到内置素材。
+
+### 内置素材保护与自动恢复
+
+- `StorageService.isBundledBackground` 标记受保护素材；`removeBackgroundImage` 与 `clearUserBackgroundLibrary` 都跳过它们，「清空我的图片」只处理用户导入的图。
+- `restoreBundledBackgroundsIfMissing` 在启动时校验，被删除的素材从应用包重新拷回。`syncBackgroundImageLibrary` 保证内置素材始终出现在图片库中，不会被磁盘清理误伤。
+- 恢复失败时写入 `AppState.restorationFailedBundledImage`，设置页显示提示而不是静默失败。
+
+### 修复：锁定结论未落盘
+
+`prepareBackgroundImage` 修改了 `appSettings` 的多项属性（背景启用、随机开关、指定图、当前图、图片库），但**没有调用 `saveSettings`**，因此每次启动都从旧值重新推导，主题锁定表现得时有时无。已在函数末尾统一落盘。这个缺陷是靠「启动后读取真实 settings.json 复核」发现的——内存状态正确但磁盘值没变，纯看代码路径不容易察觉。
+
+### 祝福条位置与避让
+
+- 从顶部安全区改为**底部安全区**，与窗口底部的距离固定，不随窗口尺寸变化。
+- 左侧按侧栏实测宽度让开：用 `PreferenceKey` 采集 `NavigationSplitView` 侧栏宽度，`.padding(.leading, isSidebarVisible ? sidebarWidth : 0)`；侧栏隐藏时（`columnVisibility == .detailOnly`）自动铺满整个底部。
+- 高度固定 38pt，标题与正文各 `lineLimit(1)` + 截断，文案长短或窗口宽窄都不改变高度，不会把内容顶出可视区；文字区 `layoutPriority(1)`，保证「换一句」按钮不被挤出。
+
+### 验证
+
+| 项目 | 结果 |
+|------|------|
+| 主题逻辑回归（独立程序） | 43 项断言全部通过 |
+| 归档内含三张主题背景图 | 通过（`Contents/Resources/`） |
+| 空数据目录首次启动 | 自动恢复 3 张素材 |
+| 手动删除 2 张后重启 | 2 张自动补回 |
+| 真实数据启动后 settings.json | `themeID=nationalDay` 时锁定项与当前图均为 `nationalDay.png`，随机已关闭（落盘生效） |
+| Release 归档 | 通过 |
+
+### README 结构调整的教训
+
+`a871ac3` 曾把 README 从 20 章的逐功能手册整体改写为产品定位式短文（删 393 行、增 98 行），超出「补充功能说明」的范围，属于越界。`c0c76f0` 已恢复原结构，改为纯增量：0 行删除、51 行新增，只在目录追加两章，并在 5.3 许愿、11 白板、15 外观三处做定点补充。
+
+**规则**：README 与 docs 可以在既有结构内增补和修改功能描述，但不得调整章节顺序、编号或整体体例。新增功能优先追加到末尾章节以免重排既有编号。
 
 ### 历史内容来源审计
 
