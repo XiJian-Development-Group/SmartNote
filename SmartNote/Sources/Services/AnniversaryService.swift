@@ -156,18 +156,25 @@ final class AnniversaryService: ObservableObject {
         today: Date,
         authorizationStatus status: NotificationAuthorizationStatus
     ) async -> NotificationOperationResult {
+        let occurrence = item.nextOccurrence(after: today)
         // 标题和正文都不包含纪念日名称或备注。userInfo 只放 ID 和发生日，
         // 用户点击后由 App 查询详情；当前工程没有通知点击路由，因此不把备注带出。
+        // 正文只给出相距天数：既让通知有信息量，也不泄露纪念日名称。
+        let daysUntil = item.daysUntilNextOccurrence(reference: today)
         let content = NotificationService.makePrivateContent(
             title: "纪念日提醒",
-            body: "有一项纪念日提醒",
+            body: Self.reminderBody(daysUntil: daysUntil),
             userInfo: [
                 "kind": "anniversary",
                 "anniversaryID": item.id.uuidString,
-                "occurrenceDate": Anniversary.key(for: item.nextOccurrence(after: today))
+                "occurrenceDate": Anniversary.key(for: occurrence)
             ]
         )
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let trigger = Self.makeTrigger(
+            occurrence: occurrence,
+            leadTimeDays: item.leadTimeDays,
+            now: today
+        )
         let identifier = NotificationIdentifiers.anniversary(item.id)
         return await notification.submitNotification(
             identifier: identifier,
@@ -176,5 +183,44 @@ final class AnniversaryService: ObservableObject {
             removeExisting: true,
             authorizationStatus: status
         )
+    }
+
+    /// 提醒时间 = 发生日往前推 leadTimeDays，当天的 09:00。
+    /// 已经到点（或已过）时立即投递，否则排到那一刻。
+    ///
+    /// 修复前所有命中项都用 `timeInterval: 1`，用户点一次「检查通知」，
+    /// 3 天后、5 天后、下周的纪念日会在同一秒一起弹出，
+    /// 提前量 `leadTimeDays` 形同虚设。
+    static func makeTrigger(
+        occurrence: Date,
+        leadTimeDays: Int,
+        now: Date,
+        calendar: Calendar = .current
+    ) -> UNNotificationTrigger {
+        let days = max(0, leadTimeDays)
+        let day = calendar.startOfDay(for: occurrence)
+        guard let reminderDay = calendar.date(byAdding: .day, value: -days, to: day) else {
+            return UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        }
+        var components = calendar.dateComponents([.year, .month, .day], from: reminderDay)
+        components.hour = Self.reminderHour
+        components.minute = 0
+
+        guard let fireDate = calendar.date(from: components), fireDate > now else {
+            return UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        }
+        return UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+    }
+
+    /// 提醒投递时刻：当天 09:00。早于此点已过则立即投递。
+    static let reminderHour: Int = 9
+
+    static func reminderBody(daysUntil: Int) -> String {
+        switch daysUntil {
+        case ..<0: return "有一项纪念日提醒"
+        case 0: return "今天有一项纪念日"
+        case 1: return "明天有一项纪念日"
+        default: return "\(daysUntil) 天后有一项纪念日"
+        }
     }
 }
