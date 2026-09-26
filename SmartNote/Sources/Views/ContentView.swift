@@ -6,14 +6,27 @@ struct ContentView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.appTheme) private var appTheme
     @State private var integrityIssues: [StorageIntegrityIssue] = StorageService.integrityIssues
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    /// 侧栏实测宽度。底部祝福条据此左对齐，避免压住侧栏项目。
+    @State private var sidebarWidth: CGFloat = 0
+
+    private var isSidebarVisible: Bool { columnVisibility != .detailOnly }
 
     var body: some View {
         // NavigationSplitView 必须是根视图。
         // 之前它被包在 ZStack 里，split view 拿不到窗口的正确安全区，
         // 侧栏 List 底部无法滚到底，最后几项（计算器、重复清理）看不到。
         // 背景用 .background 承载：它按视图尺寸绘制且不参与布局，不会挤压 split view。
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             SidebarView()
+                .background(
+                    GeometryReader { geo in
+                        Color.clear.preference(
+                            key: SidebarWidthKey.self,
+                            value: geo.size.width
+                        )
+                    }
+                )
         } detail: {
             DetailView()
         }
@@ -24,12 +37,17 @@ struct ContentView: View {
                 BackgroundImageView()
             }
         }
-        // 祝福条挂在 split view 的顶部安全区：位置固定在窗口顶部下方，
-        // 不随窗口尺寸变化而偏移。
-        .safeAreaInset(edge: .top, spacing: 0) {
+        // 祝福条挂在底部安全区：距窗口底部的距离固定，不随窗口尺寸变化。
+        // 左侧按侧栏实测宽度让开，侧栏隐藏时自动铺满整个底部。
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             if appState.shouldShowBlessingBar {
                 FestivalBlessingBar(service: appState.blessingService)
+                    .padding(.leading, isSidebarVisible ? sidebarWidth : 0)
+                    .animation(.easeInOut(duration: 0.18), value: sidebarWidth)
             }
+        }
+        .onPreferenceChange(SidebarWidthKey.self) { newValue in
+            if abs(newValue - sidebarWidth) > 0.5 { sidebarWidth = newValue }
         }
         .overlay(alignment: .top) {
             if !integrityIssues.isEmpty {
@@ -128,6 +146,15 @@ struct BackgroundImageView: View {
                 .background(.ultraThinMaterial)
                 .blur(radius: settings.backgroundBlurRadius)
         }
+    }
+}
+
+/// 侧栏实测宽度，用于底部祝福条左对齐。
+private struct SidebarWidthKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        let next = nextValue()
+        if next > 0 { value = next }
     }
 }
 

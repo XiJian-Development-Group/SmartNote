@@ -83,25 +83,28 @@ struct FestivalBlessingBar: View {
     @ObservedObject var service: BlessingService
 
     var body: some View {
-        // 不用 ThemeSurface：它自带 16pt 内边距与阴影，套在窄条上会显得臃肿，
-        // 再叠加外层 padding 后顶部留白高达 32pt。这里改为单层扁平板。
+        // 固定高度：无论文案长短、窗口宽窄，条的高度都不变，
+        // 因此不会把内容顶出可视区。标题与正文各限一行并截断。
         HStack(spacing: 10) {
             Image(systemName: service.currentBlessing.symbol)
                 .font(.callout)
                 .foregroundStyle(theme.accentSecondary)
-                .frame(width: 26, height: 26)
+                .frame(width: 24, height: 24)
                 .background(theme.accent.opacity(0.14))
                 .clipShape(Circle())
 
+            // layoutPriority 让文字先占空间，按钮始终可见不被挤出
             VStack(alignment: .leading, spacing: 1) {
                 HStack(spacing: 6) {
                     Text(service.isNationalDayPeriod ? "国庆祝福" : "今日祝福")
                         .font(.caption2.weight(.semibold))
                         .foregroundStyle(theme.accentSecondary)
+                        .fixedSize()
                     Text(service.currentBlessing.title)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(theme.primaryText)
                         .lineLimit(1)
+                        .truncationMode(.tail)
                 }
                 Text(service.currentBlessing.message)
                     .font(.caption2)
@@ -110,6 +113,7 @@ struct FestivalBlessingBar: View {
                     .truncationMode(.tail)
                     .help(service.currentBlessing.message)
             }
+            .layoutPriority(1)
 
             Spacer(minLength: 8)
 
@@ -121,19 +125,19 @@ struct FestivalBlessingBar: View {
             }
             .buttonStyle(.borderless)
             .foregroundStyle(theme.accent)
+            .fixedSize()
             .help("换一句")
         }
+        .frame(height: 38)
         .padding(.horizontal, 12)
-        .padding(.vertical, 7)
         .background(theme.surface, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .stroke(theme.border, lineWidth: 1)
         )
-        // 固定在窗口顶部安全区下方：左侧留 12pt 与侧栏文字对齐，
-        // 顶部留 14pt 使其完全落在标题栏之下，不随窗口尺寸变化而偏移。
+        // 距窗口底部 10pt，左右各 12pt；高度固定，因此与底边的距离恒定。
         .padding(.horizontal, 12)
-        .padding(.top, 14)
-        .padding(.bottom, 6)
+        .padding(.bottom, 10)
+        .padding(.top, 4)
     }
 }
