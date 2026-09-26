@@ -12,8 +12,10 @@ struct ContentView: View {
             ThemeBackdrop(theme: appTheme)
 
             VStack(spacing: 0) {
-                if appTheme.isFestive || appState.blessingService.isNationalDayPeriod {
+                if appState.shouldShowBlessingBar {
                     FestivalBlessingBar(service: appState.blessingService)
+                        // 祝福条与窗口顶部留出间距，避免贴着标题栏
+                        .padding(.top, 8)
                 }
 
                 ZStack {
@@ -25,7 +27,6 @@ struct ContentView: View {
                         DetailView()
                     }
                     .navigationSplitViewStyle(.balanced)
-                    .frame(minWidth: 900, minHeight: 600)
                     .background(Color.clear)
                     .overlay(alignment: .top) {
                         if !integrityIssues.isEmpty {
@@ -135,6 +136,9 @@ struct SidebarView: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
+        // 侧栏项目较多（5 组 27 项）。List 默认会滚动，
+        // 但导航标题与分组头在窗口变矮时会把尾部项目挤出可视区，
+        // 因此显式给一个可压缩的最小高度，避免与窗口下限冲突后无法滚动。
         List(selection: $appState.selectedTab) {
             Section("资料库") {
                 NavigationLink(value: 0) {
@@ -260,7 +264,10 @@ struct SidebarView: View {
             }
         }
         .listStyle(.sidebar)
-        .frame(minWidth: 200)
+        // 只约束最小宽度，不设固定高度；高度由 NavigationSplitView 分配。
+        // 之前 minWidth 200 叠加各详情页的 minWidth（如白噪音 800），
+        // 会把窗口下限顶到 900 以上，导致缩放时侧栏被挤压变形。
+        .frame(minWidth: 190)
         .navigationTitle("智学笔记")
         .background(Color.clear)
     }

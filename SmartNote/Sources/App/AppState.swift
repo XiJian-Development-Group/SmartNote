@@ -37,6 +37,14 @@ class AppState: ObservableObject {
     /// AppSettings 是嵌套 ObservableObject；单独发布外观状态，确保主题/明暗切换立即刷新所有 Scene。
     @Published private(set) var activeThemeID: AppSettings.ThemeID = .classic
     @Published private(set) var activeDarkModePreference: AppSettings.DarkModePreference = .system
+    /// BlessingService 同样是嵌套 ObservableObject。它的 `isNationalDayPeriod` 直接被
+    /// ContentView 的 body 读取时不会触发重算（视图只 observe AppState），
+    /// 表现为国庆期间祝福条时有时无。这里由 AppState 转发为 @Published 快照。
+    @Published private(set) var isNationalDayPeriod: Bool = false
+    /// 祝福条是否应显示：节庆主题，或处于国庆期间。
+    var shouldShowBlessingBar: Bool {
+        theme.isFestive || isNationalDayPeriod
+    }
     
     var colorScheme: ColorScheme? {
         // 节庆主题自带对比度方案；经典主题继续尊重“外观”中的明暗选择。
@@ -100,6 +108,7 @@ class AppState: ObservableObject {
         // initialize update service with configured repo
         self.updateService = UpdateService(owner: settings.updateRepoOwner, repo: settings.updateRepoName)
         self.blessingService = BlessingService()
+        self.isNationalDayPeriod = blessingService.isNationalDayPeriod
         self.historyService = HistoryService(storageService: probeStorage)
         self.appSettings = settings
         self.activeThemeID = settings.themeID
@@ -321,6 +330,7 @@ class AppState: ObservableObject {
         materials = storageService.loadMaterials()
         reviewPlans = storageService.loadReviewPlans()
         historyService.reloadProgress()
+        isNationalDayPeriod = blessingService.isNationalDayPeriod
         if !hasLoadedExamCountdowns {
             isRestoringExamCountdowns = true
             // 优先读独立文件；旧版本数据仍在 settings.json 时做一次性迁移
