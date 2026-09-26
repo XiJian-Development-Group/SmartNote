@@ -7,6 +7,12 @@ import UniformTypeIdentifiers
 ///         反向把 .snenc 解密回原文件。密码按"文件名 + 子路径"维度存到 Keychain。
 /// - 设计原则：不引第三方依赖；批量任务用 TaskGroup 并发；UI 实时显示进度；
 ///             不在 UI 中输出开发笔记 / "按您说的" 等冗余文字。
+/// - 当前状态：**临时关闭**（见 docs/notes.md 第 25 章）。
+///         侧栏 tab 22 与 `OpenFileCryptoIntent` 均已切到 `FileCryptoUnavailableView`，
+///         本视图因此暂时没有调用方。代码与 `FileCryptoService` 完整保留，
+///         修复后把 `DetailView` 的 `case 22` 换回 `FileCryptoView()` 即可恢复。
+///         `FileCryptoService` 与 P2P 用的 `P2PCryptoService` 是两套独立实现，
+///         关闭本功能不影响 P2P 聊天加密。
 struct FileCryptoView: View {
     @EnvironmentObject var appState: AppState
 

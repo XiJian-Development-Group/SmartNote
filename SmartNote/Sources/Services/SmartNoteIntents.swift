@@ -19,7 +19,8 @@ struct OpenPageIntent: AppIntent {
     @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let pageName = page.displayName
-        // 许愿与白板不走侧栏 tab：前者是独立窗口，后者当前未开放。
+        // 许愿不走侧栏 tab（独立窗口）；白板与文件加密当前未开放，
+        // 直接跳过去只会停在说明页，却在对话里回答「已打开」，属于报错状态。
         switch page {
         case .wish:
             SharedAppStateProxy.shared.requestWishWindow()
@@ -27,6 +28,8 @@ struct OpenPageIntent: AppIntent {
             return .result(dialog: "已打开\(pageName)")
         case .whiteboard:
             return .result(dialog: "白板功能维护中，暂时无法打开。")
+        case .fileCrypto:
+            return .result(dialog: "文件加密功能临时关闭，暂时无法打开。已加密的文件不受影响。")
         default:
             SharedAppStateProxy.shared.selectedTab = page.tabIndex
             NSApp.activate(ignoringOtherApps: true)
@@ -76,13 +79,16 @@ struct OpenWhiteboardIntent: AppIntent {
         .result(dialog: "白板功能维护中，暂时无法打开。")
     }
 }
+/// 文件加密当前临时关闭（见 docs/notes.md 第 25 章）。
+/// 与白板同样处理：不再切 tab，也不谎报「已打开」。
+/// 已加密的文件与密码都不受影响，只是暂时不能新建加密/解密操作。
 struct OpenFileCryptoIntent: AppIntent {
     static var title: LocalizedStringResource = "打开文件加密"
-    static var openAppWhenRun: Bool = true
+    static var description = IntentDescription("文件加密功能临时关闭，暂时无法打开。")
+    /// 不启动应用：打开它也没有可用的页面，只回报真实状态。
+    static var openAppWhenRun: Bool = false
     @MainActor func perform() async throws -> some IntentResult & ProvidesDialog {
-        SharedAppStateProxy.shared.selectedTab = 22
-        NSApp.activate(ignoringOtherApps: true)
-        return .result(dialog: "已打开文件加密")
+        .result(dialog: "文件加密功能临时关闭，暂时无法打开。已加密的文件不受影响。")
     }
 }
 /// 许愿在独立全屏窗口中（`Window(id: "wish-fullscreen")`），不再是侧栏详情页，

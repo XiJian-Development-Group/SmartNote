@@ -650,3 +650,42 @@ e2c94ab fix(history): 修正来源链接与数字口径
 ### README 维护规则
 
 README 与 docs 可以在既有结构内增补和修改功能描述，但**不得调整章节顺序、编号或整体体例**。新增功能优先追加到末尾章节以免重排既有编号。
+---
+
+## 25. 文件加密临时关闭
+
+### 决定
+
+按用户决定，**文件加密功能临时关闭**，后续再修复。关闭只动入口，不动实现。
+
+### 改了什么
+
+| 位置 | 改动 |
+|------|------|
+| `ContentView` 侧栏 | `NavigationLink(value: 22)` 保持可点击，**没有**加 `.disabled(true)` |
+| `DetailView` `case 22` | 由 `FileCryptoView()` 改为 `FileCryptoUnavailableView()` |
+| `OpenFileCryptoIntent` | `openAppWhenRun = false`，改为如实回报「文件加密功能临时关闭，暂时无法打开。已加密的文件不受影响。」 |
+| `OpenPageIntent` | 新增 `.fileCrypto` 分支，同样如实回报，不再切 tab |
+
+入口保持可点击而不是置灰，理由与白板一致（见第 9 章、U-4）：`.disabled(true)` 的控件点击后没有任何反馈，用户会以为应用卡住，反而更困惑。改为可点击并进入说明页，用户至少明确知道「这个功能现在不可用」。
+
+说明页额外强调了三件对用户重要的事：**已加密的文件不会被改动**、**密码仍由用户自己保管**、**钥匙串里保存过的密码不会被清除**。这些如果不写，用户看到「临时关闭」的第一反应会是「我之前加密的文件完蛋了」。
+
+### 确认没有波及的范围
+
+关闭前逐项核实过，以下都不受影响：
+
+- **P2P 聊天加密**。`P2PService` 用的是独立的 `P2PCryptoService.shared`；`FileCryptoService` 只在 `AppState` 里实例化并被 `FileCryptoView` 消费，两者无交集。
+- **「清除所有数据」**。`keychainService.deleteAll()` 照常清空文件加密相关密码条目，临时关闭不影响清理能力。
+- **备份与恢复**。不涉及 `FileCryptoService`。
+- **已加密的 `.snenc` 文件**。加密产物在磁盘上，本次改动不触碰任何读写逻辑。
+
+### 恢复方式
+
+`FileCryptoView` 与 `FileCryptoService` 代码完整保留，没有删除。恢复时把 `DetailView` 的 `case 22` 换回 `FileCryptoView()`，并把两个 Intent 的分支一并改回即可。
+
+### 没动的与原因
+
+- **批量加密的崩溃修复已保留**。`ProgressView().scaleEffect(0.7)` → `controlSize(.small)` 的修改（第 24 章记录的同日修复）没有回退。功能关闭期间这段代码不执行，但保留修复意味着将来恢复时不必重做。
+- **`FileCryptoView` 未删除也未标记为废弃**。临时关闭不是废弃，删掉会让恢复变成重写。该视图的文档注释里已写明「当前无调用方、恢复时改哪一行」。
+- **加密算法与实现本身未审查**。本次只做开关决策，没有对 AES-256-GCM 的封装、KDF 参数或密钥派生做安全审计。将来正式开放前应单独安排一轮。

@@ -268,6 +268,8 @@ struct SidebarView: View {
                     Label("日记", systemImage: "book.fill")
                 }
 
+                // 文件加密临时关闭：保持可点击而非置灰。
+                // 置灰后点击没有任何反馈，用户会以为应用卡住（与白板同一结论）。
                 NavigationLink(value: 22) {
                     Label("文件加密", systemImage: "lock.doc.fill")
                 }
@@ -337,6 +339,45 @@ struct WhiteboardUnavailableView: View {
     }
 }
 
+/// 文件加密临时关闭时的占位页。
+///
+/// 与白板不同，这里必须说清一件事：**已经加密产出的文件不会自动解密或失效**，
+/// 密码仍由用户自己保管，钥匙串里保存过的密码也不会被清除。
+/// 重新开放后可以直接继续使用；期间请不要删除加密产物与记住密码。
+struct FileCryptoUnavailableView: View {
+    @Environment(\.appTheme) private var theme
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "lock.doc.fill")
+                .font(.system(size: 52, weight: .light))
+                .foregroundStyle(theme.accent)
+
+            VStack(spacing: 8) {
+                Text("文件加密临时关闭")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(theme.primaryText)
+                Text("该功能正在修复，暂时不开放。")
+                    .font(.subheadline)
+                    .foregroundStyle(theme.secondaryText)
+                    .multilineTextAlignment(.center)
+                Text("已经加密的文件不受影响：加密产物不会被改动，密码仍由你自己保管，设置里保存过的密码也不会被清除。恢复后可以直接继续使用。")
+                    .font(.caption)
+                    .foregroundStyle(theme.accentSecondary)
+                    .multilineTextAlignment(.center)
+                Text("期间请不要删除已加密的文件。")
+                    .font(.caption)
+                    .foregroundStyle(theme.accentSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: 420)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(theme.background)
+    }
+}
+
 struct DetailView: View {
     @EnvironmentObject var appState: AppState
 
@@ -386,7 +427,8 @@ struct DetailView: View {
             case 21:
                 HabitTrackerView()
             case 22:
-                FileCryptoView()
+                // 文件加密临时关闭，改为说明页（见 FileCryptoUnavailableView）
+                FileCryptoUnavailableView()
             case 23:
                 WhiteNoiseView()
             case 25:
