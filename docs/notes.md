@@ -491,38 +491,82 @@ v2.0 阶段的所有新增功能用 macOS 系统 framework，不新增 SPM 依�
 | U-15 | 备份未加密改为橙色警示块，说明明文性质与处理建议 | `SettingsView.swift` |
 | P0-2 | 写盘收敛到单一入口（`setTheme` 由 3 次降为 1 次） | `AppState.swift` |
 | P0-3 | 复习计划日历事件不再是「全天」，19:00 起顺延排布 | `CalendarService.swift` |
+| P0-4 | 备份标签白名单修正：中文不再被砍成单字 | `BackupService.swift` |
 | P0-5 | 信任过的地址变更后提供「沿用」按钮 | `LLMSettingsView.swift` |
 | P1-1 | OCR 失败区分具体原因并提示，不再静默写空文本 | `OCRService.swift` `MaterialDetailView.swift` |
 | P1-2 | 历史目录加载失败可重试，不必重启 | `HistoryService.swift` `HistoryHomeView.swift` |
+| P1-4 | 清理恢复备份残留的 `.restore-old-*` / `.restore-failed-*` 中间态目录 | `StorageService.swift` |
+| P1-5 | P2P 监听「清除所有数据」，避免内存态把文件写回来 | `P2PService.swift` |
+| P2-5 | listener ready 时才取本机地址，不再固定延迟 1 秒 | `P2PNetworkService.swift` |
+| P3-1 | 番茄钟通知用固定标识符，不再每次新 UUID 堆满通知中心 | `NotificationService.swift` |
+| P3-3 | 专注时长按真实时间戳累计，Timer 只作心跳 | `PomodoroTimer.swift` |
+| P3-5 | 信任判定清除 query，`?debug=1` 不再导致失配 | `LLMConfiguration.swift` |
 | P3-7 | 识别语言按 Vision 已安装语言动态取，加入 `zh-TW` | `OCRService.swift` |
+| P3-8 | 导入 PDF 预览上限提到 20 页并标注被截断 | `FileScannerService.swift` |
+| P3-9 | `max_tokens` 夹到 256–4096（10 处请求构造） | `LLMConfiguration.swift` `LLMService.swift` |
+| W-1 | 设置窗口改为可缩放，默认 640×720 | `SettingsView.swift` |
+| W-4 | 棕噪音改 leaky integrator，消除削波失真 | `AmbientSoundService.swift` |
+
+### 顺带发现并修掉的真实缺陷
+
+这几处不在 problems.md 里，是验证过程中实测发现的：
+
+- **备份中文标签被截断成单字**（P0-4 相关）。白名单字面量写成 `"...-_.中_zh_CN"`，
+  本意是放行汉字，实际只多放行了「中」一个字符——中文标签「期中备份」
+  会被砍成「中」，备份文件名将失去可读性。改为显式放行 CJK 区（U+4E00–U+9FFF）。
+- **本机 185 个语音音色中旧实现能匹配到的中文音色为 0 个**（U-10 相关）。
+  macOS 注册的是 `com.apple.voice.compact.zh-CN.Tingting`，
+  而旧代码硬编码 `"Ting-Ting"` 并只认 `"Ting-Ting"/"Mei-Jia"` 这类早期短名。
+  修复后能列出 20 个中文音色并正确选中 compact 品质（而非机械的 eloquence）。
+- **棕噪音约 67%—73% 的样本被削波**（W-4 相关）。逐样本硬削波导致方波化失真；
+  改 leaky integrator 后削波占比 0%，差分方差仅为自身的 0.57%（白噪对照 200%）。
+- **清除数据后 P2P 会把文件写回来**（P1-5 相关）。内存态未重置，
+  任何一次后续保存都会重新落盘，「清除」实际未生效。
 
 ### 验证方式
 
 - 编译：每次改动后 `xcodebuild -configuration Debug` 均 `** BUILD SUCCEEDED **`。
+  新增文件后重跑 `xcodegen generate`，并逐项确认 `Copy Ciallo Web Files`、
+  Hardened Runtime、entitlements、版本号等既有设置未被覆盖。
 - 启动冒烟：每批改动后用 Debug 产物直接运行 14 秒，无崩溃、无异常日志。
+- Release 归档：`2.0.0` / `100` / `x86_64 arm64`，解压后启动正常。
 - 逻辑用例（独立 Swift 程序，复刻生产算法并断言）：
-  纪念日排程 15 项、日历时刻 13 项、文件分类 16 项、启动迁移 13 项。
-- 真实环境核对：本机 185 个语音音色中，旧实现能匹配到的中文音色为 **0 个**，
-  修复后为 20 个并正确选中 compact 品质。
+
+  | 用例 | 项数 |
+  |------|------|
+  | 纪念日排程（跨月、已过、leadTimeDays=0/3/7、多项目不挤同一秒） | 15 |
+  | 复习计划日历时刻（顺延、跨天、时长、边界、自定义时刻） | 13 |
+  | 文件自动分类（含 problems.md 举的反例与各类边界） | 16 |
+  | 启动迁移与明文 key 防护（四种场景） | 13 |
+  | 备份标签白名单（shell 元字符、路径穿越、长度截断） | 19 |
+  | 专注时长累计（可控时钟、500 秒空档、暂停、休息阶段） | 6 |
+  | 棕噪音削波与频谱特性 | 7 |
+
+- 真实环境核对：语音音色数量、启动耗时（Debug 0.55—1.17 秒）。
 
 ### 没动的与原因
 
 - **U-3 裸数字 tab ID**：第 17 章已声明为已知边界。Intents「撒谎」的部分
   （U-1/U-2）已单独修复，枚举化重构不在本轮范围。
+- **U-7 的路由粒度**：目前按 `kind` 跳到对应侧栏页面，不做「定位到具体条目」。
+  待办/复习/习惯的详情跳转需要各页面暴露定位接口，属于更大改动。
 - **U-11 SpeechService 单例**：多详情页同时朗读属于交互设计取舍，
   现有 `.onDisappear` 已覆盖离开即停的常见路径；改为按文章实例化会牵动
   三处调用点与状态管理，收益不抵风险。
-- **U-7 的路由粒度**：目前按 `kind` 跳到对应侧栏页面，不做「定位到具体条目」。
-  待办/复习/习惯的详情跳转需要各页面暴露定位接口，属于更大改动。
-- **P1-3 启动期异步化**：`runStartupMigration` 涉及 schema 升级与备份决策，
-  移到异步会引入「UI 已显示旧数据、迁移随后改写」的竞态；
-  当前数据量下同步执行未观察到可感知卡顿。
-- **P1-5 P2PService 单例改造**：需要改动 P2P 全模块的依赖注入方式，
-  超出本轮范围，暂保留。
+- **P1-3 启动期异步化**：实测 Debug 启动 0.55—1.17 秒，无可感知卡顿；
+  改为异步会引入「UI 已显示旧数据、迁移随后改写」的竞态。
+- **P1-5 的单例改造本身**：只修了「清除数据后内存态未重置」这个真实缺陷，
+  没有把 `P2PService` 改成依赖注入——那需要改动 P2P 全模块，超出本轮范围。
 - **P2-2 / P2-3 / P2-4**：见第 22 章声明，按已知边界保留。
 - **P3-2 专注模式**：`enableFocusMode()` 目前只有 `print`。
-  macOS 没有公开的「专注模式」开关 API（`SetFocusFilter` 面向自家应用），
-  在没有真实可调用的系统接口前不实现假开关。
+  macOS 没有面向第三方应用的「专注模式」开关 API（`SetFocusFilter` 面向自家应用），
+  没有真实可调用的系统接口前不实现假开关。
+- **P3-4 / P3-10**：经查证当前实现已正确或已用二次发布解决，
+  problems.md 的描述与代码不符，不做无意义改动。
+- **P2-6**：经查证 `saveChatMessages` / `saveGroupMessages` 开头已有
+  `guard !chatHistoryLoadFailed` 防护，写回路径已锁，不重复修。
+- **W-2**：GitHub 仓库名确实不支持中文，保持 ASCII 白名单。
+- **W-3**：P2P 已有 `noIdentityView` 处理「未创建身份」状态，非问题。
 
 ---
 
