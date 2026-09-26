@@ -215,11 +215,6 @@ struct SettingsView: View {
                         displayedComponents: .hourAndMinute
                     )
                 }
-                
-                Stepper("默认学习时长: \(appState.appSettings.defaultStudyMinutes) 分钟",
-                       value: $appState.appSettings.defaultStudyMinutes,
-                       in: 15...120,
-                       step: 15)
             }
 
             DiaryEncryptionSettingsSection()

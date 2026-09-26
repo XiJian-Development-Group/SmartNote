@@ -1032,6 +1032,10 @@ class AppSettings: ObservableObject, Codable, Equatable {
     @Published var themeID: ThemeID = .classic
     @Published var calendarIntegrationEnabled: Bool = true
     @Published var reminderEnabled: Bool = true
+    /// 旧版本遗留字段：曾经有一个「默认学习时长」设置项，但全工程没有任何消费方。
+    /// 该设置项已从设置页移除（番茄钟页的「专注时长」是真正生效的入口）。
+    /// 这里保留字段与编解码，仅为让已有的 settings.json 仍能正常读取；
+    /// 不要再往 UI 或业务逻辑里接。
     @Published var defaultStudyMinutes: Int = 30
     @Published var showFileExtensions: Bool = true
     @Published var llmConfiguration: LLMConfiguration = LLMConfiguration()
