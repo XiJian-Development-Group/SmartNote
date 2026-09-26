@@ -83,44 +83,56 @@ struct FestivalBlessingBar: View {
     @ObservedObject var service: BlessingService
 
     var body: some View {
-        ThemeSurface(cornerRadius: 14) {
-            HStack(spacing: 12) {
-                Image(systemName: service.currentBlessing.symbol)
-                    .font(.title3)
-                    .foregroundStyle(theme.accentSecondary)
-                    .frame(width: 32, height: 32)
-                    .background(theme.accent.opacity(0.14))
-                    .clipShape(Circle())
+        // 不用 ThemeSurface：它自带 16pt 内边距与阴影，套在窄条上会显得臃肿，
+        // 再叠加外层 padding 后顶部留白高达 32pt。这里改为单层扁平板。
+        HStack(spacing: 10) {
+            Image(systemName: service.currentBlessing.symbol)
+                .font(.callout)
+                .foregroundStyle(theme.accentSecondary)
+                .frame(width: 26, height: 26)
+                .background(theme.accent.opacity(0.14))
+                .clipShape(Circle())
 
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 8) {
-                        Text(service.isNationalDayPeriod ? "国庆祝福" : "今日祝福")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(theme.accentSecondary)
-                        Text(service.currentBlessing.title)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(theme.primaryText)
-                    }
-                    Text(service.currentBlessing.message)
-                        .font(.caption)
-                        .foregroundStyle(theme.secondaryText)
-                        .lineLimit(2)
-                        .help(service.currentBlessing.message)
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 6) {
+                    Text(service.isNationalDayPeriod ? "国庆祝福" : "今日祝福")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(theme.accentSecondary)
+                    Text(service.currentBlessing.title)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(theme.primaryText)
+                        .lineLimit(1)
                 }
-
-                Spacer(minLength: 8)
-
-                Button {
-                    service.refresh()
-                } label: {
-                    Label("换一句", systemImage: "arrow.triangle.2.circlepath")
-                        .font(.caption)
-                }
-                .buttonStyle(.bordered)
-                .help("从本地祝福库中换一句")
+                Text(service.currentBlessing.message)
+                    .font(.caption2)
+                    .foregroundStyle(theme.secondaryText)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .help(service.currentBlessing.message)
             }
+
+            Spacer(minLength: 8)
+
+            Button {
+                service.refresh()
+            } label: {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.callout)
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(theme.accent)
+            .help("换一句")
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.vertical, 7)
+        .background(theme.surface, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(theme.border, lineWidth: 1)
+        )
+        // 自身外再留 8pt 顶部间距，避免贴住窗口标题栏
+        .padding(.top, 8)
+        .padding(.horizontal, 12)
+        .padding(.bottom, 6)
     }
 }

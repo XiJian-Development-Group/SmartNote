@@ -11,29 +11,29 @@ struct ContentView: View {
         ZStack {
             ThemeBackdrop(theme: appTheme)
 
-            VStack(spacing: 0) {
-                if appState.shouldShowBlessingBar {
-                    FestivalBlessingBar(service: appState.blessingService)
-                        // 祝福条与窗口顶部留出间距，避免贴着标题栏
-                        .padding(.top, 8)
+            ZStack {
+                BackgroundImageView()
+
+                NavigationSplitView {
+                    SidebarView()
+                } detail: {
+                    DetailView()
                 }
-
-                ZStack {
-                    BackgroundImageView()
-
-                    NavigationSplitView {
-                        SidebarView()
-                    } detail: {
-                        DetailView()
+                .navigationSplitViewStyle(.balanced)
+                .background(Color.clear)
+                // 祝福条必须用 safeAreaInset 挂在 split view 上。
+                // 之前把它作为 NavigationSplitView 的同级兄弟放进 VStack，
+                // 会让 split view 拿不到正确的安全区，侧栏 List 底部被裁掉。
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    if appState.shouldShowBlessingBar {
+                        FestivalBlessingBar(service: appState.blessingService)
                     }
-                    .navigationSplitViewStyle(.balanced)
-                    .background(Color.clear)
-                    .overlay(alignment: .top) {
-                        if !integrityIssues.isEmpty {
-                            storageIntegrityBanner
-                                .padding(.horizontal, 12)
-                                .padding(.top, 8)
-                        }
+                }
+                .overlay(alignment: .top) {
+                    if !integrityIssues.isEmpty {
+                        storageIntegrityBanner
+                            .padding(.horizontal, 12)
+                            .padding(.top, 8)
                     }
                 }
             }
