@@ -923,6 +923,12 @@ class StorageService {
             removeManagedItem(at: url)
         }
 
+        // 恢复备份时若旧目录删除失败，会在 App Support **同级**留下
+        // SmartNote.restore-old-* / SmartNote.restore-failed-* 中间态目录。
+        // 它们不在 managedDataURLs 里（「清除所有数据」按承诺应清空本机数据），
+        // 这里显式枚举同级目录一并删除。
+        removeLeftoverRestoreDirectories()
+
         let accountsBeforeDelete = keychainService.listAccounts()
         keychainService.deleteAll()
         let remainingAccounts = keychainService.listAccounts()
@@ -936,8 +942,25 @@ class StorageService {
         NotificationCenter.default.post(name: .storageDidClearAllData, object: self)
     }
 
-    func exportData() -> Data? {
-        let exportData = ExportData(
+    /// 清理恢复备份过程可能残留的中间态目录。
+    /// 正常流程会在成功后删除旧目录、失败时回滚；只有删除本身失败才会留下。
+    private func removeLeftoverRestoreDirectories() {
+        let parent = appSupportDirectory.deletingLastPathComponent()
+        let baseName = appSupportDirectory.lastPathComponent
+        let prefixes = ["\(baseName).restore-old-", "\(baseName).restore-failed-"]
+        guard let entries = try? fileManager.contentsOfDirectory(
+            at: parent, includingPropertiesForKeys: nil
+        ) else { return }
+        for entry in entries where prefixes.contains(where: { entry.lastPathComponent.hasPrefix($0) }) {
+            do {
+                try fileManager.removeItem(at: entry)
+            } catch {
+                print("警告：残留的恢复中间目录未能删除 \(entry.lastPathComponent)：\(error.localizedDescription)")
+            }
+        }
+    }
+
+    func exportData() -> Data? {        let exportData = ExportData(
             materials: loadMaterials(),
             reviewPlans: loadReviewPlans(),
             exportedAt: Date()

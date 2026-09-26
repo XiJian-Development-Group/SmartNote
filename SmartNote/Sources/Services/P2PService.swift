@@ -238,6 +238,35 @@ final class P2PService: ObservableObject {
     private init() {
         loadData()
         setupNetworkHandlers()
+        // 「清除所有数据」后必须重置内存态。
+        // 此前 P2PService 不监听该通知：磁盘文件被删光，但内存里还留着
+        // 身份、好友和聊天记录；任何一次后续保存都会把文件重新写回来，
+        // 相当于「清除」没有真正生效。
+        clearAllDataObserver = NotificationCenter.default.addObserver(
+            forName: .storageDidClearAllData,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.resetAllLocalData() }
+        }
+    }
+
+    private var clearAllDataObserver: NSObjectProtocol?
+
+    /// 清空内存态并与磁盘保持一致。
+    /// 监听器的启停由 loadData 末尾统一处理（身份为空时不会拉起后台监听）。
+    private func resetAllLocalData() {
+        currentIdentity = nil
+        friends = []
+        groups = []
+        blackList = []
+        chatMessages = [:]
+        groupMessages = [:]
+        connectionStatus = [:]
+        chatHistoryLoadFailed = false
+        groupHistoryLoadFailed = false
+        // 重新从磁盘读一遍：此时应全部为空；若读出内容说明还有文件未纳入受管清单。
+        loadData()
     }
 
     private func loadData() {
