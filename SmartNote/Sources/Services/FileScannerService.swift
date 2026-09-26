@@ -233,19 +233,31 @@ actor FileScannerService {
         return best.0
     }
 
+    /// 导入时抽取 PDF 文本的上限。
+    /// 这只是**导入阶段的快速预览**，不是完整解析：
+    /// 详情页「提取 PDF 全文」走的是另一条不受此上限约束的路径。
+    /// 取 20 页是权衡——100 页的 PDF 全量抽取会明显拖慢导入，
+    /// 而只看前 5 页又常常漏掉正文从第 6 页开始的资料。
+    static let pdfPreviewPageLimit = 20
+
     private func extractPDFText(from url: URL) -> String? {
         guard let document = PDFDocument(url: url) else {
             return nil
         }
-        
+
         var text = ""
-        for i in 0..<min(document.pageCount, 5) {
+        let limit = min(document.pageCount, Self.pdfPreviewPageLimit)
+        for i in 0..<limit {
             if let page = document.page(at: i),
                let pageText = page.string {
                 text += pageText + "\n"
             }
         }
-        
+        // 超过上限时明确标注被截断，避免用户以为这就是全文。
+        if document.pageCount > limit {
+            text += "\n（导入预览仅显示前 \(limit) 页，共 \(document.pageCount) 页；完整内容请在资料详情中查看）"
+        }
+
         return text.isEmpty ? nil : text
     }
     

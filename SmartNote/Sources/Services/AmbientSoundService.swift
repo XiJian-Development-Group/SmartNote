@@ -309,16 +309,34 @@ enum NoiseGenerator {
         }
     }
 
-    /// 棕噪音（红噪声）：累计随机游走
+    /// 棕噪音（红噪声）：一阶低通白噪。
+    ///
+    /// W-4 原来每样本都做一次 `clamped(to: -1...1)`，随机游走一旦顶到边界
+    /// 就会被削平，形成 audible 的方波化失真，听感偏「沙沙」且低频发毛。
+    /// 这里改成标准 leaky integrator：累积但不硬削波，只在最后统一归一化。
     static func brown(seconds: Double, volume: Float) -> AVAudioPCMBuffer {
-        makeBuffer(durationSeconds: seconds) { n, s in
+        let buffer = makeBuffer(durationSeconds: seconds) { n, s in
             var last: Float = 0
             for i in 0..<n {
                 let white = Float.random(in: -1...1)
-                last = (last + white * 0.02).clamped(to: -1...1)
-                s[i] = last * volume * 3.5   // 放大补偿低频
+                // 泄漏系数让积分器均值为 0，避免随机游走整体漂移到边界
+                last = 0.997 * last + 0.03 * white
+                s[i] = last
             }
         }
+        // 积分器输出幅度很小，按实测峰值归一化到目标音量
+        let peak = (0..<buffer.frameLength).reduce(Float(0)) { acc, idx in
+            let value = abs(buffer.floatChannelData![0][Int(idx)])
+            return Swift.max(acc, value)
+        }
+        if peak > 0.0001 {
+            let gain = Float(volume) / peak
+            let pointer = buffer.floatChannelData![0]
+            for i in 0..<Int(buffer.frameLength) {
+                pointer[i] = Swift.min(1, Swift.max(-1, pointer[i] * gain))
+            }
+        }
+        return buffer
     }
 
     /// 雨声：白噪音底 + 稀疏高频脉冲
