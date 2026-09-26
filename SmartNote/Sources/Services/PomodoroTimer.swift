@@ -25,6 +25,8 @@ class PomodoroTimer: ObservableObject {
 
     private var timer: Timer?
     private var studySession: StudySession?
+    /// 当前计时段的起点。专注时长按真实时间戳累加，Timer 仅作心跳。
+    private var segmentStartedAt: Date?
     private let notificationService: NotificationService
     private let statisticsService: StudyStatisticsService
     private let storage: StorageService
@@ -62,13 +64,15 @@ class PomodoroTimer: ObservableObject {
         remainingSeconds = totalSeconds
 
         if currentPhase == .work {
+            let now = Date()
             studySession = StudySession(
                 id: UUID(),
                 subject: subject ?? linkedTodoTitle ?? "通用",
-                startTime: Date(),
+                startTime: now,
                 duration: 0,
                 completed: false
             )
+            segmentStartedAt = now
 
             if isFocusModeEnabled {
                 enableFocusMode()
@@ -76,6 +80,7 @@ class PomodoroTimer: ObservableObject {
         } else {
             // 休息阶段没有正在进行的专注会话，避免沿用上一阶段的累计值。
             studySession = nil
+            segmentStartedAt = nil
         }
 
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -102,11 +107,16 @@ class PomodoroTimer: ObservableObject {
         guard isRunning && !isPaused else { return }
         isPaused = true
         timer?.invalidate()
+        // 暂停前先把已流逝的真实时长计入，避免这段被漏掉。
+        accumulateElapsed()
     }
 
     func resume() {
         guard isRunning && isPaused else { return }
         isPaused = false
+        // 重新计时以本刻为基准，暂停期间的墙钟时间不计入专注时长。
+        // 休息阶段不设起点，accumateElapsed 会直接跳过。
+        segmentStartedAt = currentPhase == .work ? Date() : nil
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             self?.tick()
         }
@@ -117,6 +127,7 @@ class PomodoroTimer: ObservableObject {
         timer = nil
         recordCurrentStudySessionIfNeeded()
         studySession = nil
+        segmentStartedAt = nil
         isRunning = false
         isPaused = false
         remainingSeconds = 0
@@ -162,17 +173,27 @@ class PomodoroTimer: ObservableObject {
             return
         }
 
+        // P3-3 时长以真实时间戳为准，Timer 只当心跳。
+        // 原来每次回调给 duration +1：系统休眠、卡顿或回调迟到都会让统计时长
+        // 与真实专注时间不一致，甚至多出一秒。
+        accumulateElapsed()
+
         guard remainingSeconds > 0 else {
             phaseComplete()
             return
         }
 
         remainingSeconds -= 1
+    }
 
-        if currentPhase == .work {
-            // 本次专注累计秒数只保存在 studySession.duration 中。
-            studySession?.duration += 1
-        }
+    /// 把「本段起点到此刻」的真实秒数累加进当前会话。
+    /// 非专注阶段不计时；不足 1 秒的余数向下取整。
+    private func accumulateElapsed() {
+        defer { segmentStartedAt = Date() }
+        guard currentPhase == .work, let startedAt = segmentStartedAt else { return }
+        let elapsed = Date().timeIntervalSince(startedAt)
+        guard elapsed >= 1 else { return }
+        studySession?.duration += elapsed
     }
 
     private func phaseComplete() {
@@ -186,6 +207,7 @@ class PomodoroTimer: ObservableObject {
             // 统计写入发生在通知请求之前，且不等待通知结果；通知失败不能回退统计。
             recordCurrentStudySessionIfNeeded()
             studySession = nil
+            segmentStartedAt = nil
 
             sendNotification(title: "专注完成！", body: "番茄钟完成")
 
@@ -199,6 +221,7 @@ class PomodoroTimer: ObservableObject {
         } else {
             // 休息阶段不写入学习统计，并清理任何不应存在的旧会话。
             studySession = nil
+            segmentStartedAt = nil
             sendNotification(title: "休息结束！", body: "休息结束")
             currentPhase = .work
             totalSeconds = workDuration * 60

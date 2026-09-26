@@ -204,7 +204,10 @@ enum NotificationIdentifiers {
     static func reviewTask(_ id: UUID) -> String { "task_\(id.uuidString)" }
     static func habit(_ id: UUID) -> String { "habit_\(id.uuidString)" }
     static func anniversary(_ id: UUID) -> String { "anniversary-\(id.uuidString)" }
-    static func pomodoro(_ id: UUID = UUID()) -> String { "pomodoro_\(id.uuidString)" }
+    /// 番茄钟通知标识符。固定为 `pomodoro_current`：
+    /// 原实现每次生成新 UUID，通知中心会堆满 `pomodoro_*` 条目。
+    /// 配合调用处的 `removeExisting: true`，新通知会替换上一条。
+    static func pomodoro() -> String { "pomodoro_current" }
 }
 
 final class NotificationService: ObservableObject {

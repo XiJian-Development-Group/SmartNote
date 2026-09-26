@@ -60,7 +60,10 @@ struct SettingsView: View {
                     Label("关于", systemImage: "info.circle")
                 }
         }
-        .frame(width: 600, height: 480)
+        // W-1 固定 600×480 装 6 个 Tab 页，内容（备份列表、清除数据确认）
+        // 会被挤压到需要滚动才能看完。改为可缩放并给出更宽松的默认尺寸；
+        // 宽度维持 600 与既有表单排版一致，高度按内容放开到 720。
+        .frame(minWidth: 600, idealWidth: 640, minHeight: 480, idealHeight: 720)
         .onChange(of: appState.appSettings) { _old, newValue in
             appState.storageService.saveSettings(newValue)
             // update update service repository and schedule when settings change

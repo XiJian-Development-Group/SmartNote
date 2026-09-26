@@ -257,12 +257,18 @@ final class P2PNetworkService: ObservableObject {
                         connection.cancel()
                         return
                     }
+                    // 第一条连接到达即代表 listener 已经真正 ready，
+                    // 此时取本机地址才准确。原来固定延迟 1 秒取址，
+                    // 设备切网（Wi-Fi ↔ 以太网、IPv6 link-local 重新分配）时会读到旧 IP。
+                    self.updateLocalAddress()
                     self.handleIncomingConnection(connection)
                 }
             }
 
             createdListener.start(queue: queue)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            // 启动后立即取一次，作为尚无连接时的初始值；
+            // 之后每次有连接进来都会重新取，覆盖这里的快照。
+            DispatchQueue.main.async { [weak self] in
                 self?.updateLocalAddress()
             }
             return true
