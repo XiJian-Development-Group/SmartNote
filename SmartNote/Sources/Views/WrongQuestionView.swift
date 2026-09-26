@@ -5,25 +5,50 @@ struct WrongQuestionView: View {
     @State private var showAddSheet = false
     @State private var selectedQuestion: WrongQuestion?
     @State private var isFlipped = false
-    
+
     @State private var newQuestion = ""
     @State private var newCorrectAnswer = ""
     @State private var newStudentAnswer = ""
     @State private var newErrorReason = ""
     @State private var newKnowledgePoints = ""
     @State private var newSubject = ""
-    
-    var questionsForReview: [WrongQuestion] {
-        questionService.getQuestionsForReview()
+
+    /// 列表范围。
+    /// 修复前只有「待复习」一种视图：标记掌握后题目被推到 1~7 天后，
+    /// 从列表消失且没有任何入口再看到它，等于复习完就再也找不回来。
+    enum ListScope: String, CaseIterable, Identifiable {
+        case due = "待复习"
+        case all = "全部错题"
+        var id: String { rawValue }
     }
-    
+
+    @State private var scope: ListScope = .due
+
+    /// 当前范围下要展示的题目。
+    var visibleQuestions: [WrongQuestion] {
+        switch scope {
+        case .due:
+            return questionService.getQuestionsForReview()
+        case .all:
+            return questionService.questions.sorted { lhs, rhs in
+                // 未复习的排前面，其余按下次复习时间由近到远
+                let l = lhs.nextReviewAt ?? Date.distantPast
+                let r = rhs.nextReviewAt ?? Date.distantPast
+                return l < r
+            }
+        }
+    }
+
+    /// 保持旧调用点可用。
+    var questionsForReview: [WrongQuestion] { questionService.getQuestionsForReview() }
+
     var body: some View {
         VStack(spacing: 0) {
             headerView
-            
+
             Divider()
-            
-            if questionsForReview.isEmpty {
+
+            if visibleQuestions.isEmpty {
                 emptyStateView
             } else {
                 reviewModeView
@@ -39,12 +64,22 @@ struct WrongQuestionView: View {
             Text("错题本")
                 .font(.title2)
                 .fontWeight(.bold)
-            
+
             Spacer()
-            
+
             Text("\(questionService.questions.count) 道错题")
                 .foregroundColor(.secondary)
-            
+
+            // 待复习 / 全部。没有这个切换，复习完的题目在间隔期内完全无法查看。
+            Picker("", selection: $scope) {
+                ForEach(ListScope.allCases) { item in
+                    Text(item.rawValue).tag(item)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(width: 180)
+
             Button {
                 showAddSheet = true
             } label: {
@@ -58,17 +93,26 @@ struct WrongQuestionView: View {
     private var emptyStateView: some View {
         VStack(spacing: 16) {
             Spacer()
-            
-            Image(systemName: "checkmark.circle")
-                .font(.system(size: 64))
-                .foregroundColor(.green)
-            
-            Text("太棒了！")
-                .font(.headline)
-            
-            Text("当前没有需要复习的错题")
-                .foregroundColor(.secondary)
-            
+
+            if scope == .due {
+                // 「待复习」为空是好消息；「全部」为空是还没录入，图标不该一样
+                Image(systemName: "checkmark.circle")
+                    .font(.system(size: 64))
+                    .foregroundColor(.green)
+                Text("太棒了！")
+                    .font(.headline)
+                Text("当前没有需要复习的错题")
+                    .foregroundColor(.secondary)
+            } else {
+                Image(systemName: "tray")
+                    .font(.system(size: 64))
+                    .foregroundColor(.secondary)
+                Text("还没有错题")
+                    .font(.headline)
+                Text("点右上角「添加」录入第一道错题")
+                    .foregroundColor(.secondary)
+            }
+
             Spacer()
         }
     }
@@ -120,7 +164,7 @@ struct WrongQuestionView: View {
             if isFlipped {
                 masteryButtons(for: question)
             }
-            
+
             Button("返回列表") {
                 selectedQuestion = nil
                 isFlipped = false
@@ -128,28 +172,54 @@ struct WrongQuestionView: View {
             .buttonStyle(.bordered)
         }
     }
-    
+
     private func masteryButtons(for question: WrongQuestion) -> some View {
-        HStack(spacing: 12) {
-            ForEach(MasteryLevel.allCases, id: \.self) { level in
-                Button {
-                    var updated = question
-                    updated.updateMastery(level)
-                    questionService.updateQuestion(updated)
-                    isFlipped = false
-                } label: {
-                    Text(level.rawValue)
-                        .font(.caption)
+        VStack(spacing: 8) {
+            HStack(spacing: 12) {
+                ForEach(MasteryLevel.allCases, id: \.self) { level in
+                    Button {
+                        var updated = question
+                        updated.updateMastery(level)
+                        questionService.updateQuestion(updated)
+                        isFlipped = false
+                        // 标记后这道题已被推到未来，「待复习」范围里不再包含它。
+                        // 原来只把卡片翻回正面却不清 selectedQuestion，
+                        // 用户会停在一张已经不在队列里的卡片上，看不出是否生效。
+                        // 这里自动回到列表；若当前是「全部错题」范围则留在原地，
+                        // 方便继续看同一道题的其它面。
+                        if !visibleQuestions.contains(where: { $0.id == question.id }) {
+                            selectedQuestion = nil
+                        }
+                    } label: {
+                        Text(level.rawValue)
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.bordered)
             }
+
+            Text("下次复习：\(Self.nextReviewText(for: question))")
+                .font(.caption2)
+                .foregroundColor(.secondary)
         }
     }
-    
+
+    /// 描述这道题的下次复习时间；「全部错题」范围下用于说明为何它不在待复习列表。
+    private static func nextReviewText(for question: WrongQuestion) -> String {
+        guard let next = question.nextReviewAt else { return "待安排" }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "M 月 d 日"
+        let calendar = Calendar.current
+        if calendar.isDateInToday(next) { return "今天" }
+        if calendar.isDateInTomorrow(next) { return "明天" }
+        return formatter.string(from: next)
+    }
+
     private var questionListView: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-                ForEach(questionsForReview) { question in
+                ForEach(visibleQuestions) { question in
                     QuestionCard(question: question) {
                         selectedQuestion = question
                     } onDelete: {

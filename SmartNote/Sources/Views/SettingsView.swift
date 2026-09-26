@@ -720,7 +720,10 @@ struct SettingsView: View {
                         runManualBackup()
                     } label: {
                         if isMakingBackup {
-                            ProgressView().scaleEffect(0.7)
+                            // 同 FileCryptoView：scaleEffect 与 AppKit 宿主视图的
+                            // 固定固有尺寸冲突，会算出 min > max 的矛盾约束而崩溃。
+                            // controlSize 是受支持的缩放方式。
+                            ProgressView().controlSize(.small)
                         } else {
                             Label("立即备份", systemImage: "square.and.arrow.down")
                         }

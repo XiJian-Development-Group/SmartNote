@@ -91,6 +91,9 @@ class AppState: ObservableObject {
     /// 从磁盘恢复倒计时期间抑制 didSet 写盘（避免用空值覆盖真实数据）。
     private var isRestoringExamCountdowns: Bool = false
     private var storageClearObserver: NSObjectProtocol?
+    /// 订阅 appSettings 的 objectWillChange 并转发为 AppState 的变更。
+    /// appSettings 被整体替换时必须重绑（见 rebindAppSettingsObservation）。
+    private var appSettingsCancellable: AnyCancellable?
 
     /// 最近一次启动期 schema 迁移结果（用于「备份与恢复」面板显示）
     @Published var lastStartupMigration: StartupMigrationResult?
@@ -133,11 +136,20 @@ class AppState: ObservableObject {
         ) { [weak self] _ in
             self?.loadSavedData()
         }
+        // 把 AppSettings 自身的变更转发为 AppState 的变更。
+        //
+        // AppSettings 是嵌套 ObservableObject：改 appSettings.backgroundImageName
+        // 只会触发 AppSettings.objectWillChange，不会触发 AppState.objectWillChange，
+        // 于是所有 `@EnvironmentObject var appState: AppState` 的视图都不重渲染。
+        // 表现就是「改了背景图要重启才生效」。
+        // 之前 themeID / 明暗模式是靠手工再写一份顶层 @Published 快照绕过的，
+        // 但背景图这类字段没有对应的顶层属性，只能在这里统一转发。
+        // 把 AppSettings 自身的变更转发为 AppState 的变更（详见 rebindAppSettingsObservation）
+        rebindAppSettingsObservation()
         // 把自己桥给 Siri / Shortcuts intent 用
         MainActor.assumeIsolated {
             SharedAppStateProxy.shared.bind(self)
         }
-
         // perform initial auto-check if enabled
         if settings.autoUpdateEnabled {
             Task {
@@ -149,10 +161,27 @@ class AppState: ObservableObject {
         scheduleUpdateChecks(hoursInterval: settings.updateCheckIntervalHours)
     }
     
+    /// 把 `appSettings` 的 `objectWillChange` 转发为 `AppState` 的 `objectWillChange`。
+    ///
+    /// `AppSettings` 是嵌套 `ObservableObject`：改 `appSettings.backgroundImageName`
+    /// 只会触发 `AppSettings.objectWillChange`，不会触发 `AppState.objectWillChange`，
+    /// 于是所有 `@EnvironmentObject var appState: AppState` 的视图都不重渲染——
+    /// 表现是「改了背景图要重启才生效」。
+    /// 主题与明暗模式之前是靠手工再写一份顶层 `@Published` 快照绕过的，
+    /// 但背景图这类字段没有对应的顶层属性，只能在这里统一转发。
+    ///
+    /// **每次整体替换 `appSettings` 后都必须重新调用**，
+    /// 否则订阅会留在已被丢弃的旧对象上，变更不再转发。
+    private func rebindAppSettingsObservation() {
+        appSettingsCancellable = appSettings.objectWillChange
+            .sink { [weak self] in self?.objectWillChange.send() }
+    }
+
     func refreshSettings() {
         let currentExamCountdowns = examCountdowns
         let loadedSettings = storageService.loadSettings()
         self.appSettings = loadedSettings
+        rebindAppSettingsObservation()
         self.activeThemeID = loadedSettings.themeID
         self.activeDarkModePreference = loadedSettings.darkModePreference
         // appSettings 的倒计时字段只作为内存镜像，不从旧磁盘快照反向覆盖。

@@ -302,8 +302,17 @@ struct FileCryptoView: View {
                 Button {
                     startWorking()
                 } label: {
-                    HStack {
-                        if isWorking { ProgressView().scaleEffect(0.7) }
+                    HStack(spacing: 6) {
+                        // 修复前是 ProgressView().scaleEffect(0.7)。
+                        // scaleEffect 只做视觉缩放、不改布局尺寸，而 AppKit 宿主视图
+                        // (AppKitProgressView) 报的是固定固有尺寸，两者混用会让
+                        // 布局引擎算出 min > max 的矛盾约束而直接崩溃：
+                        //   "has a maximum length (32.142857) that doesn't satisfy min ..."
+                        // 改用 controlSize —— 这是 AppKit 视图唯一受支持的缩放方式。
+                        if isWorking {
+                            ProgressView()
+                                .controlSize(.small)
+                        }
                         Text(mode == .encrypt ? "开始加密" : "开始解密")
                             .fontWeight(.semibold)
                     }

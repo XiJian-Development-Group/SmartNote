@@ -544,6 +544,20 @@ v2.0 阶段的所有新增功能用 macOS 系统 framework，不新增 SPM 依�
 
 - 真实环境核对：语音音色数量、启动耗时（Debug 0.55—1.17 秒）。
 
+### 用户实测反馈的 5 个缺陷（同日修复）
+
+这 5 条不在 `problems.md` 里，是用户实际使用后报上来的，逐条核实根因后修复。
+
+| 现象 | 根因 | 修复 |
+|------|------|------|
+| 从节庆主题切回经典后，改背景图要重启才生效 | `AppSettings` 是嵌套 `ObservableObject`：改 `appSettings.backgroundImageName` 只触发 `AppSettings.objectWillChange`，**不触发 `AppState.objectWillChange`**，所有 `@EnvironmentObject var appState` 的视图都不重渲染。主题/明暗之前是靠手工再写一份顶层 `@Published` 快照绕过的，背景图没有对应的顶层属性 | `AppState` 订阅 `appSettings.objectWillChange` 并转发为自身变更（`rebindAppSettingsObservation()`）。整体替换 `appSettings` 后必须重绑，否则订阅会留在已丢弃的旧对象上 |
+| 错题复习完成后无法再次查看 | 间隔重复设计：`updateMastery` 把 `nextReviewAt` 推到 1/2/4/7 天后，`getQuestionsForReview()` 只返回到期的，而**视图只有这一个列表**，没有任何「全部」入口 | 新增「待复习 / 全部错题」分段切换；卡片显示下次复习时间；标记后若该题已不在可见列表则自动回到列表 |
+| 背诵卡片开始复习后无法回主页；复习完最后一张会「重新开始」 | 根本**没有复习会话流程**（`noCardsForReviewView` 是死代码，`cards.isEmpty` 蕴含 `cardsForReview.isEmpty`），只能从分类列表逐张点开；标记后 `selectedCard` 从不清空；卡片用 `maxHeight: .infinity` 把导航按钮挤出可视区 | 显式建模会话：进入时按 ID 冻结队列，标题栏显示进度与「结束复习」，卡片改用 `minHeight` 并放入 `ScrollView`，底部有上一张/下一张/返回主页，标记后自动推进，走完显示「本轮复习完成」 |
+| 日记关联资料 ≥2 份时仅显示一个 | `linkedMaterials` 只被写入（picker + 保存），**从未被展示**；工具栏按钮连数量都不显示 | 按钮显示「关联资料(N)」，新增 `linkedMaterialsStrip` 逐条列出资料名并可单独解除关联；资料已删除时保留占位说明 |
+| 批量加密文件时崩溃 | 按钮标签内 `ProgressView().scaleEffect(0.7)`：`scaleEffect` 只做视觉缩放、不改布局尺寸，而 `AppKitProgressView` 报的是固定固有尺寸，两者混用使布局引擎算出 min > max 的矛盾约束。`SettingsView` 的「立即备份」是同一处缺陷 | 改用 `controlSize(.small)`——AppKit 宿主视图唯一受支持的缩放方式 |
+
+逻辑验证：26 项用例覆盖错题本的间隔天数映射与可见范围判定、卡片会话的队列冻结/自动推进/首末禁用/结束复位。
+
 ### 没动的与原因
 
 - **U-3 裸数字 tab ID**：第 17 章已声明为已知边界。Intents「撒谎」的部分

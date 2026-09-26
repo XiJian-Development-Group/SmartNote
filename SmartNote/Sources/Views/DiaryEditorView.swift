@@ -4,6 +4,8 @@ import UniformTypeIdentifiers
 
 struct DiaryEditorView: View {
     @Environment(\.dismissWindow) private var dismissWindow
+    /// 由 SmartNoteApp 的「日记编辑器」窗口注入，用于把 linkedMaterialIDs 解析成资料名。
+    @EnvironmentObject private var appState: AppState
     @StateObject private var diaryService = DiaryService.shared
     @StateObject private var whiteboardService = WhiteboardService.shared
     
@@ -149,7 +151,10 @@ struct DiaryEditorView: View {
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "link")
-                            Text("关联资料")
+                            // 显示已关联数量，否则选了多份资料时看不出选了几份
+                            Text(linkedMaterials.isEmpty
+                                 ? "关联资料"
+                                 : "关联资料(\(linkedMaterials.count))")
                         }
                         .font(.caption)
                     }
@@ -187,6 +192,12 @@ struct DiaryEditorView: View {
             .padding()
             .background(Color(nsColor: .controlBackgroundColor))
             
+            // 已关联资料清单。
+            // 修复前 linkedMaterials 只被写入、从未展示：关联多份时看不出关联了哪些。
+            if !linkedMaterials.isEmpty {
+                linkedMaterialsStrip
+            }
+
             // 已选图片预览
             if !imagePaths.isEmpty {
                 imagePreviewStrip
@@ -222,6 +233,47 @@ struct DiaryEditorView: View {
     
     // MARK: - 图片预览条
     
+    /// 已关联资料清单。逐条显示资料名，并允许单独解除关联。
+    /// 资料已被删除时保留占位并说明，避免条目静默消失。
+    private var linkedMaterialsStrip: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 4) {
+                Image(systemName: "link")
+                Text("已关联 \(linkedMaterials.count) 份资料")
+            }
+            .font(.caption)
+            .foregroundColor(.secondary)
+
+            ForEach(linkedMaterials, id: \.self) { id in
+                HStack(spacing: 6) {
+                    Image(systemName: "doc.text")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    Text(materialName(for: id))
+                        .font(.caption)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Spacer(minLength: 8)
+                    Button {
+                        linkedMaterials.removeAll { $0 == id }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("解除关联")
+                }
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func materialName(for id: UUID) -> String {
+        appState.materials.first(where: { $0.id == id })?.name ?? "（资料已删除）"
+    }
+
     private var imagePreviewStrip: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
