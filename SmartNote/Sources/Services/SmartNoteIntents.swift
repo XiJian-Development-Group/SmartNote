@@ -31,7 +31,10 @@ struct OpenPageIntent: AppIntent {
         case .fileCrypto:
             return .result(dialog: "文件加密功能临时关闭，暂时无法打开。已加密的文件不受影响。")
         default:
-            SharedAppStateProxy.shared.selectedTab = page.tabIndex
+            // 侧栏 tab 可能为空（如许愿），此时不切页面，只把应用带到前台。
+            if let tab = page.tabIndex {
+                SharedAppStateProxy.shared.selectedTab = tab
+            }
             NSApp.activate(ignoringOtherApps: true)
             return .result(dialog: "已打开\(pageName)")
         }
@@ -113,6 +116,17 @@ struct OpenAnniversaryIntent: AppIntent {
     }
 }
 
+/// 答案之书。取答案要在应用里写下问题，因此这里只负责把页面打开。
+struct OpenAnswerBookIntent: AppIntent {
+    static var title: LocalizedStringResource = "打开答案之书"
+    static var openAppWhenRun: Bool = true
+    @MainActor func perform() async throws -> some IntentResult & ProvidesDialog {
+        SharedAppStateProxy.shared.selectedTab = 24
+        NSApp.activate(ignoringOtherApps: true)
+        return .result(dialog: "已打开答案之书")
+    }
+}
+
 // MARK: - 写操作
 
 /// 创建一条快速笔记。
@@ -149,6 +163,8 @@ enum SmartNotePage: Int, AppEnum, CaseIterable {
     case fileCrypto
     case wish
     case anniversary
+    /// 追加在末尾：AppEnum 的原始值会被 Shortcuts 记住，插在中间会改变已有短语的指向。
+    case answerBook
 
     static var typeDisplayRepresentation: TypeDisplayRepresentation { "页面" }
 
@@ -159,18 +175,22 @@ enum SmartNotePage: Int, AppEnum, CaseIterable {
         .whiteboard:  "白板",
         .fileCrypto:  "文件加密",
         .wish:        "许愿",
-        .anniversary: "纪念日"
+        .anniversary: "纪念日",
+        .answerBook:  "答案之书"
     ]
 
-    var tabIndex: Int {
+    /// 侧栏 tab 编号。`nil` 表示该页面不在侧栏里（例如许愿是独立窗口），
+    /// 由 `OpenPageIntent` 单独分支处理，不要再用一个假的编号占位。
+    var tabIndex: Int? {
         switch self {
         case .materials: return 0
         case .pomodoro: return 10
         case .todo: return 20
         case .whiteboard: return 19
         case .fileCrypto: return 22
-        case .wish: return 24
+        case .wish: return nil
         case .anniversary: return 25
+        case .answerBook: return 24
         }
     }
 
@@ -183,6 +203,7 @@ enum SmartNotePage: Int, AppEnum, CaseIterable {
         case .fileCrypto: return "文件加密"
         case .wish: return "许愿"
         case .anniversary: return "纪念日"
+        case .answerBook: return "答案之书"
         }
     }
 }
@@ -251,6 +272,14 @@ struct SmartNoteShortcutsProvider: AppShortcutsProvider {
             ],
             shortTitle: "纪念日",
             systemImageName: "calendar.badge.exclamationmark"
+        )
+        AppShortcut(
+            intent: OpenAnswerBookIntent(),
+            phrases: [
+                "打开\(.applicationName)答案之书"
+            ],
+            shortTitle: "答案之书",
+            systemImageName: "book.closed.fill"
         )
         AppShortcut(
             intent: CreateQuickNoteIntent(),

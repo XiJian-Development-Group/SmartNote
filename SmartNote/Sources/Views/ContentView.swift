@@ -285,6 +285,10 @@ struct SidebarView: View {
                 }
                 .buttonStyle(.plain)
 
+                NavigationLink(value: 24) {
+                    Label("答案之书", systemImage: "book.closed.fill")
+                }
+
                 NavigationLink(value: 25) {
                     Label("纪念日", systemImage: "calendar.badge.exclamationmark")
                 }
@@ -431,6 +435,8 @@ struct DetailView: View {
                 FileCryptoUnavailableView()
             case 23:
                 WhiteNoiseView()
+            case 24:
+                AnswerBookView(service: appState.answerBookService)
             case 25:
                 AnniversaryView()
             case 26:

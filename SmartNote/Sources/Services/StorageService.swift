@@ -113,6 +113,7 @@ class StorageService {
         case whiteboardsJSON
         case wishesJSON
         case anniversariesJSON
+        case answerBookHistoryJSON
         case materialsDirectory
         case diaryImagesDirectory
         case quickNotesDirectory
@@ -148,6 +149,7 @@ class StorageService {
             case .whiteboardsJSON: return "whiteboards.json"
             case .wishesJSON: return "wishes.json"
             case .anniversariesJSON: return "anniversaries.json"
+            case .answerBookHistoryJSON: return "answerBookHistory.json"
             case .materialsDirectory: return "Materials"
             case .diaryImagesDirectory: return "DiaryImages"
             case .quickNotesDirectory: return "QuickNotes"
@@ -207,6 +209,8 @@ class StorageService {
     private var examCountdownsFileURL: URL { managedURL(for: .examCountdownsJSON) }
 
     private var historyProgressFileURL: URL { managedURL(for: .historyProgressJSON) }
+
+    private var answerBookHistoryFileURL: URL { managedURL(for: .answerBookHistoryJSON) }
 
     private var learningProfileFileURL: URL { managedURL(for: .learningProfileJSON) }
 
@@ -296,6 +300,28 @@ class StorageService {
 
     func deleteHistoryProgress() {
         try? fileManager.removeItem(at: historyProgressFileURL)
+    }
+
+    // MARK: - 答案之书历史
+
+    @discardableResult
+    func saveAnswerBookHistory(_ history: AnswerBookHistoryState) -> Bool {
+        save(history, to: answerBookHistoryFileURL)
+    }
+
+    func loadAnswerBookHistoryResult() -> AnswerBookHistoryLoadResult {
+        let fileExists = fileManager.fileExists(atPath: answerBookHistoryFileURL.path)
+        guard fileExists else {
+            return AnswerBookHistoryLoadResult(state: AnswerBookHistoryState(), fileExists: false, didFailToDecode: false)
+        }
+        guard let state: AnswerBookHistoryState = load(from: answerBookHistoryFileURL) else {
+            return AnswerBookHistoryLoadResult(state: AnswerBookHistoryState(), fileExists: true, didFailToDecode: true)
+        }
+        return AnswerBookHistoryLoadResult(state: state, fileExists: true, didFailToDecode: false)
+    }
+
+    func loadAnswerBookHistory() -> AnswerBookHistoryState {
+        loadAnswerBookHistoryResult().state
     }
 
     // MARK: - 启动期 schema 迁移
@@ -1025,6 +1051,14 @@ class StorageService {
 
 struct HistoryProgressLoadResult {
     let state: HistoryLearningState
+    let fileExists: Bool
+    let didFailToDecode: Bool
+}
+
+/// 答案之书历史文件读取结果。`didFailToDecode` 为真时原文件已被隔离备份，
+/// 调用方应禁止把空状态写回，避免覆盖掉用户还能手工抢救的内容。
+struct AnswerBookHistoryLoadResult {
+    let state: AnswerBookHistoryState
     let fileExists: Bool
     let didFailToDecode: Bool
 }

@@ -1,0 +1,2017 @@
+{
+  "version": "1.0.0",
+  "note": "《答案之书》中文答案集。数据来源于 TheBookOfAnswer-tboa 项目（作者 skyc8266）的 config.json，原始文案整理自 hyt804bz / answerbook.org。搬迁时按内容去重（同一句只保留 id 最小的一条），并把原数据里 target 为 Lost/Dark 与 SystemError=404 的三条特殊条目标记为彩蛋（kind = lost / glitch）。",
+  "sourceNote": "TheBookOfAnswer-tboa · config.json（Items 0-403 + 8266）",
+  "answers": [
+    {
+      "id": 0,
+      "content": "前路迷茫，无法预测",
+      "kind": "lost"
+    },
+    {
+      "id": 1,
+      "content": "别失望",
+      "kind": "normal"
+    },
+    {
+      "id": 2,
+      "content": "不必为你无法控制的事情而担心",
+      "kind": "normal"
+    },
+    {
+      "id": 3,
+      "content": "不要忘记微笑",
+      "kind": "normal"
+    },
+    {
+      "id": 4,
+      "content": "阳光",
+      "kind": "normal"
+    },
+    {
+      "id": 5,
+      "content": "挥手道别",
+      "kind": "normal"
+    },
+    {
+      "id": 6,
+      "content": "你失去的某天会以不同的方式归还于你",
+      "kind": "normal"
+    },
+    {
+      "id": 7,
+      "content": "你的状态很不对",
+      "kind": "normal"
+    },
+    {
+      "id": 8,
+      "content": "这是个麻烦",
+      "kind": "normal"
+    },
+    {
+      "id": 9,
+      "content": "你或许需要突破",
+      "kind": "normal"
+    },
+    {
+      "id": 10,
+      "content": "放弃",
+      "kind": "normal"
+    },
+    {
+      "id": 11,
+      "content": "你唯一能做的只有把握现在",
+      "kind": "normal"
+    },
+    {
+      "id": 12,
+      "content": "学会珍惜",
+      "kind": "normal"
+    },
+    {
+      "id": 13,
+      "content": "改变心情",
+      "kind": "normal"
+    },
+    {
+      "id": 14,
+      "content": "一直走下去",
+      "kind": "normal"
+    },
+    {
+      "id": 15,
+      "content": "优秀",
+      "kind": "normal"
+    },
+    {
+      "id": 16,
+      "content": "坚持不解的努力",
+      "kind": "normal"
+    },
+    {
+      "id": 17,
+      "content": "不适合",
+      "kind": "normal"
+    },
+    {
+      "id": 18,
+      "content": "愉快生活",
+      "kind": "normal"
+    },
+    {
+      "id": 19,
+      "content": "终点",
+      "kind": "normal"
+    },
+    {
+      "id": 20,
+      "content": "换一个方向",
+      "kind": "normal"
+    },
+    {
+      "id": 21,
+      "content": "岁月静好",
+      "kind": "normal"
+    },
+    {
+      "id": 22,
+      "content": "放轻松这很简单",
+      "kind": "normal"
+    },
+    {
+      "id": 23,
+      "content": "早点儿开始",
+      "kind": "normal"
+    },
+    {
+      "id": 24,
+      "content": "不要后悔",
+      "kind": "normal"
+    },
+    {
+      "id": 25,
+      "content": "也许会退到",
+      "kind": "normal"
+    },
+    {
+      "id": 26,
+      "content": "沉默",
+      "kind": "normal"
+    },
+    {
+      "id": 27,
+      "content": "好像平凡了点",
+      "kind": "normal"
+    },
+    {
+      "id": 28,
+      "content": "糊涂一点更好",
+      "kind": "normal"
+    },
+    {
+      "id": 29,
+      "content": "善待自己",
+      "kind": "normal"
+    },
+    {
+      "id": 30,
+      "content": "放手",
+      "kind": "normal"
+    },
+    {
+      "id": 31,
+      "content": "呼吸一下新鲜空气",
+      "kind": "normal"
+    },
+    {
+      "id": 32,
+      "content": "没有答案",
+      "kind": "normal"
+    },
+    {
+      "id": 33,
+      "content": "感恩，运气会越来越好",
+      "kind": "normal"
+    },
+    {
+      "id": 34,
+      "content": "原谅",
+      "kind": "normal"
+    },
+    {
+      "id": 35,
+      "content": "自我欣赏",
+      "kind": "normal"
+    },
+    {
+      "id": 36,
+      "content": "复杂的事情简单做",
+      "kind": "normal"
+    },
+    {
+      "id": 37,
+      "content": "学会自己保护自己",
+      "kind": "normal"
+    },
+    {
+      "id": 38,
+      "content": "奇迹",
+      "kind": "normal"
+    },
+    {
+      "id": 39,
+      "content": "给自己一个肯定",
+      "kind": "normal"
+    },
+    {
+      "id": 40,
+      "content": "甜",
+      "kind": "normal"
+    },
+    {
+      "id": 41,
+      "content": "摆正心态",
+      "kind": "normal"
+    },
+    {
+      "id": 42,
+      "content": "种下满足，收获幸福",
+      "kind": "normal"
+    },
+    {
+      "id": 43,
+      "content": "把握现在",
+      "kind": "normal"
+    },
+    {
+      "id": 44,
+      "content": "学会好奇",
+      "kind": "normal"
+    },
+    {
+      "id": 45,
+      "content": "最美丽的一天",
+      "kind": "normal"
+    },
+    {
+      "id": 46,
+      "content": "彼岸",
+      "kind": "normal"
+    },
+    {
+      "id": 47,
+      "content": "停止",
+      "kind": "normal"
+    },
+    {
+      "id": 48,
+      "content": "坚强",
+      "kind": "normal"
+    },
+    {
+      "id": 49,
+      "content": "永恒",
+      "kind": "normal"
+    },
+    {
+      "id": 50,
+      "content": "常常是最后一把钥匙打开了神殿门",
+      "kind": "normal"
+    },
+    {
+      "id": 51,
+      "content": "不要刻意隐藏",
+      "kind": "normal"
+    },
+    {
+      "id": 52,
+      "content": "停止悲伤",
+      "kind": "normal"
+    },
+    {
+      "id": 53,
+      "content": "不要刻意压抑",
+      "kind": "normal"
+    },
+    {
+      "id": 54,
+      "content": "背不动的就放下",
+      "kind": "normal"
+    },
+    {
+      "id": 55,
+      "content": "不要怕",
+      "kind": "normal"
+    },
+    {
+      "id": 56,
+      "content": "安静",
+      "kind": "normal"
+    },
+    {
+      "id": 57,
+      "content": "想念",
+      "kind": "normal"
+    },
+    {
+      "id": 58,
+      "content": "驻足静立",
+      "kind": "normal"
+    },
+    {
+      "id": 59,
+      "content": "活下去",
+      "kind": "normal"
+    },
+    {
+      "id": 60,
+      "content": "去爱",
+      "kind": "normal"
+    },
+    {
+      "id": 61,
+      "content": "回家",
+      "kind": "normal"
+    },
+    {
+      "id": 62,
+      "content": "未解之谜",
+      "kind": "normal"
+    },
+    {
+      "id": 63,
+      "content": "相遇",
+      "kind": "normal"
+    },
+    {
+      "id": 64,
+      "content": "陌生人",
+      "kind": "normal"
+    },
+    {
+      "id": 65,
+      "content": "告别",
+      "kind": "normal"
+    },
+    {
+      "id": 66,
+      "content": "本能",
+      "kind": "normal"
+    },
+    {
+      "id": 67,
+      "content": "取暖",
+      "kind": "normal"
+    },
+    {
+      "id": 68,
+      "content": "重逢",
+      "kind": "normal"
+    },
+    {
+      "id": 69,
+      "content": "不要去忘记",
+      "kind": "normal"
+    },
+    {
+      "id": 70,
+      "content": "自信起来吧",
+      "kind": "normal"
+    },
+    {
+      "id": 71,
+      "content": "爱",
+      "kind": "normal"
+    },
+    {
+      "id": 72,
+      "content": "接受那些消失的",
+      "kind": "normal"
+    },
+    {
+      "id": 73,
+      "content": "到此为止",
+      "kind": "normal"
+    },
+    {
+      "id": 74,
+      "content": "一步之遥",
+      "kind": "normal"
+    },
+    {
+      "id": 75,
+      "content": "保存",
+      "kind": "normal"
+    },
+    {
+      "id": 76,
+      "content": "虚无的关系",
+      "kind": "normal"
+    },
+    {
+      "id": 77,
+      "content": "时间有限",
+      "kind": "normal"
+    },
+    {
+      "id": 78,
+      "content": "迷失的世界",
+      "kind": "normal"
+    },
+    {
+      "id": 79,
+      "content": "慢下来",
+      "kind": "normal"
+    },
+    {
+      "id": 80,
+      "content": "可怕",
+      "kind": "normal"
+    },
+    {
+      "id": 81,
+      "content": "了不起",
+      "kind": "normal"
+    },
+    {
+      "id": 82,
+      "content": "一个正在到来的晴天",
+      "kind": "normal"
+    },
+    {
+      "id": 83,
+      "content": "好天气",
+      "kind": "normal"
+    },
+    {
+      "id": 84,
+      "content": "旧梦",
+      "kind": "normal"
+    },
+    {
+      "id": 85,
+      "content": "挽留",
+      "kind": "normal"
+    },
+    {
+      "id": 86,
+      "content": "逆水行舟",
+      "kind": "normal"
+    },
+    {
+      "id": 87,
+      "content": "被排挤",
+      "kind": "normal"
+    },
+    {
+      "id": 88,
+      "content": "可以期待的未来",
+      "kind": "normal"
+    },
+    {
+      "id": 89,
+      "content": "平平安安",
+      "kind": "normal"
+    },
+    {
+      "id": 90,
+      "content": "挥别错的",
+      "kind": "normal"
+    },
+    {
+      "id": 91,
+      "content": "朴素",
+      "kind": "normal"
+    },
+    {
+      "id": 92,
+      "content": "成为了事实",
+      "kind": "normal"
+    },
+    {
+      "id": 93,
+      "content": "萌芽",
+      "kind": "normal"
+    },
+    {
+      "id": 94,
+      "content": "有一些重要的事",
+      "kind": "normal"
+    },
+    {
+      "id": 95,
+      "content": "让你泪流满脸的",
+      "kind": "normal"
+    },
+    {
+      "id": 96,
+      "content": "不知所措",
+      "kind": "normal"
+    },
+    {
+      "id": 97,
+      "content": "给人依赖",
+      "kind": "normal"
+    },
+    {
+      "id": 98,
+      "content": "对未知前途的期盼",
+      "kind": "normal"
+    },
+    {
+      "id": 99,
+      "content": "用平淡的心态去追求",
+      "kind": "normal"
+    },
+    {
+      "id": 101,
+      "content": "控制自己的情绪",
+      "kind": "normal"
+    },
+    {
+      "id": 102,
+      "content": "一切顺其自然",
+      "kind": "normal"
+    },
+    {
+      "id": 103,
+      "content": "一条没有鲜花的道路",
+      "kind": "normal"
+    },
+    {
+      "id": 104,
+      "content": "得不到别人的认同",
+      "kind": "normal"
+    },
+    {
+      "id": 105,
+      "content": "暂且不要判断",
+      "kind": "normal"
+    },
+    {
+      "id": 106,
+      "content": "不要一成不变",
+      "kind": "normal"
+    },
+    {
+      "id": 107,
+      "content": "学会认错",
+      "kind": "normal"
+    },
+    {
+      "id": 108,
+      "content": "你祈求的一切顺利",
+      "kind": "normal"
+    },
+    {
+      "id": 109,
+      "content": "享受全心全意的付出",
+      "kind": "normal"
+    },
+    {
+      "id": 110,
+      "content": "站在了最重要的地方",
+      "kind": "normal"
+    },
+    {
+      "id": 111,
+      "content": "捕风捉影",
+      "kind": "normal"
+    },
+    {
+      "id": 112,
+      "content": "欢天喜地",
+      "kind": "normal"
+    },
+    {
+      "id": 113,
+      "content": "轮回",
+      "kind": "normal"
+    },
+    {
+      "id": 114,
+      "content": "你无法继续沉睡",
+      "kind": "normal"
+    },
+    {
+      "id": 115,
+      "content": "得到了多数的支持",
+      "kind": "normal"
+    },
+    {
+      "id": 116,
+      "content": "十分好的预感",
+      "kind": "normal"
+    },
+    {
+      "id": 117,
+      "content": "背叛",
+      "kind": "normal"
+    },
+    {
+      "id": 118,
+      "content": "盛开",
+      "kind": "normal"
+    },
+    {
+      "id": 119,
+      "content": "学会改变什么",
+      "kind": "normal"
+    },
+    {
+      "id": 120,
+      "content": "最划算的交换",
+      "kind": "normal"
+    },
+    {
+      "id": 121,
+      "content": "退后一厘米",
+      "kind": "normal"
+    },
+    {
+      "id": 122,
+      "content": "这真是一个奇怪的问题",
+      "kind": "normal"
+    },
+    {
+      "id": 123,
+      "content": "用力活着",
+      "kind": "normal"
+    },
+    {
+      "id": 124,
+      "content": "成长",
+      "kind": "normal"
+    },
+    {
+      "id": 125,
+      "content": "最好的事情正要发生",
+      "kind": "normal"
+    },
+    {
+      "id": 126,
+      "content": "没有什么是对的",
+      "kind": "normal"
+    },
+    {
+      "id": 127,
+      "content": "堕落",
+      "kind": "normal"
+    },
+    {
+      "id": 128,
+      "content": "多余",
+      "kind": "normal"
+    },
+    {
+      "id": 129,
+      "content": "必须努力奔跑起来",
+      "kind": "normal"
+    },
+    {
+      "id": 130,
+      "content": "会有人陪着你",
+      "kind": "normal"
+    },
+    {
+      "id": 131,
+      "content": "驾驭",
+      "kind": "normal"
+    },
+    {
+      "id": 132,
+      "content": "站起来去战斗",
+      "kind": "normal"
+    },
+    {
+      "id": 133,
+      "content": "不要看轻别人",
+      "kind": "normal"
+    },
+    {
+      "id": 134,
+      "content": "多读一本书",
+      "kind": "normal"
+    },
+    {
+      "id": 135,
+      "content": "下一页才是你的人生答案",
+      "kind": "normal"
+    },
+    {
+      "id": 136,
+      "content": "出发",
+      "kind": "normal"
+    },
+    {
+      "id": 137,
+      "content": "差不多得了",
+      "kind": "normal"
+    },
+    {
+      "id": 138,
+      "content": "不要给人添麻烦",
+      "kind": "normal"
+    },
+    {
+      "id": 139,
+      "content": "一个人的细水长流",
+      "kind": "normal"
+    },
+    {
+      "id": 140,
+      "content": "左边",
+      "kind": "normal"
+    },
+    {
+      "id": 141,
+      "content": "有人浪费了你的时间",
+      "kind": "normal"
+    },
+    {
+      "id": 142,
+      "content": "最后什么都没改变",
+      "kind": "normal"
+    },
+    {
+      "id": 143,
+      "content": "对，去吧！",
+      "kind": "normal"
+    },
+    {
+      "id": 144,
+      "content": "扔掉这些东西",
+      "kind": "normal"
+    },
+    {
+      "id": 145,
+      "content": "有些人开始慌乱",
+      "kind": "normal"
+    },
+    {
+      "id": 146,
+      "content": "找回自己",
+      "kind": "normal"
+    },
+    {
+      "id": 147,
+      "content": "重生",
+      "kind": "normal"
+    },
+    {
+      "id": 148,
+      "content": "慢些，我们就会更快",
+      "kind": "normal"
+    },
+    {
+      "id": 149,
+      "content": "一个人的朝圣",
+      "kind": "normal"
+    },
+    {
+      "id": 150,
+      "content": "孤单",
+      "kind": "normal"
+    },
+    {
+      "id": 151,
+      "content": "下一个天亮",
+      "kind": "normal"
+    },
+    {
+      "id": 152,
+      "content": "独角戏",
+      "kind": "normal"
+    },
+    {
+      "id": 153,
+      "content": "平凡之路",
+      "kind": "normal"
+    },
+    {
+      "id": 154,
+      "content": "直面残酷",
+      "kind": "normal"
+    },
+    {
+      "id": 155,
+      "content": "泡沫",
+      "kind": "normal"
+    },
+    {
+      "id": 156,
+      "content": "你大概会受点伤",
+      "kind": "normal"
+    },
+    {
+      "id": 157,
+      "content": "远行",
+      "kind": "normal"
+    },
+    {
+      "id": 158,
+      "content": "一直在找什么",
+      "kind": "normal"
+    },
+    {
+      "id": 159,
+      "content": "回头看看",
+      "kind": "normal"
+    },
+    {
+      "id": 160,
+      "content": "唤醒沉睡的你",
+      "kind": "normal"
+    },
+    {
+      "id": 161,
+      "content": "也许会有好转",
+      "kind": "normal"
+    },
+    {
+      "id": 162,
+      "content": "烦恼快要消失了",
+      "kind": "normal"
+    },
+    {
+      "id": 163,
+      "content": "一无所有",
+      "kind": "normal"
+    },
+    {
+      "id": 164,
+      "content": "显得有些唐突",
+      "kind": "normal"
+    },
+    {
+      "id": 165,
+      "content": "迷人的危险",
+      "kind": "normal"
+    },
+    {
+      "id": 166,
+      "content": "结束倒计时",
+      "kind": "normal"
+    },
+    {
+      "id": 167,
+      "content": "第二次被伤害的机会",
+      "kind": "normal"
+    },
+    {
+      "id": 168,
+      "content": "并不会让你高兴",
+      "kind": "normal"
+    },
+    {
+      "id": 169,
+      "content": "没什么放不下",
+      "kind": "normal"
+    },
+    {
+      "id": 170,
+      "content": "等待",
+      "kind": "normal"
+    },
+    {
+      "id": 171,
+      "content": "永远不会愈合的伤口",
+      "kind": "normal"
+    },
+    {
+      "id": 172,
+      "content": "骗不到自己",
+      "kind": "normal"
+    },
+    {
+      "id": 173,
+      "content": "悄悄躲开",
+      "kind": "normal"
+    },
+    {
+      "id": 174,
+      "content": "一场完美的悲剧",
+      "kind": "normal"
+    },
+    {
+      "id": 175,
+      "content": "寻寻觅觅",
+      "kind": "normal"
+    },
+    {
+      "id": 176,
+      "content": "不要做出任何决定",
+      "kind": "normal"
+    },
+    {
+      "id": 177,
+      "content": "开心的肯定",
+      "kind": "normal"
+    },
+    {
+      "id": 178,
+      "content": "浪费光阴",
+      "kind": "normal"
+    },
+    {
+      "id": 179,
+      "content": "保密",
+      "kind": "normal"
+    },
+    {
+      "id": 180,
+      "content": "被唾弃的决定",
+      "kind": "normal"
+    },
+    {
+      "id": 181,
+      "content": "停止向前",
+      "kind": "normal"
+    },
+    {
+      "id": 182,
+      "content": "有点儿意思",
+      "kind": "normal"
+    },
+    {
+      "id": 183,
+      "content": "谢谢",
+      "kind": "normal"
+    },
+    {
+      "id": 184,
+      "content": "再也不要见",
+      "kind": "normal"
+    },
+    {
+      "id": 185,
+      "content": "完美时刻",
+      "kind": "normal"
+    },
+    {
+      "id": 186,
+      "content": "会让你痛苦的",
+      "kind": "normal"
+    },
+    {
+      "id": 187,
+      "content": "僵持不下",
+      "kind": "normal"
+    },
+    {
+      "id": 188,
+      "content": "必不可少",
+      "kind": "normal"
+    },
+    {
+      "id": 189,
+      "content": "对不起",
+      "kind": "normal"
+    },
+    {
+      "id": 190,
+      "content": "试着慷概一点儿",
+      "kind": "normal"
+    },
+    {
+      "id": 191,
+      "content": "这不是能犹豫的事儿",
+      "kind": "normal"
+    },
+    {
+      "id": 192,
+      "content": "同意",
+      "kind": "normal"
+    },
+    {
+      "id": 193,
+      "content": "试着安静一会儿",
+      "kind": "normal"
+    },
+    {
+      "id": 194,
+      "content": "默默无闻",
+      "kind": "normal"
+    },
+    {
+      "id": 195,
+      "content": "虚空",
+      "kind": "normal"
+    },
+    {
+      "id": 196,
+      "content": "戒掉过分的急躁",
+      "kind": "normal"
+    },
+    {
+      "id": 197,
+      "content": "不要隐藏起来",
+      "kind": "normal"
+    },
+    {
+      "id": 198,
+      "content": "其实大家都知道",
+      "kind": "normal"
+    },
+    {
+      "id": 199,
+      "content": "会被一直依赖的",
+      "kind": "normal"
+    },
+    {
+      "id": 200,
+      "content": "全部给它",
+      "kind": "normal"
+    },
+    {
+      "id": 201,
+      "content": "坚持了不该坚持的",
+      "kind": "normal"
+    },
+    {
+      "id": 202,
+      "content": "你好像舍不得",
+      "kind": "normal"
+    },
+    {
+      "id": 203,
+      "content": "有点儿心疼",
+      "kind": "normal"
+    },
+    {
+      "id": 204,
+      "content": "轻而易举的伤害",
+      "kind": "normal"
+    },
+    {
+      "id": 205,
+      "content": "卑微的等待",
+      "kind": "normal"
+    },
+    {
+      "id": 206,
+      "content": "你有必要傻一点",
+      "kind": "normal"
+    },
+    {
+      "id": 207,
+      "content": "一成不变",
+      "kind": "normal"
+    },
+    {
+      "id": 208,
+      "content": "你会忘记它",
+      "kind": "normal"
+    },
+    {
+      "id": 209,
+      "content": "禁言",
+      "kind": "normal"
+    },
+    {
+      "id": 210,
+      "content": "只是一场梦",
+      "kind": "normal"
+    },
+    {
+      "id": 211,
+      "content": "你要勇敢的离开",
+      "kind": "normal"
+    },
+    {
+      "id": 212,
+      "content": "拼凑不了的昨天",
+      "kind": "normal"
+    },
+    {
+      "id": 213,
+      "content": "容易被操控",
+      "kind": "normal"
+    },
+    {
+      "id": 214,
+      "content": "尽你最大的能力",
+      "kind": "normal"
+    },
+    {
+      "id": 215,
+      "content": "去忘记",
+      "kind": "normal"
+    },
+    {
+      "id": 216,
+      "content": "大家好像都不认同",
+      "kind": "normal"
+    },
+    {
+      "id": 217,
+      "content": "认真起来",
+      "kind": "normal"
+    },
+    {
+      "id": 218,
+      "content": "值得去做的事",
+      "kind": "normal"
+    },
+    {
+      "id": 219,
+      "content": "是",
+      "kind": "normal"
+    },
+    {
+      "id": 220,
+      "content": "白日梦",
+      "kind": "normal"
+    },
+    {
+      "id": 221,
+      "content": "转个身忘记吧",
+      "kind": "normal"
+    },
+    {
+      "id": 222,
+      "content": "你可能会比较悲伤",
+      "kind": "normal"
+    },
+    {
+      "id": 223,
+      "content": "这绝对是个好主意",
+      "kind": "normal"
+    },
+    {
+      "id": 224,
+      "content": "好的指引",
+      "kind": "normal"
+    },
+    {
+      "id": 225,
+      "content": "不是",
+      "kind": "normal"
+    },
+    {
+      "id": 226,
+      "content": "充满未知的迷惑",
+      "kind": "normal"
+    },
+    {
+      "id": 227,
+      "content": "光明的",
+      "kind": "normal"
+    },
+    {
+      "id": 228,
+      "content": "幼稚又可笑",
+      "kind": "normal"
+    },
+    {
+      "id": 229,
+      "content": "你很幸运",
+      "kind": "normal"
+    },
+    {
+      "id": 230,
+      "content": "机会就在眼前",
+      "kind": "normal"
+    },
+    {
+      "id": 231,
+      "content": "不如忘掉这个问题",
+      "kind": "normal"
+    },
+    {
+      "id": 232,
+      "content": "又干净又明亮",
+      "kind": "normal"
+    },
+    {
+      "id": 233,
+      "content": "专注一点",
+      "kind": "normal"
+    },
+    {
+      "id": 234,
+      "content": "殊途同归",
+      "kind": "normal"
+    },
+    {
+      "id": 235,
+      "content": "背道而驰",
+      "kind": "normal"
+    },
+    {
+      "id": 236,
+      "content": "小迷糊",
+      "kind": "normal"
+    },
+    {
+      "id": 237,
+      "content": "你在开玩笑吗",
+      "kind": "normal"
+    },
+    {
+      "id": 238,
+      "content": "别难过你是最棒的",
+      "kind": "normal"
+    },
+    {
+      "id": 239,
+      "content": "吃点东西冷静一下",
+      "kind": "normal"
+    },
+    {
+      "id": 240,
+      "content": "这个大概会让你哭泣",
+      "kind": "normal"
+    },
+    {
+      "id": 241,
+      "content": "高兴起来吧你这么厉害",
+      "kind": "normal"
+    },
+    {
+      "id": 242,
+      "content": "别总想着过去了",
+      "kind": "normal"
+    },
+    {
+      "id": 243,
+      "content": "捍卫它",
+      "kind": "normal"
+    },
+    {
+      "id": 244,
+      "content": "无谓的徘徊",
+      "kind": "normal"
+    },
+    {
+      "id": 245,
+      "content": "将要被击渍",
+      "kind": "normal"
+    },
+    {
+      "id": 246,
+      "content": "不必耿耿于怀",
+      "kind": "normal"
+    },
+    {
+      "id": 247,
+      "content": "放在心里吧这样比较好点",
+      "kind": "normal"
+    },
+    {
+      "id": 248,
+      "content": "不用伪装到面目全非",
+      "kind": "normal"
+    },
+    {
+      "id": 249,
+      "content": "别压抑自己的天性",
+      "kind": "normal"
+    },
+    {
+      "id": 250,
+      "content": "一个人安安静静待一会儿",
+      "kind": "normal"
+    },
+    {
+      "id": 251,
+      "content": "既然认准这条路，就不要去想走多久",
+      "kind": "normal"
+    },
+    {
+      "id": 252,
+      "content": "大哭一场会好受点",
+      "kind": "normal"
+    },
+    {
+      "id": 253,
+      "content": "总会慢慢淡去的",
+      "kind": "normal"
+    },
+    {
+      "id": 254,
+      "content": "明天就会有新鲜事儿发生",
+      "kind": "normal"
+    },
+    {
+      "id": 255,
+      "content": "这事情要靠缘分",
+      "kind": "normal"
+    },
+    {
+      "id": 256,
+      "content": "太槽糕了",
+      "kind": "normal"
+    },
+    {
+      "id": 257,
+      "content": "这是起跑线",
+      "kind": "normal"
+    },
+    {
+      "id": 258,
+      "content": "没事，有我在",
+      "kind": "normal"
+    },
+    {
+      "id": 259,
+      "content": "不要把所有表情都写在脸上",
+      "kind": "normal"
+    },
+    {
+      "id": 260,
+      "content": "别人会对你苦笑",
+      "kind": "normal"
+    },
+    {
+      "id": 261,
+      "content": "好像会很累",
+      "kind": "normal"
+    },
+    {
+      "id": 262,
+      "content": "有人撑着你向前",
+      "kind": "normal"
+    },
+    {
+      "id": 263,
+      "content": "你需要的只是勇气",
+      "kind": "normal"
+    },
+    {
+      "id": 264,
+      "content": "不甘心的话就努力争取吧",
+      "kind": "normal"
+    },
+    {
+      "id": 265,
+      "content": "无条件的付出",
+      "kind": "normal"
+    },
+    {
+      "id": 266,
+      "content": "试着更快一些",
+      "kind": "normal"
+    },
+    {
+      "id": 267,
+      "content": "这是昂贵的礼物",
+      "kind": "normal"
+    },
+    {
+      "id": 268,
+      "content": "不能永远一成不变",
+      "kind": "normal"
+    },
+    {
+      "id": 269,
+      "content": "甜蜜",
+      "kind": "normal"
+    },
+    {
+      "id": 270,
+      "content": "会有一些困难",
+      "kind": "normal"
+    },
+    {
+      "id": 271,
+      "content": "等待下一个故事的发生",
+      "kind": "normal"
+    },
+    {
+      "id": 272,
+      "content": "试着面对自己真实的想法",
+      "kind": "normal"
+    },
+    {
+      "id": 273,
+      "content": "这就是结局",
+      "kind": "normal"
+    },
+    {
+      "id": 274,
+      "content": "心会冷掉",
+      "kind": "normal"
+    },
+    {
+      "id": 275,
+      "content": "愿意并且相信",
+      "kind": "normal"
+    },
+    {
+      "id": 276,
+      "content": "守护",
+      "kind": "normal"
+    },
+    {
+      "id": 277,
+      "content": "将要奔赴一场未知的路程",
+      "kind": "normal"
+    },
+    {
+      "id": 278,
+      "content": "隐忍",
+      "kind": "normal"
+    },
+    {
+      "id": 279,
+      "content": "不必要的退让",
+      "kind": "normal"
+    },
+    {
+      "id": 280,
+      "content": "这大概会让你有点寂寞",
+      "kind": "normal"
+    },
+    {
+      "id": 281,
+      "content": "形同陌路",
+      "kind": "normal"
+    },
+    {
+      "id": 282,
+      "content": "不要轻易去相信",
+      "kind": "normal"
+    },
+    {
+      "id": 283,
+      "content": "可能会很累",
+      "kind": "normal"
+    },
+    {
+      "id": 284,
+      "content": "有些人选择了离开",
+      "kind": "normal"
+    },
+    {
+      "id": 285,
+      "content": "会让周围的人感觉到温暖",
+      "kind": "normal"
+    },
+    {
+      "id": 286,
+      "content": "会有一个风光明媚的未来",
+      "kind": "normal"
+    },
+    {
+      "id": 287,
+      "content": "大概要多想一会儿",
+      "kind": "normal"
+    },
+    {
+      "id": 288,
+      "content": "值得肯定",
+      "kind": "normal"
+    },
+    {
+      "id": 289,
+      "content": "好像会有很大的麻烦",
+      "kind": "normal"
+    },
+    {
+      "id": 290,
+      "content": "注意一下周围",
+      "kind": "normal"
+    },
+    {
+      "id": 291,
+      "content": "你将会有好的运气",
+      "kind": "normal"
+    },
+    {
+      "id": 292,
+      "content": "大概吧",
+      "kind": "normal"
+    },
+    {
+      "id": 293,
+      "content": "漂亮",
+      "kind": "normal"
+    },
+    {
+      "id": 294,
+      "content": "你可能会失去一些东西",
+      "kind": "normal"
+    },
+    {
+      "id": 295,
+      "content": "看见的都不是真的",
+      "kind": "normal"
+    },
+    {
+      "id": 296,
+      "content": "苦涩",
+      "kind": "normal"
+    },
+    {
+      "id": 297,
+      "content": "看向未来",
+      "kind": "normal"
+    },
+    {
+      "id": 298,
+      "content": "笑",
+      "kind": "normal"
+    },
+    {
+      "id": 299,
+      "content": "接受的终将会接受",
+      "kind": "normal"
+    },
+    {
+      "id": 300,
+      "content": "保护你的温暖所在",
+      "kind": "normal"
+    },
+    {
+      "id": 301,
+      "content": "这就是命",
+      "kind": "normal"
+    },
+    {
+      "id": 302,
+      "content": "未来会变得特别繁忙",
+      "kind": "normal"
+    },
+    {
+      "id": 303,
+      "content": "居心叵测",
+      "kind": "normal"
+    },
+    {
+      "id": 304,
+      "content": "这简直太有趣了",
+      "kind": "normal"
+    },
+    {
+      "id": 305,
+      "content": "胜券在握",
+      "kind": "normal"
+    },
+    {
+      "id": 306,
+      "content": "突如其来的幸福",
+      "kind": "normal"
+    },
+    {
+      "id": 307,
+      "content": "平分秋色",
+      "kind": "normal"
+    },
+    {
+      "id": 308,
+      "content": "非常融洽",
+      "kind": "normal"
+    },
+    {
+      "id": 309,
+      "content": "按照一定的规律到达了终点",
+      "kind": "normal"
+    },
+    {
+      "id": 310,
+      "content": "平衡",
+      "kind": "normal"
+    },
+    {
+      "id": 311,
+      "content": "残留的遗撼",
+      "kind": "normal"
+    },
+    {
+      "id": 312,
+      "content": "拜拜",
+      "kind": "normal"
+    },
+    {
+      "id": 313,
+      "content": "特别的见解",
+      "kind": "normal"
+    },
+    {
+      "id": 314,
+      "content": "最特别的幸运",
+      "kind": "normal"
+    },
+    {
+      "id": 315,
+      "content": "值得喝一杯",
+      "kind": "normal"
+    },
+    {
+      "id": 316,
+      "content": "并不确定真伪",
+      "kind": "normal"
+    },
+    {
+      "id": 317,
+      "content": "使人警惕起来",
+      "kind": "normal"
+    },
+    {
+      "id": 318,
+      "content": "空想",
+      "kind": "normal"
+    },
+    {
+      "id": 319,
+      "content": "精彩的发展",
+      "kind": "normal"
+    },
+    {
+      "id": 320,
+      "content": "你会好起来",
+      "kind": "normal"
+    },
+    {
+      "id": 321,
+      "content": "勇敢地出发吧！",
+      "kind": "normal"
+    },
+    {
+      "id": 322,
+      "content": "小心地处理",
+      "kind": "normal"
+    },
+    {
+      "id": 323,
+      "content": "听取意见",
+      "kind": "normal"
+    },
+    {
+      "id": 324,
+      "content": "胜利女神在你这边",
+      "kind": "normal"
+    },
+    {
+      "id": 325,
+      "content": "关系会有好转",
+      "kind": "normal"
+    },
+    {
+      "id": 326,
+      "content": "你们会相遇！",
+      "kind": "normal"
+    },
+    {
+      "id": 327,
+      "content": "不要害怕",
+      "kind": "normal"
+    },
+    {
+      "id": 328,
+      "content": "你的想法很聪明",
+      "kind": "normal"
+    },
+    {
+      "id": 329,
+      "content": "好事降临",
+      "kind": "normal"
+    },
+    {
+      "id": 330,
+      "content": "不好的事要消失了",
+      "kind": "normal"
+    },
+    {
+      "id": 331,
+      "content": "告诉自己是最棒的！",
+      "kind": "normal"
+    },
+    {
+      "id": 332,
+      "content": "沉默是金",
+      "kind": "normal"
+    },
+    {
+      "id": 333,
+      "content": "你一点也不平凡",
+      "kind": "normal"
+    },
+    {
+      "id": 334,
+      "content": "将为他付出努力",
+      "kind": "normal"
+    },
+    {
+      "id": 335,
+      "content": "不用理会",
+      "kind": "normal"
+    },
+    {
+      "id": 336,
+      "content": "有一点突然",
+      "kind": "normal"
+    },
+    {
+      "id": 337,
+      "content": "这是幸运的",
+      "kind": "normal"
+    },
+    {
+      "id": 338,
+      "content": "尊重自己的内心",
+      "kind": "normal"
+    },
+    {
+      "id": 339,
+      "content": "对自己好一点",
+      "kind": "normal"
+    },
+    {
+      "id": 340,
+      "content": "把握机会",
+      "kind": "normal"
+    },
+    {
+      "id": 341,
+      "content": "不会让你失望",
+      "kind": "normal"
+    },
+    {
+      "id": 342,
+      "content": "你会豁然开朗！",
+      "kind": "normal"
+    },
+    {
+      "id": 343,
+      "content": "没什么大不了的",
+      "kind": "normal"
+    },
+    {
+      "id": 344,
+      "content": "不要勉强自己",
+      "kind": "normal"
+    },
+    {
+      "id": 345,
+      "content": "你是最可爱的",
+      "kind": "normal"
+    },
+    {
+      "id": 346,
+      "content": "你骗不了自己",
+      "kind": "normal"
+    },
+    {
+      "id": 347,
+      "content": "这是一个幸运的开端",
+      "kind": "normal"
+    },
+    {
+      "id": 348,
+      "content": "这会有额外的收获",
+      "kind": "normal"
+    },
+    {
+      "id": 349,
+      "content": "拒绝内耗",
+      "kind": "normal"
+    },
+    {
+      "id": 350,
+      "content": "保持微笑",
+      "kind": "normal"
+    },
+    {
+      "id": 351,
+      "content": "向过去道别",
+      "kind": "normal"
+    },
+    {
+      "id": 352,
+      "content": "这是一个美好的意外",
+      "kind": "normal"
+    },
+    {
+      "id": 353,
+      "content": "你会找到新的契机",
+      "kind": "normal"
+    },
+    {
+      "id": 354,
+      "content": "勇敢去爱",
+      "kind": "normal"
+    },
+    {
+      "id": 355,
+      "content": "去郊游一下",
+      "kind": "normal"
+    },
+    {
+      "id": 356,
+      "content": "你的状态很好",
+      "kind": "normal"
+    },
+    {
+      "id": 357,
+      "content": "这是一个大麻烦",
+      "kind": "normal"
+    },
+    {
+      "id": 358,
+      "content": "开心的结果",
+      "kind": "normal"
+    },
+    {
+      "id": 359,
+      "content": "这会让你幸福",
+      "kind": "normal"
+    },
+    {
+      "id": 360,
+      "content": "会越来越好",
+      "kind": "normal"
+    },
+    {
+      "id": 361,
+      "content": "你需要新的突破",
+      "kind": "normal"
+    },
+    {
+      "id": 362,
+      "content": "触底反弹",
+      "kind": "normal"
+    },
+    {
+      "id": 363,
+      "content": "欣赏自己",
+      "kind": "normal"
+    },
+    {
+      "id": 364,
+      "content": "你会发现快乐所在",
+      "kind": "normal"
+    },
+    {
+      "id": 365,
+      "content": "相遇的契机",
+      "kind": "normal"
+    },
+    {
+      "id": 366,
+      "content": "珍惜现在",
+      "kind": "normal"
+    },
+    {
+      "id": 367,
+      "content": "学会平静",
+      "kind": "normal"
+    },
+    {
+      "id": 368,
+      "content": "天长地久",
+      "kind": "normal"
+    },
+    {
+      "id": 369,
+      "content": "告别一段感情",
+      "kind": "normal"
+    },
+    {
+      "id": 370,
+      "content": "一直坚持下去",
+      "kind": "normal"
+    },
+    {
+      "id": 371,
+      "content": "不要为别人改变",
+      "kind": "normal"
+    },
+    {
+      "id": 372,
+      "content": "会看见曙光",
+      "kind": "normal"
+    },
+    {
+      "id": 373,
+      "content": "奇迹发生",
+      "kind": "normal"
+    },
+    {
+      "id": 374,
+      "content": "肯定自己的选择",
+      "kind": "normal"
+    },
+    {
+      "id": 375,
+      "content": "开心第一天",
+      "kind": "normal"
+    },
+    {
+      "id": 376,
+      "content": "坚持下去你的事",
+      "kind": "normal"
+    },
+    {
+      "id": 377,
+      "content": "甜蜜的未来",
+      "kind": "normal"
+    },
+    {
+      "id": 378,
+      "content": "这是你的本能",
+      "kind": "normal"
+    },
+    {
+      "id": 379,
+      "content": "光明的未来",
+      "kind": "normal"
+    },
+    {
+      "id": 380,
+      "content": "将会实现你的梦想",
+      "kind": "normal"
+    },
+    {
+      "id": 381,
+      "content": "美丽的重逢",
+      "kind": "normal"
+    },
+    {
+      "id": 382,
+      "content": "直面这件事",
+      "kind": "normal"
+    },
+    {
+      "id": 383,
+      "content": "都会成为你的勋章",
+      "kind": "normal"
+    },
+    {
+      "id": 384,
+      "content": "接受不好的结果",
+      "kind": "normal"
+    },
+    {
+      "id": 385,
+      "content": "自信起来",
+      "kind": "normal"
+    },
+    {
+      "id": 387,
+      "content": "不要对过去的事耿耿于怀",
+      "kind": "normal"
+    },
+    {
+      "id": 388,
+      "content": "享受你自己的成果",
+      "kind": "normal"
+    },
+    {
+      "id": 389,
+      "content": "还差一点",
+      "kind": "normal"
+    },
+    {
+      "id": 390,
+      "content": "放轻松",
+      "kind": "normal"
+    },
+    {
+      "id": 391,
+      "content": "是个好主意",
+      "kind": "normal"
+    },
+    {
+      "id": 392,
+      "content": "这好的指引",
+      "kind": "normal"
+    },
+    {
+      "id": 393,
+      "content": "早点开始吧",
+      "kind": "normal"
+    },
+    {
+      "id": 394,
+      "content": "不要后悔你的决定",
+      "kind": "normal"
+    },
+    {
+      "id": 395,
+      "content": "很愉快的相处",
+      "kind": "normal"
+    },
+    {
+      "id": 396,
+      "content": "这是终点",
+      "kind": "normal"
+    },
+    {
+      "id": 397,
+      "content": "去大胆尝试",
+      "kind": "normal"
+    },
+    {
+      "id": 398,
+      "content": "必须保持积极的想法",
+      "kind": "normal"
+    },
+    {
+      "id": 399,
+      "content": "换一个方式",
+      "kind": "normal"
+    },
+    {
+      "id": 400,
+      "content": "你会事半功倍",
+      "kind": "normal"
+    },
+    {
+      "id": 401,
+      "content": "保护自己",
+      "kind": "normal"
+    },
+    {
+      "id": 402,
+      "content": "你很优秀",
+      "kind": "normal"
+    },
+    {
+      "id": 8266,
+      "content": "An error occurred when generating answers. Please try again.",
+      "kind": "glitch"
+    }
+  ]
+}

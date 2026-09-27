@@ -31,6 +31,7 @@ v2.0 阶段的所有新增功能用 macOS 系统 framework，不新增 SPM 依�
 | 主题 | SwiftUI Environment + `AppTheme` | 四套主题，三个节庆主题锁定背景 |
 | 祝福 | 本地日期索引 + 本地祝福库 | 国庆 10/1–10/7 自动切节庆文案库 |
 | 历史科普 | `Bundle` JSON + `HistoryService` + 本地进度 JSON | 1840—1949 离线导览 |
+| 答案之书 | `Bundle` JSON + `AnswerBookService` + 本地历史 JSON | 402 条离线答案，彩蛋约 4%，历史最多 100 条 |
 | 计算器 | `AlgebraEvaluator` + `Int64` 精确整数路径 | 已弃用 `NSExpression` |
 
 ---
@@ -206,6 +207,7 @@ v2.0 阶段的所有新增功能用 macOS 系统 framework，不新增 SPM 依�
 - **白噪音**：6 个内置算法声源（雨 / 海浪 / 森林 / 粉噪 / 棕噪等），分别播放 + 调音量 + 停止全部；支持导入本地音频（security-scoped）。
 - **许愿**：独立全屏窗口（`openWindow(id: "wish-fullscreen")`，1280×800 起，min 1000×620）。星空铺满画布，左右分栏，70 颗固定种子星 + 6 秒周期流星。重复点侧栏入口复用同一窗口，不开多个。
 - **纪念日**：单次 / 每年 / 月三种重复；提前提醒天数；点「检查通知」才请求权限并检查。通知去重 key 是「发生日」字符串，成功投递后才写入 `lastNotifiedYearMonthDayKey`，避免重复提醒。
+- **答案之书**：写下问题 → 翻页取一句话。答案库 402 条离线内置（`Resources/answer_book.json`），书页用大字号呈现（答案文案多数不足 10 字）。「换一个」排除当前条目重抽，改的是这一次记录而不是新增条目；「复制」走 `NSPasteboard`；「收藏」按条标记。历史最多 100 条，存 `answerBookHistory.json`。约 4% 概率抽到「迷失页 / 书页故障」两条彩蛋，页面上有标注，见第 26 章。
 - **计算器**：标准 / 科学 / 程序员三模式。程序员模式按 BIN/OCT/DEC/HEX 输入，运算走带溢出检查的 `Int64`，避免大整数经 `Double` 丢精度。科学模式 DEG/RAD 切换，角度 / 弧度互转。`x²` / `x³` 是一元函数，不是二元操作；百分号按计算器语义处理。
 
 ### 没动的与原因
@@ -280,9 +282,9 @@ v2.0 阶段的所有新增功能用 macOS 系统 framework，不新增 SPM 依�
   | `Cmd+Shift+R` | 跳到真题 |
   | `Cmd+Shift+K` | 跳到课件 |
 
-- **Siri / Shortcuts**：8 个 `AppShortcut`（资料库 / 番茄钟 / 待办 / 白板 / 文件加密 / 许愿 / 纪念日 / 快速记录）+ `OpenPageIntent`（带页面参数）。`SharedAppStateProxy` 在 `AppState.init()` MainActor 上 bind 自身，Intent perform 时读写 `selectedTab`。快速记录 Intent 直接写文件，不依赖主窗口显示。
+- **Siri / Shortcuts**：9 个 `AppShortcut`（资料库 / 番茄钟 / 待办 / 白板 / 文件加密 / 许愿 / 纪念日 / 答案之书 / 快速记录）+ `OpenPageIntent`（带页面参数）。`SharedAppStateProxy` 在 `AppState.init()` MainActor 上 bind 自身，Intent perform 时读写 `selectedTab`。快速记录 Intent 直接写文件，不依赖主窗口显示。
 
-  ⚠️ 当前 `Cmd+Shift+R` / `Cmd+Shift+K` 和 Siri Intent 的页面跳转仍写裸数字 tab ID；侧栏顺序变化时容易失效。后续应统一路由（页面枚举）。
+  ⚠️ 当前 `Cmd+Shift+R` / `Cmd+Shift+K` 和 Siri Intent 的页面跳转仍写裸数字 tab ID；侧栏顺序变化时容易失效。后续应统一路由（页面枚举）。`SmartNotePage.tabIndex` 已改成可选并去掉了许愿那个假编号（见第 26 章），但页面枚举本身仍未覆盖全部侧栏项目。
 
 - **菜单栏**：常驻 `MenuBarExtra(.menu)`，提供主窗入口、快速记录、开机自启开关、设置、退出；`LaunchAtLoginService` 单例管自启。
 - **开机自启**：`SMAppService.mainApp.register()`。首次注册可能需要用户在系统设置批准；服务会回读实际状态并在失败时保留错误提示。
@@ -689,3 +691,65 @@ README 与 docs 可以在既有结构内增补和修改功能描述，但**不�
 - **批量加密的崩溃修复已保留**。`ProgressView().scaleEffect(0.7)` → `controlSize(.small)` 的修改（第 24 章记录的同日修复）没有回退。功能关闭期间这段代码不执行，但保留修复意味着将来恢复时不必重做。
 - **`FileCryptoView` 未删除也未标记为废弃**。临时关闭不是废弃，删掉会让恢复变成重写。该视图的文档注释里已写明「当前无调用方、恢复时改哪一行」。
 - **加密算法与实现本身未审查**。本次只做开关决策，没有对 AES-256-GCM 的封装、KDF 参数或密钥派生做安全审计。将来正式开放前应单独安排一轮。
+
+---
+
+## 26. 答案之书（v2.0.1 新增）
+
+把独立项目 `TheBookOfAnswer-tboa`（Python + pywebview + HTML）的玩法搬进 SmartNote，**只搬数据与玩法，不搬代码层**：webview/HTML/CSS 层与原生 SwiftUI 混用是倒退，没有搬。
+
+### 数据来源与搬迁口径
+
+| 项 | 说明 |
+|---|---|
+| 原始数据 | `TheBookOfAnswer-tboa/config.json` 的 `Items`：编号 0–403 共 404 条 + 彩蛋项 `8266` |
+| 原有 `target` 字段 | 形如 `["Answer","Page=399",""]`、`["Lost","ID=0","Dark"]`、`["SystemError=404","ErrorWhenGeneratingAnswers","Hidden"]`；**tboa 自己的代码从未读过它**，搬迁时按它分类后丢弃 |
+| 去重口径 | 同文案只保留编号最小的一条，共去掉 3 条：`100`（与前路迷茫重复）、`386`（与坚强重复）、`403`（与摆正心态重复） |
+| 最终条数 | **402 条** = 400 常规（`normal`）+ 1 迷失页（`lost`，编号 0）+ 1 书页故障（`glitch`，编号 8266） |
+| 存放位置 | `SmartNote/Resources/answer_book.json`（36 KB），与 `history_catalog.json` 同一套 `Bundle` 加载方式 |
+
+`answers` 里每条是 `{id, content, kind}`。`kind` 缺省为 `normal`，因此将来往资源文件里加字段不会让旧条目解码失败。
+
+### 三个来自原项目的问题，在搬迁时结构性避开
+
+| 原项目问题 | 这里的做法 |
+|---|---|
+| 按编号上界随机（`randint(0, MaxId)`），编号一旦有缺口就会抽到"错误答案"分支，而那个分支还漏了 f-string，用户会看到字面量 `{question}` | 直接对数组 `randomElement()`，不存在"编号"这个概念可被抽空 |
+| 历史文件非原子写；读失败时 `load_history()` 吞异常返回空数组，下一次保存把整个文件覆盖成 1 条，历史静默全丢 | 历史走 `StorageService`：`data.write(options: .atomic)` + 权限 600；解码失败时隔离为 `.corrupted-*` 且**禁止写回**（`canPersistHistory = false`） |
+| 写盘失败只 `print`，而 macOS 是 `--windowed` 打包，stdout 用户看不到，表现只是"历史一直是空的" | 失败原因进 `@Published saveError`，界面上是橙色横幅 |
+
+### 交互决策
+
+- **「换一个」改记录而不是新增记录**。同一次测定反复翻页只留一条历史，否则历史会被同一个问题刷屏。实现是 `AnswerBookService.update(recordID:entry:)`。
+- **彩蛋概率 4%**（`specialDrawRate`）。命中后从 2 条彩蛋里再随机取一条，两条都带页面标注（「这一页是空白的」/「这一页印坏了」），避免用户以为抽到了坏数据。这个概率是常量，要调只用改一处。
+- **不做「每日一答」**。按日期做确定性抽取需要额外定义"一天算几次、跨天怎么算"，本轮不引入这个状态；每日祝福已有 `BlessingService`，两者不混。
+- **不搬那张 1280×1280 / 6.3 MB 的图**。原项目里它永远是同一张、从不随答案变化，实际只当封面占位用；为了省 6 MB 包体，书页改为 `SF Symbol` + 主题色绘制。
+- **文件放在 `ManagedDataPath` 清单里**，于是备份、存储统计、「清除所有数据」都自动带上它，不需要在别处再登记一遍。
+- **顺手修掉的过期映射**：`SmartNotePage.tabIndex` 原本给许愿返回 `24` 这个假编号（许愿早就不走 tab），tab 24 现由答案之书使用，`tabIndex` 改为可选、许愿返回 `nil`。
+
+### 新增 / 改动文件
+
+| 文件 | 内容 |
+|---|---|
+| `Resources/answer_book.json` | 新增，402 条答案 |
+| `Models/AnswerBook.swift` | 新增，`AnswerBookKind` / `AnswerBookEntry` / `AnswerBookCatalog` / `AnswerBookRecord` / `AnswerBookHistoryState` |
+| `Services/AnswerBookService.swift` | 新增，目录加载 + 抽取 + 历史读写 |
+| `Views/AnswerBookView.swift` | 新增，书页界面 + 历史抽屉 |
+| `Services/StorageService.swift` | `ManagedDataPath` 加 `answerBookHistoryJSON`；新增 save/load 与 `AnswerBookHistoryLoadResult` |
+| `Views/ContentView.swift` | 侧栏「实用工具」加 `NavigationLink(value: 24)`；`DetailView` 加 `case 24` |
+| `App/AppState.swift` | 新增 `answerBookService`；`forwardNestedChanges`；`loadSavedData()` 里 `reloadHistory()`（清数据后界面不残留旧记录） |
+| `Services/SmartNoteIntents.swift` | `SmartNotePage` 加 `.answerBook`；`OpenAnswerBookIntent` + AppShortcut 短语「打开智学笔记答案之书」；`tabIndex` 改可选 |
+
+### 验证方式（本项目没有 XCTest target）
+
+功能清单里给的是人工逐项走一遍（第 10 章，71–84 项）。此外本轮用了一个临时探针：把 `Models/` `Services/` `Utilities/` 与探针 `main` 一起用 `swiftc` 编成独立可执行文件，直接跑真实的 `AnswerBookService` + `StorageService`（数据目录注入到 `/tmp`），验证 24 项：条数与编号/文案唯一性、2 万次抽取不重复"被排除的那一条"、10 万次抽取彩蛋命中率 3.97%、2 万次抽取可覆盖全部 402 条、空/超长问题被拦、落盘后权限为 600、重启后历史与收藏仍在、损坏文件被隔离且不被覆盖、历史上限 100 条、`clearAllData()` 会删掉历史文件、缺字段的旧文件仍可读。
+
+探针是**临时工具**，没有进仓库（放在 `/tmp/ab_probe/`）；它编译时会排除 `SmartNoteIntents.swift` / `NotificationRouter.swift` / `AppState.swift`（这几个需要 `@main` 应用上下文）。
+
+### 没动的与原因
+
+- **不搬原项目的 updater**。原项目 `run_updater()` 是空函数，本轮无关。
+- **不回写原项目**。`TheBookOfAnswer-tboa` 保持原样，没有为了搬迁去改它。
+- **不做导出（TXT / JSON）与跨设备同步**。原项目曾列出导出计划，本轮只做本地历史；没有云同步是这个应用一贯的边界。
+- **不引入第三方依赖**，仍然只用系统 framework（`Foundation` / `SwiftUI` / `AppKit` 的 `NSPasteboard`）。
+- **书页不做真实翻页几何动画**。当前是 `transition` 位移 + 淡入，没有做 `page curl` 这类自定义形变；理由是收益低而复杂度高，改起来只影响 `AnswerBookView` 一处。

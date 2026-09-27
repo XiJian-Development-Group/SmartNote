@@ -79,6 +79,7 @@ class AppState: ObservableObject {
     let wishService = WishService()
     let anniversaryService = AnniversaryService()
     let calculatorEngine = CalculatorEngine()
+    let answerBookService = AnswerBookService()
     let speechService = SpeechService.shared
     let learningAnalysisService = LearningAnalysisService.shared
     let notificationService = NotificationService.shared
@@ -153,6 +154,7 @@ class AppState: ObservableObject {
         forwardNestedChanges(of: anniversaryService)
         forwardNestedChanges(of: blessingService)
         forwardNestedChanges(of: historyService)
+        forwardNestedChanges(of: answerBookService)
         forwardNestedChanges(of: speechService)
         forwardNestedChanges(of: notificationService)
         forwardNestedChanges(of: learningAnalysisService)
@@ -529,6 +531,7 @@ class AppState: ObservableObject {
         materials = storageService.loadMaterials()
         reviewPlans = storageService.loadReviewPlans()
         historyService.reloadProgress()
+        answerBookService.reloadHistory()
         isNationalDayPeriod = blessingService.isNationalDayPeriod
         if !hasLoadedExamCountdowns {
             isRestoringExamCountdowns = true
