@@ -1,0 +1,23 @@
+#!/bin/sh
+# 提交前文档一致性检查。
+#
+# 挂载（.git/hooks 不随仓库分发，需要手动挂一次）：
+#   ln -sf ../../scripts/hooks/pre-commit .git/hooks/pre-commit
+#
+# 检查不通过则中止提交；确认无误可以 `git commit --no-verify` 绕过。
+
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+if ! command -v python3 >/dev/null 2>&1; then
+    echo "pre-commit: 找不到 python3，跳过文档一致性检查"
+    exit 0
+fi
+
+if ! python3 scripts/check-docs.py; then
+    echo
+    echo "pre-commit: 文档与代码不一致，提交已中止。"
+    echo "  · 生成物过期  → python3 scripts/check-docs.py gen"
+    echo "  · 数字/覆盖不符 → 按上面的 file:line 补齐文档"
+    echo "  · 确认要跳过   → git commit --no-verify"
+    exit 1
+fi

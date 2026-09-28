@@ -123,6 +123,6 @@ API Key 写在 macOS 钥匙串，以保证凭据安全。
 - 邮件：panmofan@icloud.com
 - Issues：<https://github.com/XiJian-Development-Group/SmartNote/issues>
 
-docs文件夹下的文件基本上是给Ai维护用的，一般别去读
+docs文件夹下的文件基本上是给Ai维护用的，一般别去读（索引在 `docs/README.md`）
 
 MIT License，详见 [LICENSE](LICENSE)。
