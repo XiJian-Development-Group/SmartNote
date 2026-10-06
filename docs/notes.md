@@ -347,7 +347,7 @@ v2.0 阶段的所有新增功能用 macOS 系统 framework，不新增 SPM 依�
 ## 20. 中国近代史科普
 
 - 侧栏 → 历史科普 → 中国近代史；1840—1949 离线导览，断网可读。
-- 首批 34 篇，目录随应用打包：`SmartNote/Resources/history_catalog.json`。
+- 首批 34 篇，目录随应用打包：`Shared/Resources/history_catalog.json`。
 - 时期筛选是**主题导览分组**，不作为严格年份边界；跨时期文章保留在最能帮助理解的主题组中。
 - 每篇包含摘要、分段正文、关键事件、人物、名词卡片、关联阅读、来源入口。
 - 阅读能力：标题 / 摘要 / 正文 / 事件 / 人物 / 术语 / 别名搜索；按时期 / 标签 / 收藏筛选；分段已读、整篇完成、收藏、最近阅读（首页横向卡片）、随机学习。
@@ -716,7 +716,7 @@ README 与 docs 可以在既有结构内增补和修改功能描述，但**不�
 | 原有 `target` 字段 | 形如 `["Answer","Page=399",""]`、`["Lost","ID=0","Dark"]`、`["SystemError=404","ErrorWhenGeneratingAnswers","Hidden"]`；**tboa 自己的代码从未读过它**，搬迁时按它分类后丢弃 |
 | 去重口径 | 同文案只保留编号最小的一条，共去掉 3 条：`100`（与前路迷茫重复）、`386`（与坚强重复）、`403`（与摆正心态重复） |
 | 最终条数 | **402 条** = 400 常规（`normal`）+ 1 迷失页（`lost`，编号 0）+ 1 书页故障（`glitch`，编号 8266） |
-| 存放位置 | `SmartNote/Resources/answer_book.json`（36 KB），与 `history_catalog.json` 同一套 `Bundle` 加载方式 |
+| 存放位置 | `Shared/Resources/answer_book.json`（36 KB），与 `history_catalog.json` 同一套 `Bundle` 加载方式 |
 
 `answers` 里每条是 `{id, content, kind}`。`kind` 缺省为 `normal`，因此将来往资源文件里加字段不会让旧条目解码失败。
 

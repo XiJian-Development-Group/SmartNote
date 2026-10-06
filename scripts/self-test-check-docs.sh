@@ -14,9 +14,9 @@ cd "$(git rev-parse --show-toplevel)" || exit 1
 
 FEATURE="docs/功能清单.md"
 NOTES="docs/notes.md"
-CONTENT_VIEW="SmartNote/Sources/Views/ContentView.swift"
-THEME="SmartNote/Sources/Models/AppTheme.swift"
-STORAGE="SmartNote/Sources/Services/StorageService.swift"
+CONTENT_VIEW="Platforms/macOS/Views/ContentView_macOS.swift"
+THEME="Shared/Models/AppTheme.swift"
+STORAGE="Shared/Services/StorageService.swift"
 TOUCHED=("$FEATURE" "$NOTES" "$CONTENT_VIEW" "$THEME" "$STORAGE")
 
 for file in "${TOUCHED[@]}"; do

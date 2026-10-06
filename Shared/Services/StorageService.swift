@@ -1208,7 +1208,8 @@ class AppSettings: ObservableObject, Codable, Equatable {
         lhs.backgroundImageActiveName == rhs.backgroundImageActiveName &&
         lhs.backgroundBlurEnabled == rhs.backgroundBlurEnabled &&
         lhs.backgroundBlurRadius == rhs.backgroundBlurRadius &&
-        lhs.backgroundOpacity == rhs.backgroundOpacity
+        lhs.backgroundOpacity == rhs.backgroundOpacity &&
+        lhs.iCloudSyncEnabled == rhs.iCloudSyncEnabled
     }
     
     enum DarkModePreference: String, Codable, Equatable, CaseIterable, Identifiable {

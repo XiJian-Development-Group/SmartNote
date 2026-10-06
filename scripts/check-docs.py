@@ -31,8 +31,11 @@ from collections import Counter, defaultdict
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
-SRC = ROOT / "SmartNote" / "Sources"
-RES = ROOT / "SmartNote" / "Resources"
+# iOS/macOS 工程化迁移后，跨平台代码在 Shared/，macOS 专有代码在 Platforms/macOS/。
+# iOS 专有代码在 Platforms/iOS/，本检查器只关心 Shared/ + Platforms/macOS/（macOS 是文档基线）。
+SHARED = ROOT / "Shared"
+MACOS = ROOT / "Platforms" / "macOS"
+SHARED_RES = SHARED / "Resources"
 
 README = ROOT / "README.md"
 FEATURE_LIST = DOCS / "功能清单.md"
@@ -41,11 +44,11 @@ CODEX_MAP = DOCS / "代码地图.md"
 STRINGS_DOC = DOCS / "文案清单.md"
 SETTINGS_DOC = DOCS / "设置项清单.md"
 
-STORAGE = SRC / "Services" / "StorageService.swift"
-INTENTS = SRC / "Services" / "SmartNoteIntents.swift"
-CONTENT_VIEW = SRC / "Views" / "ContentView.swift"
-THEME = SRC / "Models" / "AppTheme.swift"
-ANSWER_BOOK = RES / "answer_book.json"
+STORAGE = SHARED / "Services" / "StorageService.swift"
+INTENTS = MACOS / "Services" / "SmartNoteIntents.swift"
+CONTENT_VIEW = MACOS / "Views" / "ContentView_macOS.swift"
+THEME = SHARED / "Models" / "AppTheme.swift"
+ANSWER_BOOK = SHARED_RES / "answer_book.json"
 
 GENERATED_HEADER = (
     "<!-- 本文件由 scripts/check-docs.py 生成，请勿手动编辑；"
@@ -152,7 +155,7 @@ def line_of(text: str, needle: str) -> int:
 
 
 def swift_files() -> list[pathlib.Path]:
-    return sorted(p for p in SRC.rglob("*.swift"))
+    return sorted(set(SHARED.rglob("*.swift")) | set(MACOS.rglob("*.swift")))
 
 
 def string_literals(path: pathlib.Path) -> list[tuple[int, str]]:
@@ -180,7 +183,7 @@ def truth_sidebar() -> tuple[int, set[int], list[str]]:
     所以「入口数」与「tab 编号数」本来就差 1，不能拿它们互相比较。
     """
     text = read(CONTENT_VIEW)
-    start = text.index("struct SidebarView: View {")
+    start = text.index("struct SidebarView")
     end = text.index("\nstruct ", start + 10)
     body = text[start:end]
     values = {int(v) for v in re.findall(r"NavigationLink\(value:\s*(\d+)\)", body)}
@@ -191,14 +194,14 @@ def truth_sidebar() -> tuple[int, set[int], list[str]]:
 
 def truth_sidebar_links() -> int:
     text = read(CONTENT_VIEW)
-    start = text.index("struct SidebarView: View {")
+    start = text.index("struct SidebarView")
     end = text.index("\nstruct ", start + 10)
     return len(re.findall(r"NavigationLink\(value:", text[start:end]))
 
 
 def truth_detail_cases() -> list[int]:
     text = read(CONTENT_VIEW)
-    start = text.index("struct DetailView: View {")
+    start = text.index("struct DetailView")
     body = text[start:]
     return [int(v) for v in re.findall(r"^\s*case (\d+):", body, re.M)]
 
@@ -246,7 +249,7 @@ def truth_app_settings() -> dict:
     start = text.index("class AppSettings: ObservableObject, Codable, Equatable {")
     block = text[start:]
     equal_start = block.index("static func == (lhs: AppSettings")
-    equal_end = block.index("enum DarkModePreference: String, Codable, Equatable {")
+    equal_end = block.index("enum DarkModePreference:")
     equality = block[equal_start:equal_end]
     keys_start = block.index("enum CodingKeys: String, CodingKey {")
     keys_end = block.index("init() {", keys_start)
@@ -272,7 +275,7 @@ def truth_app_settings() -> dict:
             }
         )
 
-    views_text = "\n".join(read(p) for p in sorted((SRC / "Views").rglob("*.swift")))
+    views_text = "\n".join(read(p) for p in sorted(set((SHARED / "Views").rglob("*.swift")) | set((MACOS / "Views").rglob("*.swift"))))
     for field in fields:
         field["ui_refs"] = len(re.findall(rf"\.{field['name']}\b", views_text))
     return {"fields": fields}
@@ -327,7 +330,7 @@ def declared_types(text: str) -> str:
 def gen_codemap() -> str:
     groups: dict[str, list[pathlib.Path]] = defaultdict(list)
     for path in swift_files():
-        groups[str(path.parent.relative_to(SRC))].append(path)
+        groups[str(path.parent.relative_to(ROOT))].append(path)
 
     total_files = 0
     total_lines = 0
@@ -350,8 +353,9 @@ def gen_codemap() -> str:
         "",
         GENERATED_HEADER.rstrip("\n"),
         "",
-        f"`SmartNote/Sources/` 下共 **{total_files}** 个 Swift 文件、**{total_lines}** 行；"
-        "按目录分组，每个文件给出主要类型与首段文档注释。",
+        f"`Shared/` 与 `Platforms/macOS/` 下共 **{total_files}** 个 Swift 文件、**{total_lines}** 行；"
+        "按目录分组，每个文件给出主要类型与首段文档注释。iOS 端独有文件见 `Platforms/iOS/`，"
+        "未纳入本表（基线是 macOS）。",
         "",
         "改代码时先看本表定位文件；新增文件后本表会由 `check-docs.py` 重新生成并在检查时报出未同步。",
         "",
@@ -373,7 +377,7 @@ def collect_strings() -> tuple[list[dict], list[dict]]:
     ui: list[dict] = []
     others: list[dict] = []
     for path in swift_files():
-        rel = str(path.relative_to(SRC))
+        rel = str(path.relative_to(ROOT))
         for line_no, line in enumerate(read(path).splitlines(), 1):
             if line.strip().startswith("//"):
                 continue
@@ -695,7 +699,7 @@ def check_structure(report: Report) -> None:
         not missing and not extra and len(cases) == len(set(cases)),
         "B1 侧栏 value ↔ DetailView case 一一对应",
         f"侧栏缺 case：{missing or '无'}；多余 case：{extra or '无'}；case 重复={len(cases) != len(set(cases))}",
-        f"SmartNote/Sources/Views/ContentView.swift",
+        f"Platforms/macOS/Views/ContentView_macOS.swift",
     )
     report.check(
         len(sidebar_values) == truth_sidebar_links(),
@@ -720,7 +724,7 @@ def check_structure(report: Report) -> None:
             not missing_fields,
             f"B3 AppSettings 每个字段都出现在{label}里（共 {len(fields)} 个字段）",
             "缺失：" + "、".join(missing_fields) if missing_fields else "全部覆盖（含已登记的有意豁免）",
-            "SmartNote/Sources/Services/StorageService.swift",
+            "Shared/Services/StorageService.swift",
         )
 
     known = {field["name"] for field in fields}
