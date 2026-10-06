@@ -831,3 +831,89 @@ ln -sf ../../scripts/hooks/pre-commit .git/hooks/pre-commit
 - **没有默认挂 pre-commit hook**，理由见上。
 - **没有把检查接进 CI**：仓库目前没有 CI 配置，本地跑 + 可选 hook 已经覆盖单人开发场景。
 - **没有做代码格式化/静态分析**，只做"文档与代码是否一致"这一类检查。
+
+---
+
+## 28. iOS 现状（2026-10-06）
+
+iOS 端工程化（Platforms/iOS/、Platforms/macOS/、Shared/、project.yml 重写、IOS_DEVELOPMENT_PLAN.md）作为未提交的工作区改动已存在多轮。本节沉淀：编译验证、entitlements 设计、个人账号受限项、运行时探测策略、必须手测项、Simulator 跑不起来的真实原因。
+
+### 28.1 编译验证
+
+```
+xcodegen generate
+xcodebuild -project SmartNote.xcodeproj -scheme SmartNote-iOS \
+  -configuration Debug \
+  -destination 'generic/platform=iOS Simulator' \
+  -sdk iphonesimulator \
+  CODE_SIGNING_ALLOWED=NO build
+```
+
+**结果**：`BUILD SUCCEEDED`，零警告零错误。
+
+产物体检（`Build/Products/Debug-iphonesimulator/SmartNote.app`）：
+- `SmartNote` 主二进制：Mach-O universal（x86_64 + arm64）
+- `SmartNote.debug.dylib`：49 MB（Debug 模式正常）
+- `Info.plist`：DTSDKName=`iphonesimulator27.0`、MinimumOSVersion=`18.0`、CFBundleDisplayName=`智学笔记`、所有用途说明齐全
+- `PlugIns/SmartNoteLiveActivity.appex`：嵌入正确
+- 资源：`Assets.car`、`answer_book.json`、`history_catalog.json`、三张背景图
+
+### 28.2 entitlements 设计：个人 Apple Developer Program 兼容
+
+三个 entitlements 文件全部为空（`<dict/>`），对应能力声明全部注释在 `project.yml`：
+
+- **iCloud**：`ICloudSyncService.isAvailable` 运行时探测；能力缺失时设置页同步开关被 `AppState_iOS.isCloudKitAvailable == false` 自动隐藏，不给用户一个「按了必然报错」的选项
+- **Universal Links / Associated Domains**：当前没有 deep link 入口，付费账号后启用
+- **Family Controls / Screen Time**：iOS 端尚未接入该能力
+- **远程推送**：没有 `aps-environment` 时 `PushNotificationService` 拿不到 device token 保持 `nil`，不抛异常
+- **后台任务**：`BackgroundTaskService.registerTasks()` 先检查 `Info.plist.UIBackgroundModes`，未声明就跳过注册（`BGTaskScheduler` 在未声明时会抛异常，必须挡住）
+
+升级到付费账号后，`project.yml` 的注释解开并 `xcodegen generate` 即可恢复，**对应功能代码没有删除**。
+
+### 28.3 iOS 端独有的边界
+
+| 边界 | 设计 | 必须手测项 |
+|---|---|---|
+| Scene Delegate | `INFOPLIST_KEY_UIApplicationSceneManifest_…SceneDelegateClassName` 指向 `$(PRODUCT_MODULE_NAME).SceneDelegate` | 真机多窗口行为 |
+| VisionKit 文档扫描 | `DocumentScannerService_iOS` 用 `VNDocumentCameraViewController` | 模拟器假输入，真机才有 |
+| AVSpeechSynthesizer | `SpeechService_iOS` | 模拟器可用，真机音色不同 |
+| VoiceMemoService | 麦克风权限（`NSMicrophoneUsageDescription` 已声明）| 模拟器假数据 |
+| Push 通知路由 | `pushNotificationService.onNotificationTapped` → `routeNotification(userInfo)` 按 `kind` 切 tab | 真机通知权限流程 |
+| iCloud 同步开关 | `isICloudSyncEnabled = appSettings.iCloudSyncEnabled`，能力缺失时 `isCloudKitAvailable = false` | 设置页 iCloud 同步入口应隐藏 |
+| Live Activity | `SmartNoteLiveActivity` 用 `embed: true` 嵌进 `PlugIns/` | 灵动岛/锁屏 |
+| Widget | 当前不在工程 target 内（`excludes: Platforms/iOS/Views/Widget/**`）| — |
+
+### 28.4 Simulator 实跑在本机不可行（机器环境问题）
+
+**症状**：`xcrun simctl list devices` 列出所有 iPhone 设备都标 `unavailable, runtime profile not found`；`xcrun simctl create` 报 `Invalid runtime`；`simctl list runtimes` 输出为空但 `simctl runtime list` 显示 iOS 27.0 (24A434) 已 mount 在 cryptex 路径。
+
+**根因**：Xcode 27（SDK 27.0）+ iOS 27 simulator runtime 是 cryptex 磁盘镜像挂载的（`/private/var/run/com.apple.security.cryptexd/...`），但 `simctl create` / `simctl list runtimes` 旧接口没跟上 cryptex runtime 的 identifier 协议。runtime 实际装好了，只是创建 device 实例失败。
+
+**这是 Xcode 27 + iOS 27 cryptex runtime 的兼容状态，不是项目代码问题**。真机验证必须手动做（个人 Apple Developer Program 第一次 Run 到真机会弹"未受信任的开发者"，要去设置 → 通用 → VPN 与设备管理 信任一次，7 天有效）。
+
+### 28.5 opencode 留下的 P0/P1 核对
+
+依据 `problems.md` 核对（仅关注 Shared/iOS 路径相关项）：
+
+| ID | 问题 | 现状 |
+|---|---|---|
+| P0-1 | `runStartupMigration` 时序 | ✅ 已修（`runStartupMigration` 第 379 行先 `loadSettings`，触发 `legacyAPIKeyMigrationPending` 赋值）|
+| P0-2 | SettingsView 重复写盘 | ❌ 未修（macOS SettingsView:67 仍存；iOS `SettingsView_iOS` 没有这个 onChange，不影响 iOS）|
+| P0-3 | Calendar 整天事件 | ✅ 已修（改用 `Self.planDateTime`，默认 19:00）|
+| P0-4 | 备份路径 shell 元字符 | ✅ 维持现状 |
+| P0-5 | LLM 信任状态 | ✅ 维持现状 |
+| P1-1 | OCR 错误吞掉 | ✅ iOS 已修（`OCRService_iOS` 用 `ResumeOnce` + 错误返回 `nil`）|
+| P1-2 | HistoryService 不重试 | ❌ 未修 |
+| P1-3 | AppState 启动阻塞 | ❌ 未修（iOS `AppState_iOS.init` 同步执行 `runStartupMigration` + `loadSavedData`）|
+| P1-4 | clearAllData 中间态 | ❌ 未修 |
+| P1-5 | P2PService 单例 init | ❌ 未修（Shared 层，iOS P2P 受影响）|
+
+**未修项全部在 Shared / macOS 路径上**。P1-3 / P1-5 改 Shared 层会同时影响 macOS，超出 iOS 验收范围，本轮不动。
+
+### 28.6 没动的与原因
+
+- **没有让 Simulator 跑起来**：本机 iOS 27 cryptex runtime 与 simctl 旧接口不兼容，是 Xcode 27 已知状态
+- **没有改 opencode 未修的 P0/P1**：跨平台 Shared/工程债，按"超出验收范围不动"原则
+- **没有给真机打签名**：必须你手动做（个人 Apple Developer Program）
+- **没有改 `project.yml` 的 entitlements 注释位置**：保留作为付费账号升级的开关指引
+- **Widget target 暂未恢复**：源码在 `Platforms/iOS/Views/Widget/`，工程 `excludes` 屏蔽；扩展需要单独的 bundle id + Live Activity 同等的描述文件能力，恢复时一并处理
