@@ -3,6 +3,7 @@ options:
   bundleIdPrefix: com.skyc8266
   deploymentTarget:
     macOS: "15.0"
+    iOS: "18.0"
   xcodeVersion: "16.0"
   developmentLanguage: zh-Hans
   generateEmptyDirectories: true
@@ -12,21 +13,39 @@ packages:
     url: https://github.com/swiftlang/swift-markdown
     from: "0.4.0"
 
+# 统一版本号定义（单一真相源，修改此处自动同步到所有 Target）
+version: &version
+  marketing: "2.1.0"
+  build: "101"
+
 settings:
   base:
     SWIFT_VERSION: "5.9"
     MACOSX_DEPLOYMENT_TARGET: "15.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "18.0"
     CODE_SIGN_STYLE: Automatic
     ENABLE_HARDENED_RUNTIME: YES
     COMBINE_HIDPI_IMAGES: YES
+    # 版本号统一引用（通过 xcodegen 变量替换）
+    MARKETING_VERSION: "2.1.0"
+    CURRENT_PROJECT_VERSION: "101"
 
 targets:
+  # ==================== macOS 主应用 ====================
   SmartNote:
     type: application
     platform: macOS
     sources:
-      - path: SmartNote/Sources
-      - path: SmartNote/Resources
+      - path: Shared
+        excludes:
+          - "**/Assets.xcassets"
+          # macOS 使用 Platforms/macOS 下的原实现（逐位不变）；
+          # Shared 里的副本是给 iOS 用的跨平台版本，两者不可同时编译。
+          - "**/UpdateService.swift"
+      - path: Platforms/macOS
+        excludes:
+          - "**/Info.plist"
+          - "**/*.plist"
     dependencies:
       - package: Markdown
     preBuildScripts:
@@ -39,52 +58,292 @@ targets:
           echo "Copying ciallo web files to app bundle..."
           destination="$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Resources/ciallo"
           mkdir -p "$destination"
-          # index.html uses native JS; do not ship the unused legacy jQuery/ajax directory.
           /usr/bin/rsync -a --delete --delete-excluded --exclude='.DS_Store' --exclude='.*' --exclude='/ajax/' "$SRCROOT/ciallo/" "$destination/"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.skyc8266.smartnote
-        INFOPLIST_FILE: SmartNote/Resources/Info.plist
-        CODE_SIGN_ENTITLEMENTS: SmartNote/Resources/SmartNote.entitlements
+        CODE_SIGN_ENTITLEMENTS: Platforms/macOS/Resources/SmartNote.entitlements
         PRODUCT_NAME: SmartNote
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        GENERATE_INFOPLIST_FILE: NO
-        MARKETING_VERSION: "2.0.0"
-        CURRENT_PROJECT_VERSION: "100"
+        MARKETING_VERSION: "$(MARKETING_VERSION)"
+        CURRENT_PROJECT_VERSION: "$(CURRENT_PROJECT_VERSION)"
         ENABLE_RESOURCE_ACCESS_CALENDARS: YES
         ENABLE_RESOURCE_ACCESS_CONTACTS: NO
         ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY: NO
-    info:
-      path: SmartNote/Resources/Info.plist
-      properties:
-        CFBundleName: SmartNote
-        CFBundleDisplayName: 智学笔记
-        CFBundleIdentifier: com.skyc8266.smartnote
-        CFBundleDevelopmentRegion: zh-Hans
-        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
-        CFBundleShortVersionString: "$(MARKETING_VERSION)"
-        CFBundlePackageType: APPL
-        CFBundleExecutable: SmartNote
-        LSMinimumSystemVersion: "15.0"
-        LSApplicationCategoryType: public.app-category.education
-        NSHumanReadableCopyright: "Copyright 2026 Skyc8266"
-        NSPrincipalClass: NSApplication
-        NSCalendarsFullAccessUsageDescription: "智学笔记需要访问日历，以便将复习计划创建为日历事件。"
-        NSRemindersFullAccessUsageDescription: "智学笔记需要访问提醒事项，以便将复习任务创建为提醒。"
-        NSLocalNetworkUsageDescription: "智学笔记需要访问本地网络，以便连接同一局域网中的 P2P 设备。"
-        NSBonjourServices:
-          - _tcp
-        NSAppTransportSecurity:
-          NSAllowsLocalNetworking: true
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleName: SmartNote
+        INFOPLIST_KEY_CFBundleDisplayName: 智学笔记
+        INFOPLIST_KEY_CFBundleIdentifier: com.skyc8266.smartnote
+        INFOPLIST_KEY_CFBundleDevelopmentRegion: zh-Hans
+        INFOPLIST_KEY_CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        INFOPLIST_KEY_CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        INFOPLIST_KEY_CFBundlePackageType: APPL
+        INFOPLIST_KEY_CFBundleExecutable: SmartNote
+        INFOPLIST_KEY_LSMinimumSystemVersion: "15.0"
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright 2026 Skyc8266"
+        INFOPLIST_KEY_NSPrincipalClass: NSApplication
+        INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: 智学笔记需要访问日历，以便将复习计划创建为日历事件。
+        INFOPLIST_KEY_NSRemindersFullAccessUsageDescription: 智学笔记需要访问提醒事项，以便将复习任务创建为提醒。
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: 智学笔记需要访问本地网络，以便连接同一局域网中的 P2P 设备。
+        INFOPLIST_KEY_NSBonjourServices: _tcp
+        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking: true
     entitlements:
-      path: SmartNote/Resources/SmartNote.entitlements
+      path: Platforms/macOS/Resources/SmartNote.entitlements
       properties:
-        # 安全作用域书签已接入资料模型；开启沙盒前仍需完成 /Applications 安装 helper、
-        # 外部 ditto/unzip 流程迁移及全量沙盒回归，因此本轮保持关闭。
         com.apple.security.app-sandbox: false
         com.apple.security.files.user-selected.read-write: true
         com.apple.security.personal-information.calendars: true
         com.apple.security.personal-information.reminders: true
+        com.apple.security.network.client: true
+        com.apple.security.network.server: true
+
+  # ==================== iOS 主应用 ====================
+  SmartNote-iOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: Shared
+        excludes:
+          - "**/Assets.xcassets"
+      - path: Platforms/iOS
+        excludes:
+          - "**/Info.plist"
+          - "**/*.plist"
+          # 小组件源码已停用（见下方 SmartNoteWidget target 的说明）。
+          # 整个 Platforms/iOS 都是本 target 的 sources，不排除的话
+          # SmartNoteWidget.swift 会被当成主 App 的代码编译进去——
+          # 它 import WidgetKit 并声明 Widget/View，虽然能编译，但纯属死代码，
+          # 且一旦小组件恢复就会与扩展 target 里的同名类型冲突。
+          - "Views/Widget/**"
+      - path: Shared/Models/NotificationTypes.swift
+    dependencies:
+      - package: Markdown
+      # Live Activity 必须作为扩展**嵌入**主 App 的 PlugIns/ 目录。
+      #
+      # 之前扩展只出现在 scheme 的 build targets 里，因此会被编译、却不会被拷进
+      # App 包——装机后主 App 里根本不存在该扩展，灵动岛不会出现。
+      # `embed: true` 让 xcodegen 生成「Embed App Extensions」阶段。
+      #
+      # 小组件（SmartNoteWidget）暂时移除，原因见下方 target 的注释。
+      - target: SmartNoteLiveActivity
+        embed: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.skyc8266.smartnote.ios
+        CODE_SIGN_ENTITLEMENTS: Platforms/iOS/Resources/SmartNote.entitlements
+        PRODUCT_NAME: SmartNote
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        MARKETING_VERSION: "$(MARKETING_VERSION)"
+        CURRENT_PROJECT_VERSION: "$(CURRENT_PROJECT_VERSION)"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MULTIPLE_WINDOWS: YES
+        APPLICATION_EXTENSION_API_ONLY: NO
+        # ---- 签名 ----
+        # 交给 Xcode 管理（Automatic）。个人（免费）账号请在 Xcode 的
+        # Signing & Capabilities 里选一次你的团队，之后会记住。
+        # 想固定团队，把下面一行填成 10 位 Team ID（Xcode 里��� Team 里有）。
+        CODE_SIGN_STYLE: Automatic
+        #
+        # 这里刻意**不**设置下面这些键：
+        #   CODE_SIGNING_ALLOWED / CODE_SIGNING_REQUIRED / CODE_SIGN_IDENTITY
+        #   PROVISIONING_PROFILE_SPECIFIER / CODE_SIGNING_IDENTITY[sdk=...]
+        # 之前为了「不签名直接侧载」把它们全关成 NO / 空值，结果是：
+        #   - Xcode 无法为个人账号自动创建/匹配描述文件；
+        #   - Widget / LiveActivity 扩展无法与主 App 一起签名，装机即失败；
+        #   - 命令行 `xcodebuild -sdk iphoneos` 也会因为「不签名」而无法产出真机包。
+        # 如果确实需要完全免签名（例如只做静态检查），在 xcodebuild 命令行传
+        # CODE_SIGNING_ALLOWED=NO 覆盖即可，不必写进工程。
+        ENABLE_BITCODE: NO
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleName: SmartNote
+        INFOPLIST_KEY_CFBundleDisplayName: 智学笔记
+        INFOPLIST_KEY_CFBundleIdentifier: com.skyc8266.smartnote.ios
+        INFOPLIST_KEY_CFBundleDevelopmentRegion: zh-Hans
+        INFOPLIST_KEY_CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        INFOPLIST_KEY_CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        INFOPLIST_KEY_CFBundlePackageType: APPL
+        INFOPLIST_KEY_CFBundleExecutable: SmartNote
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
+        INFOPLIST_KEY_NSHumanReadableCopyright: "Copyright 2026 Skyc8266"
+        INFOPLIST_KEY_UIApplicationSceneManifest_UIApplicationSupportsMultipleScenes: true
+        INFOPLIST_KEY_UIApplicationSceneManifest_UISceneConfigurations_UIWindowSceneSessionRoleApplication_0_UISceneConfigurationName: Default Configuration
+        INFOPLIST_KEY_UIApplicationSceneManifest_UISceneConfigurations_UIWindowSceneSessionRoleApplication_0_UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations~ipad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_UIRequiresFullScreen: false
+        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking: true
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: false
+        INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription: 智学笔记需要访问日历，以便将复习计划创建为日历事件。
+        INFOPLIST_KEY_NSRemindersFullAccessUsageDescription: 智学笔记需要访问提醒事项，以便将复习任务创建为提醒。
+        INFOPLIST_KEY_NSCameraUsageDescription: 智学笔记需要访问相机，用于扫描文档、拍照 OCR、拍照记录。
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: 智学笔记需要访问相册，用于导入图片资料、设置背景图片。
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: 智学笔记需要访问麦克风，用于语音笔记、语音转文字。
+        INFOPLIST_KEY_NSLocalNetworkUsageDescription: 智学笔记需要访问本地网络，以便连接同一局域网中的 P2P 设备。
+        INFOPLIST_KEY_NSBluetoothPeripheralUsageDescription: 智学笔记需要蓝牙权限，用于设备发现与连接。
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: 智学笔记需要位置权限，用于地理围栏打卡、位置记录。
+        INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription: 智学笔记需要后台位置权限，用于地理围栏打卡提醒。
+        INFOPLIST_KEY_NSFaceIDUsageDescription: 智学笔记使用 Face ID/Touch ID 保护隐私数据（日记加密、文件加密）。
+    entitlements:
+      path: Platforms/iOS/Resources/SmartNote.entitlements
+      # 个人（免费）开发者账号不支持 Family Controls、Associated Domains 与 iCloud
+      # 这三项能力：一旦声明，Xcode 就无法生成匹配的描述文件，报错
+      # 「Cannot create a iOS App Development provisioning profile … do not support
+      #  the Family Controls (Development), Associated Domains, and iCloud capabilities」。
+      #
+      # 因此下面这三组能力默认注释掉。只有升级到付费 Apple Developer Program 后，
+      # 才能把注释解开并重新 `xcodegen generate`。
+      #
+      # 对应的功能代码不删除，而是改为运行时探测能力是否可用
+      # （见 `ICloudSyncService.isAvailable` / `AppState_iOS.isCloudKitAvailable`）：
+      # 能力缺失时相关入口自动隐藏或提示，不会在运行时崩溃。
+      properties:
+        # ------------------------------------------------------------------
+        # 个人（免费）开发者账号下，下面所有能力都不能写进描述文件，
+        # 写了就会得到两类报错：
+        #
+        #   1) 不支持的���力（直接拒绝创建描述文件）
+        #      com.apple.developer.family-controls        (Family Controls)
+        #      com.apple.developer.associated-domains     (Associated Domains)
+        #      com.apple.developer.icloud-*               (iCloud)
+        #      com.apple.developer.ubiquity-*
+        #      → "Personal development teams … do not support the Family
+        #         Controls (Development), Associated Domains, and iCloud
+        #         capabilities."
+        #
+        #   2) 即使能力本身个人账号支持，只要**当前描述文件里没有**，
+        #      Xcode 会报 "Entitlements … not found and could not be
+        #      included in profile. These likely are not valid entitlements
+        #      and should be removed from your entitlements file."
+        #      com.apple.developer.push-notifications
+        #      com.apple.developer.background-modes
+        #
+        # 结论：个人账号下把 entitlements 清空是唯一稳妥做法。
+        # 升级到付费 Apple Developer Program 后，解开对应注释并重新
+        # `xcodegen generate` 即可恢复。
+        #
+        # 对应的功能代码没有删除，而是改为运行时探测能力是否可用：
+        #   - iCloud 同步：ICloudSyncService.isAvailable / AppState_iOS.isCloudKitAvailable，
+        #     能力缺失时整块设置界面隐藏，不会崩溃。
+        #   - 后台任务：BackgroundTaskService.registerTasks() 会先检查
+        #     Info.plist 里有没有 UIBackgroundModes，没有就跳过注册
+        #     （BGTaskScheduler 在未声明时会抛异常，必须挡住）。
+        #   - 远程推送：没有 aps-environment 时拿不到 device token，
+        #     PushNotificationService 已按「拿不到就保持 nil」处理。
+        #
+        # iCloud（付费账号后启用）
+        # com.apple.developer.ubiquity-container-identifiers:
+        #   - "$(TeamIdentifierPrefix)com.skyc8266.smartnote.ios"
+        # com.apple.developer.ubiquity-kvstore-identifier: "$(TeamIdentifierPrefix)com.skyc8266.smartnote.ios"
+        # com.apple.developer.icloud-container-identifiers:
+        #   - "iCloud.com.skyc8266.smartnote.ios"
+        # com.apple.developer.icloud-services:
+        #   - CloudDocuments
+        #   - CloudKeyValueStore
+        #
+        # Universal Links（付费账号后启用）
+        # com.apple.developer.associated-domains:
+        #   - "applinks:smartnote.app"
+        #   - "applinks:www.smartnote.app"
+        #
+        # Family Controls / Screen Time（付费账号后启用）
+        # com.apple.developer.family-controls: true
+        # com.apple.developer.user-management: true
+        #
+        # 推送与后台（付费账号或已具备对应描述文件后启用）
+        # com.apple.developer.push-notifications: true
+        # com.apple.developer.background-modes:
+        #   - remote-notification
+        #   - background-processing
+        #   - background-fetch
+        {}
+
+  # ==================== iOS Widget Extension（暂时停用） ====================
+  #
+  # 停用原因：小组件需要 **App Groups** 才能读到主 App 的数据
+  # （com.apple.security.application-groups + 一个 group 标识），
+  # 而当前签名没有该能力——Widget 代码里的数据源本来就是占位注释，
+  # 就算装上去也只会显示空内容。
+  #
+  # 与个人（免费）开发者账号无关：App Groups 本身是支持的，
+  # 但需要主 App 与扩展**同时**声明同一个 group 并分别配置描述文件。
+  # 在拿到该能力之前，先把小组件整体停用，避免装一个必然空白的扩展。
+  #
+  # 恢复方式（三处都要改，缺一个都不会生效）：
+  #   1. 取消下面整个 target 的注释；
+  #   2. 在 SmartNote-iOS 的 dependencies 里加回：
+  #        - target: SmartNoteWidget
+  #          embed: true
+  #   3. 在 schemes.SmartNote-iOS.build.targets 里加回：SmartNoteWidget: all
+  #
+  # 源码保留在 Platforms/iOS/Views/Widget/（未被任何 target 引用，不会编译）。
+  #   SmartNoteWidget:
+  #     type: app-extension
+  #     platform: iOS
+  #     productName: SmartNoteWidget
+  #     bundleId: com.skyc8266.smartnote.ios.widget
+  #     sources:
+  #       - path: Platforms/iOS/Views/Widget
+  #         excludes:
+  #           - "**/Info.plist"
+  #     settings:
+  #       base:
+  #         PRODUCT_BUNDLE_IDENTIFIER: com.skyc8266.smartnote.ios.widget
+  #         INFOPLIST_FILE: Platforms/iOS/Views/Widget/Info.plist
+  #         CODE_SIGN_ENTITLEMENTS: Platforms/iOS/Views/Widget/SmartNoteWidget.entitlements
+  #         MARKETING_VERSION: "$(MARKETING_VERSION)"
+  #         CURRENT_PROJECT_VERSION: "$(CURRENT_PROJECT_VERSION)"
+  #         APPLICATION_EXTENSION_API_ONLY: YES
+  #         # 与主 App 一致：交给 Xcode 管理签名，扩展必须与主 App 同团队一起签名，
+  #         # 否则装机时扩展无法被嵌入。
+  #         CODE_SIGN_STYLE: Automatic
+  #
+  #     entitlements:
+  #       path: Platforms/iOS/Views/Widget/SmartNoteWidget.entitlements
+  #       # Widget 目前不声明任何能力：
+  #       #   - `com.apple.security.app-sandbox` 是 **macOS 专有**键，在 iOS 扩展上无效；
+  #       #     留着会触发「not found and could not be included in profile」。
+  #       #   - iCloud 能力个人账号不支持，且 Widget 代码并不访问 CloudKit。
+  #       # 若将来要用 App Group 与主 App 共享数据，在这里加
+  #       # `com.apple.security.application-groups`（个人账号支持）。
+  #       properties: {}
+  #
+  # ==================== iOS Live Activity Extension ====================
+  SmartNoteLiveActivity:
+    type: app-extension
+    platform: iOS
+    productName: SmartNoteLiveActivity
+    bundleId: com.skyc8266.smartnote.ios.liveactivity
+    sources:
+      - path: Platforms/iOS/Views/LiveActivity
+        excludes:
+          - "**/Info.plist"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.skyc8266.smartnote.ios.liveactivity
+        INFOPLIST_FILE: Platforms/iOS/Views/LiveActivity/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Platforms/iOS/Views/LiveActivity/SmartNoteLiveActivity.entitlements
+        MARKETING_VERSION: "$(MARKETING_VERSION)"
+        CURRENT_PROJECT_VERSION: "$(CURRENT_PROJECT_VERSION)"
+        APPLICATION_EXTENSION_API_ONLY: YES
+        # 与主 App 一致：交给 Xcode 管理签名。
+        CODE_SIGN_STYLE: Automatic
+    info:
+      path: Platforms/iOS/Views/LiveActivity/Info.plist
+      properties:
+        CFBundleDisplayName: 智学笔记
+        CFBundleIdentifier: com.skyc8266.smartnote.ios.liveactivity
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.live-activity-extension
+          NSExtensionPrincipalClass: SmartNoteLiveActivityExtension
+    entitlements:
+      path: Platforms/iOS/Views/LiveActivity/SmartNoteLiveActivity.entitlements
+      # 同 Widget：`com.apple.security.app-sandbox` 是 macOS 专有键，
+      # 在 iOS 扩展上无效，留着会导致描述文件匹配失败。
+      # LiveActivity 不需要任何额外能力。
+      properties: {}
 
 schemes:
   SmartNote:
@@ -93,5 +352,20 @@ schemes:
         SmartNote: all
     run:
       config: Debug
+    archive:
+      config: Release
+
+  SmartNote-iOS:
+    build:
+      targets:
+        SmartNote-iOS: all
+        # 小组件暂时移除（无 App Groups 权限），恢复时把下面一行加回来：
+        #   SmartNoteWidget: all
+        SmartNoteLiveActivity: all
+    run:
+      config: Debug
+      # 不在这里写死 destination（例如 `platform=iOS Simulator,name=iPhone 16 Pro`）：
+      # xcodegen 不会把它写进 scheme，留着只会造成「已经指定了模拟器却仍然选不到」
+      # 的误解。不指定时由 Xcode 按已安装的运行时动态填充运行目标列表。
     archive:
       config: Release

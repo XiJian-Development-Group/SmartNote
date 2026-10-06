@@ -1,0 +1,286 @@
+import SwiftUI
+
+struct ContentView_macOS: View {
+    @EnvironmentObject var appState: AppState_macOS
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.openWindow) private var openWindow
+    @State private var integrityIssues: [StorageIntegrityIssue] = StorageService.integrityIssues
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    @State private var sidebarWidth: CGFloat = 0
+
+    private var isSidebarVisible: Bool { columnVisibility != .detailOnly }
+
+    var body: some View {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
+            SidebarView_macOS()
+                .background(
+                    GeometryReader { geo in
+                        Color.clear.preference(
+                            key: SidebarWidthKey.self,
+                            value: geo.size.width
+                        )
+                    }
+                )
+        } detail: {
+            DetailView_macOS()
+        }
+        .navigationSplitViewStyle(.balanced)
+        .background {
+            ZStack {
+                ThemeBackdrop(theme: appTheme)
+                BackgroundImageView()
+            }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if appState.shouldShowBlessingBar {
+                FestivalBlessingBar(service: appState.blessingService)
+                    .padding(.leading, isSidebarVisible ? sidebarWidth : 0)
+                    .animation(.easeInOut(duration: 0.18), value: sidebarWidth)
+            }
+        }
+        .onPreferenceChange(SidebarWidthKey.self) { newValue in
+            if abs(newValue - sidebarWidth) > 0.5 { sidebarWidth = newValue }
+        }
+        .onChange(of: appState.wishWindowRequestToken) { _, token in
+            if token > 0 { openWindow(id: "wish-fullscreen") }
+        }
+        .overlay(alignment: .top) {
+            if !integrityIssues.isEmpty {
+                storageIntegrityBanner
+                    .padding(.horizontal, 12)
+                    .padding(.top, 8)
+            }
+        }
+        .sheet(isPresented: $appState.showFileImporter) {
+            FileImportView()
+                .environmentObject(appState)
+        }
+        .alert("错误", isPresented: $appState.showError) {
+            Button("确定", role: .cancel) {}
+        } message: {
+            Text(appState.errorMessage ?? "发生未知错误")
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .storageIntegrityIssue)) { notification in
+            guard let fileURL = notification.userInfo?["fileURL"] as? URL,
+                  let message = notification.userInfo?["message"] as? String else { return }
+            integrityIssues.append(StorageIntegrityIssue(fileURL: fileURL, message: message))
+            integrityIssues.sort { $0.timestamp < $1.timestamp }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .storageDidClearAllData)) { _ in
+            integrityIssues.removeAll()
+            StorageService.dismissIntegrityIssues()
+        }
+    }
+
+    private var storageIntegrityBanner: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+
+                Text("部分数据文件读取失败，已自动备份损坏文件（\(integrityIssues.map { $0.fileURL.lastPathComponent }.joined(separator: "、"))），若继续保存会写入新内容。")
+                    .font(.caption)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer(minLength: 8)
+
+                HStack(spacing: 6) {
+                    Button("查看备份位置") { showBackupLocation() }
+                        .buttonStyle(.bordered)
+
+                    Button("关闭") {
+                        integrityIssues.removeAll()
+                        StorageService.dismissIntegrityIssues()
+                    }
+                    .buttonStyle(.borderless)
+                }
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.regularMaterial)
+        .overlay(alignment: .bottom) { Divider() }
+    }
+
+    private func showBackupLocation() {
+        guard let firstIssue = integrityIssues.first else { return }
+        let directory = firstIssue.fileURL.deletingLastPathComponent()
+        NSWorkspace.shared.open(directory)
+    }
+}
+
+private struct SidebarWidthKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        let next = nextValue()
+        if next > 0 { value = next }
+    }
+}
+
+struct SidebarView_macOS: View {
+    @EnvironmentObject var appState: AppState_macOS
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        List(selection: $appState.selectedTab) {
+            Section("资料库") {
+                NavigationLink(value: 0) { Label("全部资料", systemImage: "folder.fill") }
+                NavigationLink(value: 1) { Label("课件", systemImage: "book.fill") }
+                NavigationLink(value: 2) { Label("真题", systemImage: "pencil.and.list.clipboard") }
+                NavigationLink(value: 3) { Label("笔记", systemImage: "note.text") }
+                NavigationLink(value: 4) { Label("收藏", systemImage: "star.fill") }
+            }
+
+            Section("学习") {
+                NavigationLink(value: 5) { Label("考点提取", systemImage: "brain.head.profile") }
+                NavigationLink(value: 9) { Label("智能阅卷", systemImage: "checkmark.seal.fill") }
+                NavigationLink(value: 8) { Label("AI 对话", systemImage: "bubble.left.and.bubble.right.fill") }
+                NavigationLink(value: 10) { Label("番茄钟", systemImage: "timer") }
+                NavigationLink(value: 11) { Label("错题本", systemImage: "xmark.circle") }
+                NavigationLink(value: 12) { Label("背诵卡片", systemImage: "rectangle.stack") }
+                NavigationLink(value: 19) { Label("白板", systemImage: "square.and.pencil") }
+            }
+
+            Section("历史科普") {
+                NavigationLink(value: 27) { Label("中国近代史", systemImage: "clock.arrow.circlepath") }
+            }
+
+            Section("计划") {
+                NavigationLink(value: 13) { Label("考试倒计时", systemImage: "calendar.badge.exclamationmark") }
+                NavigationLink(value: 6) { Label("复习计划", systemImage: "calendar.badge.clock") }
+                NavigationLink(value: 20) { Label("待办清单", systemImage: "checklist") }
+                NavigationLink(value: 21) { Label("习惯养成打卡", systemImage: "checkmark.square") }
+            }
+
+            Section("实用工具") {
+                NavigationLink(value: 7) { Label("学习统计", systemImage: "chart.bar.fill") }
+                NavigationLink(value: 16) { Label("社交", systemImage: "bubble.left.and.bubble.right.fill") }
+                NavigationLink(value: 17) { Label("放松亿下", systemImage: "gamecontroller") }
+                NavigationLink(value: 18) { Label("日记", systemImage: "book.fill") }
+                NavigationLink(value: 22) { Label("文件加密", systemImage: "lock.doc.fill") }
+                NavigationLink(value: 23) { Label("白噪音", systemImage: "speaker.wave.3.fill") }
+                Button { openWindow(id: "wish-fullscreen") } label: { Label("许愿", systemImage: "moon.stars.fill") }.buttonStyle(.plain)
+                NavigationLink(value: 24) { Label("答案之书", systemImage: "book.closed.fill") }
+                NavigationLink(value: 25) { Label("纪念日", systemImage: "calendar.badge.exclamationmark") }
+                NavigationLink(value: 26) { Label("计算器", systemImage: "function") }
+                NavigationLink(value: 14) { Label("重复清理", systemImage: "doc.on.doc") }
+            }
+        }
+        .listStyle(.sidebar)
+        .frame(minWidth: 190, maxWidth: .infinity, minHeight: 0, maxHeight: .infinity)
+        .navigationTitle("智学笔记")
+        .background(Color.clear)
+    }
+}
+
+struct DetailView_macOS: View {
+    @EnvironmentObject var appState: AppState_macOS
+
+    var body: some View {
+        Group {
+            switch appState.selectedTab {
+            case 0: MaterialsListView(filter: nil)
+            case 1: MaterialsListView(filter: .lecture)
+            case 2: MaterialsListView(filter: .exam)
+            case 3: MaterialsListView(filter: .notes)
+            case 4: MaterialsListView(filter: nil, favoritesOnly: true)
+            case 5: KeyPointsView()
+            case 6: ReviewPlanView()
+            case 7: StatisticsView()
+            case 8: AIChatView()
+            case 9: SmartGradingView()
+            case 10: PomodoroView()
+            case 11: WrongQuestionView()
+            case 12: FlashCardView()
+            case 13: ExamCountdownView()
+            case 14: DuplicateScannerView()
+            case 16: P2PSocialView()
+            case 17: RelaxGameView()
+            case 18: DiaryListView()
+            case 19: WhiteboardUnavailableView()
+            case 20: TodoListView()
+            case 21: HabitTrackerView()
+            case 22: FileCryptoUnavailableView()
+            case 23: WhiteNoiseView()
+            case 24: AnswerBookView(service: appState.answerBookService)
+            case 25: AnniversaryView()
+            case 26: CalculatorView()
+            case 27: HistoryHomeView(service: appState.historyService)
+            default: MaterialsListView()
+            }
+        }
+        .background(Color.clear)
+    }
+}
+
+/// 白板暂时关闭时的占位页。几何画板正在重做，暂不对外开放。
+/// 已有的白板数据文件不受影响，重新开放后可直接恢复使用。
+struct WhiteboardUnavailableView: View {
+    @Environment(\.appTheme) private var theme
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "square.and.pencil")
+                .font(.system(size: 52, weight: .light))
+                .foregroundStyle(theme.accent)
+
+            VStack(spacing: 8) {
+                Text("白板功能维护中")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(theme.primaryText)
+                Text("几何画板正在重新整理，暂时不开放。")
+                    .font(.subheadline)
+                    .foregroundStyle(theme.secondaryText)
+                    .multilineTextAlignment(.center)
+                Text("你已经创建的画板数据都保留着，恢复后可以直接继续使用，不会丢失。")
+                    .font(.caption)
+                    .foregroundStyle(theme.accentSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: 420)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(theme.background)
+    }
+}
+
+/// 文件加密临时关闭时的占位页。
+///
+/// 与白板不同，这里必须说清一件事：**已经加密产出的文件不会自动解密或失效**，
+/// 密码仍由用户自己保管，钥匙串里保存过的密码也不会被清除。
+/// 重新开放后可以直接继续使用；期间请不要删除加密产物与记住密码。
+struct FileCryptoUnavailableView: View {
+    @Environment(\.appTheme) private var theme
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "lock.doc.fill")
+                .font(.system(size: 52, weight: .light))
+                .foregroundStyle(theme.accent)
+
+            VStack(spacing: 8) {
+                Text("文件加密临时关闭")
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(theme.primaryText)
+                Text("该功能正在修复，暂时不开放。")
+                    .font(.subheadline)
+                    .foregroundStyle(theme.secondaryText)
+                    .multilineTextAlignment(.center)
+                Text("已经加密的文件不受影响：加密产物不会被改动，密码仍由你自己保管，设置里保存过的密码也不会被清除。恢复后可以直接继续使用。")
+                    .font(.caption)
+                    .foregroundStyle(theme.accentSecondary)
+                    .multilineTextAlignment(.center)
+                Text("期间请不要删除已加密的文件。")
+                    .font(.caption)
+                    .foregroundStyle(theme.accentSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: 420)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(theme.background)
+    }
+}

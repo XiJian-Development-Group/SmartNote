@@ -1,0 +1,1010 @@
+import SwiftUI
+import UniformTypeIdentifiers
+
+struct SettingsView: View {
+    @EnvironmentObject var appState: AppState_macOS
+    @State private var isCheckingUpdate: Bool = false
+    @State private var updateMessage: String = ""
+    @State private var showImagePicker: Bool = false
+    @State private var selectedImageData: Data? = nil
+    @State private var selectedImageName: String? = nil
+    @ObservedObject private var notificationService = NotificationService.shared
+
+    // 清除所有数据：二次确认 + 手动输入「清除」
+    @State private var showClearAllConfirmation: Bool = false
+    @State private var clearAllConfirmInput: String = ""
+
+    // 备份与恢复面板
+    @State private var backupLabel: String = ""
+    @State private var isMakingBackup: Bool = false
+    @State private var isRestoring: Bool = false
+    @State private var backupStatus: String = ""
+    @State private var backupNotice: String = ""
+    @State private var showRestoreConfirmation: Bool = false
+    @State private var pendingRestoreURL: URL?
+    
+    var body: some View {
+        TabView {
+            generalSection
+                .tabItem {
+                    Label("通用", systemImage: "gear")
+                }
+            
+            appearanceSection
+                .tabItem {
+                    Label("外观", systemImage: "paintbrush")
+                }
+            
+            learningProfileSection
+                .tabItem {
+                    Label("学习", systemImage: "brain.head.profile")
+                }
+            
+            llmSection
+                .tabItem {
+                    Label("AI 分析", systemImage: "brain")
+                }
+            
+            storageSection
+                .tabItem {
+                    Label("存储", systemImage: "internaldrive")
+                }
+
+            backupSection
+                .tabItem {
+                    Label("备份与恢复", systemImage: "externaldrive.badge.checkmark")
+                }
+
+            aboutSection
+                .tabItem {
+                    Label("关于", systemImage: "info.circle")
+                }
+        }
+        // W-1 固定 600×480 装 6 个 Tab 页，内容（备份列表、清除数据确认）
+        // 会被挤压到需要滚动才能看完。改为可缩放并给出更宽松的默认尺寸；
+        // 宽度维持 600 与既有表单排版一致，高度按内容放开到 720。
+        .frame(minWidth: 600, idealWidth: 640, minHeight: 480, idealHeight: 720)
+        .onChange(of: appState.appSettings) { _old, newValue in
+            appState.storageService.saveSettings(newValue)
+            // update update service repository and schedule when settings change
+            appState.updateUpdateServiceRepositoryIfNeeded(owner: newValue.updateRepoOwner, repo: newValue.updateRepoName)
+            appState.scheduleUpdateChecks(hoursInterval: newValue.updateCheckIntervalHours)
+        }
+        .fileImporter(
+            isPresented: $showImagePicker,
+            allowedContentTypes: [.image],
+            allowsMultipleSelection: false
+        ) { result in
+            handleImageSelection(result)
+        }
+        .sheet(isPresented: $showClearAllConfirmation) {
+            clearAllConfirmationDialog
+        }
+    }
+    
+    /// 用户自己的图片数量（不含内置素材），用于随机开关的可用性判断。
+    private var userBackgroundCount: Int {
+        appState.appSettings.backgroundImageLibrary
+            .filter { !StorageService.isBundledBackground($0) }
+            .count
+    }
+
+    private func backgroundThumbnail(for name: String) -> some View {
+        let url = appState.storageService.getBackgroundImageURL(named: name)
+        let isBundled = StorageService.isBundledBackground(name)
+        let isActive = appState.appSettings.effectiveBackgroundImageName == name
+        let isLocked = appState.appSettings.backgroundImageName == name
+        let themeLocked = appState.isBackgroundLockedByTheme
+
+        return VStack(spacing: 4) {
+            Group {
+                if FileManager.default.fileExists(atPath: url.path),
+                   let image = NSImage(contentsOf: url) {
+                    Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    Color.secondary.opacity(0.2)
+                        .overlay { Image(systemName: "photo").foregroundColor(.secondary) }
+                }
+            }
+            .frame(height: 56)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .overlay(alignment: .topTrailing) {
+                if isBundled {
+                    Image(systemName: "lock.fill")
+                        .font(.caption2)
+                        .foregroundColor(.white)
+                        .padding(3)
+                        .background(Color.black.opacity(0.45), in: Circle())
+                        .padding(3)
+                }
+            }
+
+            Text(label(for: name, isBundled: isBundled, isLocked: isLocked, isActive: isActive))
+                .font(.caption2)
+                .lineLimit(1)
+                .foregroundColor(isActive ? .accentColor : .secondary)
+
+            if isBundled {
+                Text("主题自带")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            } else {
+                HStack(spacing: 4) {
+                    Button("使用") { appState.selectBackgroundImage(name) }
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
+                        .disabled(themeLocked)
+                    Button("删除", role: .destructive) { appState.removeBackgroundImage(name) }
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
+                }
+            }
+        }
+        .padding(4)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(isActive ? Color.accentColor : Color.secondary.opacity(0.25), lineWidth: isActive ? 2 : 1)
+        )
+    }
+
+    private func label(for name: String, isBundled: Bool, isLocked: Bool, isActive: Bool) -> String {
+        if isLocked { return isBundled ? "当前主题" : "指定" }
+        if isActive { return "当前" }
+        if isBundled { return "主题自带" }
+        return name.suffix(6).description
+    }
+
+    private func handleImageSelection(_ result: Result<[URL], Error>) {
+        guard let urls = try? result.get(), let url = urls.first else { return }
+        
+        // Start accessing the security-scoped resource
+        guard url.startAccessingSecurityScopedResource() else {
+            print("Failed to access security-scoped resource")
+            return
+        }
+        defer { url.stopAccessingSecurityScopedResource() }
+        
+        do {
+            let imageData = try Data(contentsOf: url)
+            let fileName = UUID().uuidString + ".png"
+            
+            if let savedURL = appState.storageService.saveBackgroundImage(imageData, fileName: fileName) {
+                appState.addBackgroundImage(fileName)
+                selectedImageData = imageData
+                selectedImageName = fileName
+            }
+        } catch {
+            print("Error loading image: \(error)")
+        }
+    }
+    
+    private var generalSection: some View {
+        Form {
+            Section("日历与提醒") {
+                Toggle("启用日历同步", isOn: $appState.appSettings.calendarIntegrationEnabled)
+
+                Toggle("每日学习通知", isOn: Binding(
+                    get: {
+                        notificationService.dailyNotificationEnabled
+                            && notificationService.authorizationStatus.canSendNotifications
+                    },
+                    set: { newValue in
+                        Task {
+                            await notificationService.setDailyNotification(enabled: newValue)
+                        }
+                    }
+                ))
+
+                if let lastErrorMessage = notificationService.lastErrorMessage {
+                    Text(lastErrorMessage)
+                        .font(.caption2)
+                        .foregroundColor(.orange)
+                }
+
+                if notificationService.dailyNotificationEnabled
+                    && notificationService.authorizationStatus.canSendNotifications {
+                    DatePicker(
+                        "通知时间",
+                        selection: Binding(
+                            get: { notificationService.notificationTime },
+                            set: { newValue in
+                                Task {
+                                    await notificationService.updateNotificationTime(newValue)
+                                }
+                            }
+                        ),
+                        displayedComponents: .hourAndMinute
+                    )
+                }
+            }
+
+            DiaryEncryptionSettingsSection()
+
+            Section("系统集成") {
+                HStack {
+                    Image(systemName: "menubar.dock.rectangle")
+                        .foregroundColor(.secondary)
+                    Text("菜单栏")
+                    Spacer()
+                    Text("已启用")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .help("菜单栏图标显示在屏幕右上角，提供快速入口。")
+
+                HStack {
+                    Image(systemName: "power")
+                        .foregroundColor(.secondary)
+                    Text("开机自启动")
+                    Spacer()
+                    Toggle("", isOn: Binding(
+                        get: { appState.launchAtLoginService.enabledByUser },
+                        set: { newVal in appState.launchAtLoginService.setEnabled(newVal) }
+                    ))
+                    .labelsHidden()
+                }
+                if let err = appState.launchAtLoginService.lastError {
+                    Text(err)
+                        .font(.caption2)
+                        .foregroundColor(.orange)
+                }
+                Text("通过 macOS 原生 SMAppService 注册；首次启用需在系统弹窗中允许。")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+
+            Section("更新") {
+                Toggle("自动检查更新", isOn: $appState.appSettings.autoUpdateEnabled)
+                    .onChange(of: appState.appSettings.autoUpdateEnabled) { _old, newValue in
+                        if newValue {
+                            Task {
+                                await appState.performAutoCheckIfEnabled()
+                            }
+                        }
+                    }
+                Text("仅自动检查并提示；下载和安装需要你点击“立即更新”确认。")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                Stepper("检查间隔: \(appState.appSettings.updateCheckIntervalHours) 小时", value: $appState.appSettings.updateCheckIntervalHours, in: 1...168)
+                HStack {
+                    Text("Repo")
+                    TextField("Owner", text: $appState.appSettings.updateRepoOwner)
+                    Text("/")
+                    TextField("Repo", text: $appState.appSettings.updateRepoName)
+                }
+                Picker("更新渠道", selection: $appState.appSettings.updateChannel) {
+                    Text("Latest").tag(AppSettings.UpdateChannel.latest)
+                    Text("Pre-release").tag(AppSettings.UpdateChannel.prerelease)
+                }
+                if let pending = appState.updateService.pendingRelease,
+                   appState.updateService.isUpdateAvailable(pending) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("发现新版本 \(pending.name ?? pending.tag_name ?? "新版本")，是否安装？")
+                            .font(.callout)
+                        HStack {
+                            Button("立即更新") {
+                                installPendingUpdate(pending)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(appState.updateService.isDownloading)
+                            if appState.updateService.isDownloading {
+                                ProgressView()
+                                    .controlSize(.small)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+                HStack {
+                    Button(action: {
+                        Task {
+                            isCheckingUpdate = true
+                            updateMessage = "正在检查..."
+                            do {
+                                // save repo/settings changes before checking
+                                appState.storageService.saveSettings(appState.appSettings)
+                                // apply repo change immediately
+                                appState.updateUpdateServiceRepositoryIfNeeded(owner: appState.appSettings.updateRepoOwner, repo: appState.appSettings.updateRepoName)
+                                appState.scheduleUpdateChecks(hoursInterval: appState.appSettings.updateCheckIntervalHours)
+                                let channel = appState.appSettings.updateChannel
+                                let svcChannel: UpdateService.Channel = (channel == .prerelease) ? .prerelease : .latest
+                                // ensure updateService is configured with latest owner/repo
+                                // (AppState created UpdateService at init; for repo changes user must restart to apply to service instance)
+                                if let release = try await appState.updateService.checkForUpdate(channel: svcChannel) {
+                                    let isNewer = appState.updateService.isUpdateAvailable(release)
+                                    if isNewer {
+                                        let version = release.name ?? release.tag_name ?? "无名"
+                                        appState.updateService.pendingRelease = release
+                                        updateMessage = "发现新版本 \(version)，请确认是否安装"
+                                    } else {
+                                        appState.updateService.latestCheckedRelease = nil
+                                        appState.updateService.pendingRelease = nil
+                                        updateMessage = "当前版本 (\(appState.updateService.currentAppVersion)) 已是最新"
+                                    }
+                                    // send notification to user that an update is available
+                                    if isNewer {
+                                        Task {
+                                            await appState.updateService.notifyUserUpdateFound(release)
+                                        }
+                                    }
+                                    // persist last check
+                                    var s = appState.storageService.loadSettings()
+                                    s.lastUpdateCheckDate = Date()
+                                    s.lastFoundReleaseName = release.name ?? release.tag_name
+                                    appState.storageService.saveSettings(s)
+                                } else {
+                                    appState.updateService.pendingRelease = nil
+                                    updateMessage = "未找到符合条件的更新"
+                                    var s = appState.storageService.loadSettings()
+                                    s.lastUpdateCheckDate = Date()
+                                    appState.storageService.saveSettings(s)
+                                }
+                            } catch {
+                                updateMessage = "检查失败: \(error.localizedDescription)"
+                            }
+                            isCheckingUpdate = false
+                        }
+                    }) {
+                        if isCheckingUpdate {
+                            ProgressView()
+                        } else {
+                            Text("检查更新")
+                        }
+                    }
+                    // show progress and logs (with auto-scroll and copy/clear controls)
+                    VStack(alignment: .leading) {
+                        if let p = appState.updateService.downloadProgress, appState.updateService.isDownloading {
+                            ProgressView(value: p) {
+                                Text("下载中：\(Int((p * 100).rounded()))%")
+                            }
+                            .progressViewStyle(.linear)
+                        } else if appState.updateService.isDownloading {
+                            ProgressView()
+                        }
+
+                        if !appState.updateService.logs.isEmpty {
+                            HStack(spacing: 8) {
+                                Text("更新日志:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Spacer()
+                                Button(action: {
+                                    // copy logs to clipboard
+                                    let joined = appState.updateService.logs.joined(separator: "\n")
+                                    NSPasteboard.general.clearContents()
+                                    NSPasteboard.general.setString(joined, forType: .string)
+                                }) {
+                                    Image(systemName: "doc.on.clipboard")
+                                }
+                                .buttonStyle(.bordered)
+
+                                Button(action: {
+                                    // clear logs on main actor
+                                    Task { @MainActor in
+                                        appState.updateService.logs.removeAll()
+                                    }
+                                }) {
+                                    Image(systemName: "trash")
+                                }
+                                .buttonStyle(.bordered)
+                            }
+
+                            ScrollViewReader { proxy in
+                                ScrollView(.vertical) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        ForEach(Array(appState.updateService.logs.enumerated()), id: \.0) { idx, line in
+                                            HStack(alignment: .top, spacing: 8) {
+                                                Text("\(idx + 1)")
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                                    .frame(width: 28, alignment: .trailing)
+                                                Text(line)
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .id(idx)
+                                            }
+                                        }
+                                    }
+                                    .padding(.vertical, 2)
+                                }
+                                .frame(maxHeight: 140)
+                                .onChange(of: appState.updateService.logs.count) { _ in
+                                    // scroll to bottom when logs change
+                                    if let last = appState.updateService.logs.indices.last {
+                                        withAnimation(.easeOut) {
+                                            proxy.scrollTo(last, anchor: .bottom)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .padding(.top, 6)
+
+                    Spacer()
+                    Text(updateMessage)
+                        .foregroundColor(.secondary)
+                }
+                if appState.appSettings.autoUpdateEnabled {
+                    HStack {
+                        Text("下次计划检查:")
+                        Spacer()
+                        let last = appState.storageService.loadSettings().lastUpdateCheckDate ?? Date()
+                        let next = Calendar.current.date(byAdding: .hour, value: appState.appSettings.updateCheckIntervalHours, to: last) ?? Date()
+                        Text(next, style: .date)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                if let last = appState.storageService.loadSettings().lastUpdateCheckDate {
+                    HStack {
+                        Text("上次检查:")
+                        Spacer()
+                        Text(last, style: .date)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                if let name = appState.storageService.loadSettings().lastFoundReleaseName {
+                    HStack {
+                        Text("上次发现:")
+                        Spacer()
+                        Text(name)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            
+            Section("文件扫描") {
+                Toggle("启动时自动扫描", isOn: $appState.appSettings.autoScanDirectories)
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+    
+    private var appearanceSection: some View {
+        Form {
+            Section("背景图片") {
+                if let locked = appState.lockedBundledBackgroundName {
+                    // 节庆主题强制使用自带背景，此处不提供任何修改入口。
+                    HStack(spacing: 10) {
+                        Image(systemName: "lock.fill")
+                            .foregroundColor(.orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("当前主题已锁定背景")
+                                .font(.subheadline.weight(.semibold))
+                            Text("「\(appState.theme.name)」主题使用自带背景图。切回「经典」主题后可自行选择或随机轮换。")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                } else {
+                    Toggle("启用背景图片", isOn: $appState.appSettings.backgroundImageEnabled)
+
+                    if appState.appSettings.backgroundImageEnabled {
+                        Toggle(
+                            "随机轮换",
+                            isOn: Binding(
+                                get: { appState.appSettings.backgroundImageRandomEnabled },
+                                set: { appState.setBackgroundImageRandomEnabled($0) }
+                            )
+                        )
+                        .disabled(userBackgroundCount < 2)
+
+                        if appState.appSettings.backgroundImageRandomEnabled {
+                            Text("每次启动会从你的图片中随机换一张；也可以随时手动换一张。")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Button("换一张") {
+                                appState.pickRandomBackgroundImage()
+                            }
+                            .buttonStyle(.bordered)
+                        }
+
+                        Button("添加图片") {
+                            showImagePicker = true
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+
+                if !appState.appSettings.backgroundImageLibrary.isEmpty {
+                    Text("图片库（\(appState.appSettings.backgroundImageLibrary.count) 张）")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    ScrollView {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 84), spacing: 10)], spacing: 10) {
+                            ForEach(appState.appSettings.backgroundImageLibrary, id: \.self) { name in
+                                backgroundThumbnail(for: name)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    .frame(maxHeight: 190)
+
+                    Button("清空我的图片", role: .destructive) {
+                        appState.clearUserBackgroundLibrary()
+                    }
+                }
+            }
+            
+            if appState.appSettings.backgroundImageEnabled {
+                Section("背景效果") {
+                    Toggle("启用模糊效果", isOn: $appState.appSettings.backgroundBlurEnabled)
+                    Toggle("启用模糊效果", isOn: $appState.appSettings.backgroundBlurEnabled)
+                    
+                    if appState.appSettings.backgroundBlurEnabled {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("模糊半径: \(appState.appSettings.backgroundBlurRadius, specifier: "%.0f")")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Slider(value: $appState.appSettings.backgroundBlurRadius, in: 0...100, step: 1)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("背景透明度: \(appState.appSettings.backgroundOpacity, specifier: "%.2f")")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Slider(value: $appState.appSettings.backgroundOpacity, in: 0...1, step: 0.05)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            
+            Section("显示") {
+                Picker("外观", selection: Binding(
+                    get: { appState.activeDarkModePreference },
+                    set: { appState.setDarkModePreference($0) }
+                )) {
+                    Text("跟随系统").tag(AppSettings.DarkModePreference.system)
+                    Text("浅色").tag(AppSettings.DarkModePreference.light)
+                    Text("深色").tag(AppSettings.DarkModePreference.dark)
+                }
+
+                Toggle("显示文件扩展名", isOn: $appState.appSettings.showFileExtensions)
+            }
+
+            Section("主题") {
+                ForEach(AppTheme.all) { theme in
+                    Button {
+                        appState.setTheme(theme.id)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: theme.symbol)
+                                .font(.title3)
+                                .foregroundStyle(theme.accent)
+                                .frame(width: 30)
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(theme.name)
+                                    .font(.headline)
+                                Text(theme.summary)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Spacer()
+
+                            if appState.activeThemeID == theme.id {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(theme.accent)
+                            }
+                        }
+                        .padding(.vertical, 5)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Text("经典主题不改变背景，可使用你自己的图片或留空；三个节庆主题各自锁定一张自带背景图。")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+    
+    private var llmSection: some View {
+        LLMSettingsView()
+    }
+    
+    private var learningProfileSection: some View {
+        LearningProfileSettingsView()
+    }
+    
+    private var storageSection: some View {
+        Form {
+            Section("存储信息") {
+                HStack {
+                    Text("资料数量")
+                    Spacer()
+                    Text("\(appState.materials.count)")
+                        .foregroundColor(.secondary)
+                }
+                
+                HStack {
+                    Text("复习计划")
+                    Spacer()
+                    Text("\(appState.reviewPlans.count)")
+                        .foregroundColor(.secondary)
+                }
+                
+                HStack {
+                    Text("占用空间")
+                    Spacer()
+                    Text(ByteCountFormatter.string(fromByteCount: appState.backupService.dataStorageSize(), countStyle: .file))
+                        .foregroundColor(.secondary)
+                }
+            }
+            
+            Section {
+                Button("清除所有数据", role: .destructive) {
+                    showClearAllConfirmation = true
+                }
+            }
+
+            if let missing = appState.restorationFailedBundledImage {
+                Section {
+                    HStack(alignment: .top, spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("主题背景恢复失败")
+                                .font(.subheadline.weight(.semibold))
+                            Text("未能从应用包恢复 \(missing)，请重新安装应用。")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Button("知道了") { appState.clearRestorationFailure() }
+                            .buttonStyle(.borderless)
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+    
+    // MARK: - 备份与恢复
+
+    private var backupSection: some View {
+        Form {
+            Section("当前状态") {
+                HStack {
+                    Text("数据 schema 版本")
+                    Spacer()
+                    Text("v\(appState.appSettings.schemaVersion)")
+                        .foregroundColor(.secondary)
+                        .monospacedDigit()
+                }
+                HStack {
+                    Text("上次自动迁移")
+                    Spacer()
+                    if let d = appState.appSettings.lastMigrationDate {
+                        Text(d, style: .relative)
+                            .foregroundColor(.secondary)
+                    } else {
+                        Text("尚未迁移").foregroundColor(.secondary)
+                    }
+                }
+                if let mig = appState.lastStartupMigration, mig.didUpgrade {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
+                        Text("本次启动从 v\(mig.fromVersion) 升级到 v\(mig.toVersion)")
+                            .font(.caption)
+                    }
+                    if mig.didBackup, let url = mig.backupURL {
+                        Text("自动备份：\(url.lastPathComponent)")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    } else if let err = mig.backupError {
+                        Text("自动备份失败：\(err.localizedDescription)")
+                            .font(.caption2)
+                            .foregroundColor(.red)
+                    }
+                }
+            }
+
+            Section("新建备份") {
+                TextField("可选标签（留空则用时间戳）", text: $backupLabel)
+                HStack {
+                    Button {
+                        runManualBackup()
+                    } label: {
+                        if isMakingBackup {
+                            // 同 FileCryptoView：scaleEffect 与 AppKit 宿主视图的
+                            // 固定固有尺寸冲突，会算出 min > max 的矛盾约束而崩溃。
+                            // controlSize 是受支持的缩放方式。
+                            ProgressView().controlSize(.small)
+                        } else {
+                            Label("立即备份", systemImage: "square.and.arrow.down")
+                        }
+                    }
+                    .disabled(isMakingBackup || isRestoring)
+                    .buttonStyle(.borderedProminent)
+
+                    Spacer()
+
+                    if !backupStatus.isEmpty {
+                        Text(backupStatus)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                Text("备份存储于：\(appState.backupService.backupsDirectoryURL.path)")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .textSelection(.enabled)
+                // U-15 备份是明文 ZIP，但提示语只在角落一行小字，
+                // 用户很容易把它当「加密快照」直接放进 iCloud / 公共网盘。
+                // 改为显眼的警示块，说明明文性质与正确处理方式。
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.shield.fill")
+                        .foregroundColor(.orange)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("备份未加密，请勿直接存入公共网盘")
+                            .font(.callout.weight(.semibold))
+                        Text("备份是未加密的 ZIP，内含资料、日记正文和复习计划等明文内容。上传到 iCloud、Dropbox 等第三方网盘等同于交给对方服务器保管。若需要额外保护，请自行用系统「加密磁盘映像」或第三方工具二次加密后再存放。")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+
+                if !backupNotice.isEmpty {
+                    Text(backupNotice)
+                        .font(.caption2)
+                        .foregroundColor(.orange)
+                }
+            }
+
+            Section("历史备份") {
+                Text("为保护历史数据，不会自动删除旧备份；可按需手动删除。")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                if backupList.isEmpty {
+                    Text("暂无备份").foregroundColor(.secondary)
+                } else {
+                    ForEach(backupList, id: \.path) { url in
+                        HStack(spacing: 8) {
+                            Image(systemName: "doc.zipper")
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(url.lastPathComponent)
+                                    .font(.caption)
+                                    .lineLimit(1)
+                                if let info = try? url.resourceValues(forKeys: [.creationDateKey, .fileSizeKey]),
+                                   let date = info.creationDate {
+                                    Text("\(date.formatted(date: .abbreviated, time: .shortened)) · \(ByteCountFormatter.string(fromByteCount: Int64(info.fileSize ?? 0), countStyle: .file))")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            Spacer()
+                            Button("恢复") {
+                                pendingRestoreURL = url
+                                showRestoreConfirmation = true
+                            }
+                            .disabled(isRestoring)
+                            Button(role: .destructive) {
+                                deleteBackup(url)
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                            .disabled(isRestoring)
+                        }
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+        .onAppear { refreshBackupList() }
+        .alert("确认恢复？", isPresented: $showRestoreConfirmation, presenting: pendingRestoreURL) { url in
+            Button("取消", role: .cancel) {}
+            Button("恢复", role: .destructive) {
+                restoreBackup(url)
+            }
+        } message: { url in
+            Text("从「\(url.lastPathComponent)」恢复会覆盖当前所有数据。请确保当前数据已另存备份。App 将在恢复完成后退出。")
+        }
+    }
+
+    @State private var backupList: [URL] = []
+
+    private func refreshBackupList() {
+        backupList = appState.backupService.listBackups()
+        backupNotice = appState.backupService.preparationWarnings.joined(separator: "\n")
+    }
+
+    private func deleteBackup(_ url: URL) {
+        do {
+            try appState.backupService.deleteBackup(url)
+            backupStatus = "已删除：\(url.lastPathComponent)"
+            refreshBackupList()
+        } catch {
+            backupStatus = "删除失败：\(error.localizedDescription)"
+        }
+    }
+
+    private func runManualBackup() {
+        guard !isRestoring else { return }
+        isMakingBackup = true
+        backupStatus = "正在打包…"
+        let labelToUse: String? = backupLabel.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : backupLabel
+        let backupService = appState.backupService
+        Task.detached { [labelToUse, backupService] in
+            do {
+                let url = try backupService.makeBackup(label: labelToUse)
+                await MainActor.run {
+                    backupStatus = "已生成：\(url.lastPathComponent)"
+                    backupLabel = ""
+                    refreshBackupList()
+                    isMakingBackup = false
+                }
+            } catch {
+                await MainActor.run {
+                    backupStatus = "失败：\(error.localizedDescription)"
+                    refreshBackupList()
+                    isMakingBackup = false
+                }
+            }
+        }
+    }
+
+    private func restoreBackup(_ url: URL) {
+        guard !isRestoring else { return }
+        isRestoring = true
+        backupStatus = "正在解压并校验临时目录…"
+        let backupService = appState.backupService
+        Task.detached { [backupService] in
+            do {
+                let tempDir = try backupService.extractBackup(url)
+                await MainActor.run {
+                    backupStatus = "校验通过，正在切换数据…"
+                    commitRestore(from: tempDir)
+                }
+            } catch {
+                await MainActor.run {
+                    backupStatus = "恢复失败：\(error.localizedDescription)"
+                    isRestoring = false
+                    refreshBackupList()
+                }
+            }
+        }
+    }
+
+    /// 在主线程同步完成目录切换；退出前暂停定时器并取消主线程上的更新检查。
+    /// 白板立即保存会同时使其待执行自动保存失效，成功后立即退出，避免旧数据回写。
+    @MainActor
+    private func commitRestore(from tempDir: URL) {
+        let pomodoro = PomodoroTimer.shared
+        let shouldResumePomodoro = pomodoro.isRunning && !pomodoro.isPaused
+        if shouldResumePomodoro {
+            pomodoro.pause()
+        }
+        appState.updateCheckCancellable?.cancel()
+
+        // 先保存内存中尚未落盘的白板内容，并使白板自动保存定时器失效。
+        WhiteboardService.shared.saveDocuments()
+
+        do {
+            try appState.backupService.replaceDataDirectory(withExtractedBackupAt: tempDir)
+            // 目录切换、复验与旧目录清理全部完成后再退出，启动时才会读取新数据。
+            // 退出前先把内存中尚未落盘的内容写回，再走 NSApp.terminate 的正常退出流程：
+            // exit(0) 会绕过 NSApplication 的 willTerminate 通知与状态保存，
+            // 且 Mac App Store 的审核标准不允许直接调用 exit()。
+            appState.flushPendingChangesBeforeTerminate()
+            NSApp.terminate(nil)
+        } catch {
+            if shouldResumePomodoro {
+                pomodoro.resume()
+            }
+            appState.scheduleUpdateChecks(hoursInterval: appState.appSettings.updateCheckIntervalHours)
+            try? FileManager.default.removeItem(at: tempDir)
+            backupStatus = "恢复阶段失败：\(error.localizedDescription)"
+            isRestoring = false
+            refreshBackupList()
+        }
+    }
+
+    private func installPendingUpdate(_ release: UpdateService.ReleaseInfo) {
+        Task {
+            updateMessage = "正在下载、验证并切换版本..."
+            do {
+                // This call is reachable only from the user's explicit “立即更新” action.
+                let installed = try await appState.updateService.performDownloadAndInstall(
+                    release: release,
+                    autoInstall: true
+                )
+                if let installed {
+                    updateMessage = "更新已安装并启动：\(installed.path)"
+                }
+                appState.updateService.pendingRelease = nil
+                appState.updateService.latestCheckedRelease = nil
+            } catch {
+                updateMessage = "更新安装失败：\(error.localizedDescription)"
+            }
+        }
+    }
+
+    private var aboutSection: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            
+            Image(systemName: "book.fill")
+                .font(.system(size: 64))
+                .foregroundColor(.accentColor)
+            
+            Text("智学笔记")
+                .font(.title)
+                .fontWeight(.bold)
+            
+            let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?."
+            let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?"
+            Text("版本 \(version) (\(build))")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            Text("AI 智能复习工具")
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+            
+            Text("© 2026 skyc8266")
+                .font(.caption2)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+    }
+    
+    private func clearAllData() {
+        appState.materials.removeAll()
+        appState.reviewPlans.removeAll()
+        appState.storageService.clearAllData()
+    }
+
+    /// 清除所有数据的二次确认。
+    /// 这是不可逆操作：会删除资料、复习计划、日记、待办、习惯、历史阅读进度、
+    /// 主题背景和 Keychain 里的 API key / 文件密码，因此必须显式确认，
+    /// 且要求手动输入「清除」二字，避免误触或脚本误调用。
+    private var clearAllConfirmationDialog: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("此操作无法撤销")
+                .font(.headline)
+            Text("将永久删除本机上的资料、复习计划、日记、待办、习惯打卡、历史阅读进度，以及钥匙串中保存的 API key 与文件密码。建议先在下方「备份与恢复」中导出一份备份。")
+                .font(.callout)
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            TextField("输入「清除」以确认", text: $clearAllConfirmInput)
+                .textFieldStyle(.roundedBorder)
+
+            HStack {
+                Spacer()
+                Button("取消", role: .cancel) {
+                    clearAllConfirmInput = ""
+                }
+                Button("永久删除", role: .destructive) {
+                    clearAllConfirmInput = ""
+                    clearAllData()
+                }
+                .disabled(clearAllConfirmInput != "清除")
+            }
+        }
+        .padding(20)
+        .frame(width: 420)
+    }
+}
