@@ -16,7 +16,14 @@ struct ContentView_iOS: View {
                 iPhoneLayout
             }
         }
-        .background(ThemeBackdrop(theme: appTheme))
+        .background {
+            // 层级与 macOS 的 ContentView_macOS 一致：ThemeBackdrop 在下、
+            // 背景图在上（背景图自带 opacity/blur，因此能透出主题配色）。
+            ZStack {
+                ThemeBackdrop(theme: appTheme)
+                BackgroundImageView_iOS()
+            }
+        }
         .sheet(isPresented: $appState.showFileImporter) {
             FileImportView_iOS()
                 .environmentObject(appState)
@@ -36,7 +43,7 @@ struct ContentView_iOS: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .openTabFromShortcut)) { notification in
             if let tabIndex = notification.userInfo?["tabIndex"] as? Int {
-                appState.selectedTab = tabIndex
+                appState.goToSection(tabIndex)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .newMaterialFromShortcut)) { _ in
@@ -60,55 +67,60 @@ struct ContentView_iOS: View {
             // AI 对话
         }
         .onReceive(NotificationCenter.default.publisher(for: .getAnswerBookFromShortcut)) { _ in
-            appState.selectedTab = 17 // 答案之书
+            // 原来写的是 `selectedTab = 17`，但 17 是「放松亿下」；
+            // 答案之书是 24。
+            appState.goToSection(AppState_iOS.IPadSection.answerBook.rawValue)
         }
     }
 
     // MARK: - iPhone 布局
 
     private var iPhoneLayout: some View {
-        TabView(selection: $appState.selectedTab) {
+        // 注意绑定的是 `iphoneTab` 而不是 `selectedTab`：
+        // 后者的编号是 iPad 详情区的页面号，与这里的标签栏不是一回事，
+        // 混用会导致「课件/真题/笔记/收藏」在 iPhone 上永远到不了。
+        TabView(selection: $appState.iphoneTab) {
             // 资料库
             NavigationStack {
-                MaterialsListView_iOS(filter: nil)
+                MaterialsBrowserView_iOS()
             }
             .tabItem { Label("资料库", systemImage: "folder.fill") }
-            .tag(0)
+            .tag(AppState_iOS.IPhoneTab.materials)
 
             // 学习工具
             NavigationStack {
                 StudyToolsView_iOS()
             }
             .tabItem { Label("学习", systemImage: "brain.head.profile") }
-            .tag(1)
+            .tag(AppState_iOS.IPhoneTab.study)
 
             // 计划
             NavigationStack {
                 PlansView_iOS()
             }
             .tabItem { Label("计划", systemImage: "calendar.badge.clock") }
-            .tag(2)
+            .tag(AppState_iOS.IPhoneTab.plans)
 
             // 实用工具
             NavigationStack {
                 UtilitiesView_iOS()
             }
             .tabItem { Label("工具", systemImage: "wrench.and.screwdriver.fill") }
-            .tag(3)
+            .tag(AppState_iOS.IPhoneTab.tools)
 
             // 历史科普
             NavigationStack {
                 HistoryHomeView_iOS(service: appState.historyService)
             }
             .tabItem { Label("历史", systemImage: "clock.arrow.circlepath") }
-            .tag(4)
+            .tag(AppState_iOS.IPhoneTab.history)
 
             // 设置
             NavigationStack {
                 SettingsView_iOS()
             }
             .tabItem { Label("设置", systemImage: "gearshape.fill") }
-            .tag(5)
+            .tag(AppState_iOS.IPhoneTab.settings)
         }
         .tint(appTheme.accent)
     }

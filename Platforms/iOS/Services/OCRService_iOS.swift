@@ -1,5 +1,6 @@
 import Foundation
 import CoreImage
+import PDFKit
 import Vision
 import Combine
 
@@ -16,14 +17,70 @@ final class OCRService_iOS: ObservableObject {
 
     private init() {}
 
-    /// 从磁盘图片文件识别文字。
+    /// 从磁盘文件识别文字。
+    ///
+    /// **PDF 与图片走不同路径**：`CIImage(contentsOf:)` 读不了 PDF
+    /// （CoreImage 不支持 PDF 容器），直接拿它去喂 PDF 必然得到 `nil`。
+    /// 所以这里按扩展名分流，PDF 改用 PDFKit 逐页光栅化后再识别 ——
+    /// 与 macOS 版 `OCRService.recognizeText(fromPDF:)` 的做法一致。
     ///
     /// 识别是 CPU 密集操作，放到 detached task 中执行，避免阻塞主线程。
-    /// 识别失败（图片损坏、权限不足、请求失败）一律返回 `nil`，
+    /// 识别失败（文件损坏、加密、无可渲染页面）一律返回 `nil`，
     /// 由调用方决定是否提示用户。
-    func recognizeText(from imageURL: URL) async -> String? {
-        guard let ciImage = CIImage(contentsOf: imageURL) else { return nil }
+    func recognizeText(from url: URL) async -> String? {
+        if url.pathExtension.lowercased() == "pdf" {
+            return await Self.recognizeTextInPDF(at: url)
+        }
+        guard let ciImage = CIImage(contentsOf: url) else { return nil }
         return await Self.recognizeText(in: ciImage)
+    }
+
+    /// 逐页识别 PDF 里的文字。
+    ///
+    /// 只取前 `maxPages` 页：整本教材可能有几百页，全量 OCR 既慢又会
+    /// 撑爆内存，而资料分析通常只看开头若干页。
+    private static func recognizeTextInPDF(at url: URL, maxPages: Int = 20) async -> String? {
+        let pageCount = await withCheckedContinuation { continuation in
+            Task.detached {
+                guard let document = PDFDocument(url: url) else {
+                    continuation.resume(returning: 0)
+                    return
+                }
+                continuation.resume(returning: document.pageCount)
+            }
+        }
+        guard pageCount > 0 else { return nil }
+
+        var collected: [String] = []
+        for index in 0..<min(pageCount, maxPages) {
+            let pageText: String? = await withCheckedContinuation { continuation in
+                Task.detached {
+                    guard let document = PDFDocument(url: url),
+                          let page = document.page(at: index) else {
+                        continuation.resume(returning: nil)
+                        return
+                    }
+                    // 优先用 PDF 自带的文字层：比光栅化后再 OCR 快得多，也更准。
+                    if let embedded = page.string, !embedded.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        continuation.resume(returning: embedded)
+                        return
+                    }
+                    // 扫描版 PDF 没有文字层，退回位图 OCR。
+                    let image = page.thumbnail(of: CGSize(width: 2000, height: 2000), for: .mediaBox)
+                    guard let cgImage = image.cgImage else {
+                        continuation.resume(returning: nil)
+                        return
+                    }
+                    let ciImage = CIImage(cgImage: cgImage)
+                    continuation.resume(returning: await recognizeText(in: ciImage))
+                }
+            }
+            if let pageText, !pageText.isEmpty {
+                collected.append(pageText)
+            }
+        }
+        let joined = collected.joined(separator: "\n")
+        return joined.isEmpty ? nil : joined
     }
 
     /// 从内存中的图片数据识别文字。

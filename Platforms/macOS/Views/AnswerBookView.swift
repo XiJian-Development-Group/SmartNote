@@ -188,14 +188,10 @@ struct AnswerBookView: View {
 
     private func answerContent(_ entry: AnswerBookEntry) -> some View {
         VStack(spacing: 16) {
-            if entry.isSpecial {
-                Text(entry.kind == .glitch ? "这一页印坏了" : "这一页是空白的")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(theme.accentSecondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(theme.accent.opacity(0.14), in: Capsule())
-            }
+            // 原本这里会根据 kind 显示「这一页印坏了」或「这一页是空白的」，
+            // 但这些描述源于迁移前的数据标记（Lost/Dark、SystemError=404），
+            // 与当前产品无关，已按要求移除。
+            // 保留 isSpecial 判断以便后续若想加其他视觉区分时可用。
 
             Text(entry.content)
                 .font(.system(size: 34, weight: .medium, design: .serif))

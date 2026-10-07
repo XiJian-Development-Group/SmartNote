@@ -33,7 +33,9 @@ struct KeyPointsView_iOS: View {
         } description: {
             Text("请先在资料库导入资料，再进行考点提取")
         } actions: {
-            Button("去导入资料") { appState.selectedTab = 0 }
+            Button("去导入资料") {
+                appState.goToSection(AppState_iOS.IPadSection.allMaterials.rawValue)
+            }
                 .buttonStyle(.borderedProminent)
         }
     }
@@ -120,7 +122,15 @@ struct KeyPointsView_iOS: View {
 
     private func extractKeyPoints(from material: StudyMaterial) {
         let text = material.extractedText ?? material.content
-        guard !text.isEmpty else { return }
+        // 原先是裸 `guard ... else { return }`：资料没有文字时点「开始提取」
+        // 毫无反应，界面停在原地，用户不知道发生了什么。
+        // 现在明确告知，并指出正确的前置步骤。
+        guard !text.isEmpty else {
+            appState.errorMessage = "「\(material.name)」还没有可用文字，无法提取考点。请先在资料详情里做 OCR 识别，或手动补充内容。"
+            appState.showError = true
+            appState.hapticFeedbackService.error()
+            return
+        }
 
         isExtracting = true
         showResult = false

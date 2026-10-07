@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "note": "《答案之书》中文答案集。数据来源于 TheBookOfAnswer-tboa 项目（作者 skyc8266）的 config.json，原始文案整理自 hyt804bz / answerbook.org。搬迁时按内容去重（同一句只保留 id 最小的一条），并把原数据里 target 为 Lost/Dark 与 SystemError=404 的三条特殊条目标记为彩蛋（kind = lost / glitch）。",
+  "note": "《答案之书》中文答案集。数据来源于 TheBookOfAnswer-tboa 项目（作者 skyc8266）的 config.json，原始文案整理自 hyt804bz / answerbook.org。",
   "sourceNote": "TheBookOfAnswer-tboa · config.json（Items 0-403 + 8266）",
   "answers": [
     {

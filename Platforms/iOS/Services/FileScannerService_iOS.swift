@@ -59,6 +59,26 @@ class FileScannerService_iOS: ObservableObject {
     }
 
     private func processFile(_ url: URL, storageMode: StorageMode) async -> StudyMaterial? {
+        // 文档选择器（`fileImporter`）返回的是**安全作用域 URL**：在调用
+        // `startAccessingSecurityScopedResource()` 之前，任何读取/拷贝都会被系统
+        // 拒绝（报 "Operation not permitted" 或 "The file couldn’t be opened"）。
+        //
+        // 这里必须自己开访问权，而不是依赖调用方——调用方（视图层）的
+        // `defer { stopAccessing... }` 会在把 URL 交回来之前就释放掉访问权。
+        // macOS 版的 `FileScannerService.processFile` 就是这么处理的。
+        let didStartAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if didStartAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        // 即使拿到访问权，文件也可能已被用户在"文件"App 里移动/删除。
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            errorMessage = "无法读取文件：\(url.lastPathComponent)"
+            return nil
+        }
+
         let fileName = url.lastPathComponent
         let fileType = detectFileType(from: url)
 

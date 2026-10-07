@@ -1,5 +1,82 @@
 import SwiftUI
 
+/// iPhone「资料库」标签页的容器。
+///
+/// iPad 靠侧栏切分「全部资料 / 课件 / 真题 / 笔记 / 收藏」，
+/// 而 iPhone 底部标签栏只有一个「资料库」入口，原来只能看到**全部资料**，
+/// 分类与收藏筛选在 iPhone 上根本没有任何入口。
+/// 这里用顶部分段选择器补上这两层筛选。
+struct MaterialsBrowserView_iOS: View {
+    @EnvironmentObject var appState: AppState_iOS
+    @Environment(\.appTheme) private var appTheme
+
+    /// `nil` 表示「全部」。
+    private enum Scope: Hashable {
+        case all
+        case category(MaterialCategory)
+        case favorites
+
+        var title: String {
+            switch self {
+            case .all: return "全部"
+            case .favorites: return "收藏"
+            case .category(let c): return c.rawValue
+            }
+        }
+
+        var symbol: String {
+            switch self {
+            case .all: return "square.grid.2x2"
+            case .favorites: return "star.fill"
+            case .category(let c): return c.icon
+            }
+        }
+    }
+
+    @State private var scope: Scope = .all
+
+    private var activeCategory: MaterialCategory? {
+        if case .category(let c) = scope { return c }
+        return nil
+    }
+
+    private var favoritesOnly: Bool {
+        scope == .favorites
+    }
+
+    /// 只显示真正有内容的分类，避免出现「点进去永远是空列表」的分类。
+    private var availableScopes: [Scope] {
+        var result: [Scope] = [.all]
+        let present = Set(appState.materials.map(\.category))
+        for category in MaterialCategory.allCases where present.contains(category) {
+            result.append(.category(category))
+        }
+        if appState.materials.contains(where: \.isFavorite) {
+            result.append(.favorites)
+        }
+        return result
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if availableScopes.count > 1 {
+                Picker("分类", selection: $scope) {
+                    ForEach(availableScopes, id: \.self) { item in
+                        Label(item.title, systemImage: item.symbol).tag(item)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+
+                Divider()
+            }
+
+            MaterialsListView_iOS(filter: activeCategory, favoritesOnly: favoritesOnly)
+        }
+    }
+}
+
 struct MaterialsListView_iOS: View {
     @EnvironmentObject var appState: AppState_iOS
     @Environment(\.appTheme) private var appTheme
@@ -194,13 +271,25 @@ struct MaterialRow_iOS: View {
 
             Spacer()
 
+            // 收藏标记。原来只是一个 `.caption` 大小的黄色星，
+            // 在列表里几乎看不见（用户反馈「收藏后没有明显标记」）。
+            // 现在改为：整行左侧显示醒目的金色书签条 + 右侧放大号实心星，
+            // 并且收藏行的底色也带上淡金。
             if material.isFavorite {
                 Image(systemName: "star.fill")
-                    .font(.caption)
+                    .font(.title3)
                     .foregroundStyle(.yellow)
+                    .symbolEffect(.bounce, value: material.isFavorite)
+                    .accessibilityLabel("已收藏")
             }
         }
         .padding(.vertical, 4)
+        .padding(.leading, material.isFavorite ? 4 : 0)
+        .listRowBackground(
+            material.isFavorite
+                ? Color.yellow.opacity(0.10)
+                : Color.clear
+        )
     }
 
     // 图标与配色复用 Shared/Models/StudyMaterial.swift 的映射，

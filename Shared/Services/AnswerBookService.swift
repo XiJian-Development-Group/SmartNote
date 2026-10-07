@@ -14,7 +14,7 @@ final class AnswerBookService: ObservableObject {
     static let historyLimit = 100
     /// 问题长度上限。界面的输入限制只是提示，这里是真正的拦截。
     static let questionLimit = 100
-    /// 彩蛋命中概率。命中后从彩蛋池里再随机取一条。
+    /// 稀有条目的命中概率。命中后从稀有池里再随机取一条。
     static let specialDrawRate: Double = 0.04
 
     @Published private(set) var entries: [AnswerBookEntry] = []

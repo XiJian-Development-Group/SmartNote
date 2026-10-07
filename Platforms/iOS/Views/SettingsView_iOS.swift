@@ -5,7 +5,19 @@ import PhotosUI
 struct SettingsView_iOS: View {
     @EnvironmentObject var appState: AppState_iOS
     @Environment(\.appTheme) private var appTheme
-    @AppStorage("iCloudSyncEnabled") private var iCloudSyncEnabled = false
+
+    /// 读取/写入 AI 配置的统一入口。
+    ///
+    /// **必须经由 `appState.llmConfiguration`**，不能直接改
+    /// `appSettings.llmConfiguration` —— 只有前者会调用
+    /// `llmService.updateConfiguration()`，把新配置同步给已经在运行的
+    /// `LLMService` 实例。详见「AI 设置」处的说明。
+    private func llmBinding<T>(_ keyPath: WritableKeyPath<LLMConfiguration, T>) -> Binding<T> {
+        Binding(
+            get: { appState.llmConfiguration[keyPath: keyPath] },
+            set: { appState.llmConfiguration[keyPath: keyPath] = $0 }
+        )
+    }
 
     var body: some View {
         NavigationStack {
@@ -103,76 +115,38 @@ struct SettingsView_iOS: View {
                     ), in: 1...60)
                 }
 
-                // iCloud 同步
-                //
-                // iCloud 能力仅在付费 Apple Developer Program 下可用；个人账号的
-                // 描述文件里没有这项能力，此时整块隐藏，而不是显示一个必然报错的开关。
-                if appState.isCloudKitAvailable {
-                    Section("iCloud 同步") {
-                        Toggle("启用 iCloud 同步", isOn: $iCloudSyncEnabled)
-                            .onChange(of: iCloudSyncEnabled) { _, newValue in
-                                appState.toggleICloudSync(newValue)
-                            }
-
-                        if iCloudSyncEnabled {
-                            HStack {
-                                Text("同步状态")
-                                Spacer()
-                                switch appState.syncStatus {
-                                case .idle: Text("待同步").foregroundStyle(appTheme.secondaryText)
-                                case .syncing: ProgressView().controlSize(.small)
-                                case .success(let date): Text("已同步 \(date, style: .relative)").foregroundStyle(.green)
-                                case .failed(let error): Text("失败：\(error.localizedDescription)").foregroundStyle(.red)
-                                }
-                            }
-
-                            Button("立即同步") {
-                                Task { await appState.performICloudSync() }
-                            }
-                            .disabled(appState.syncStatus == .syncing)
-
-                            Button("从 iCloud 拉取") {
-                                Task { await appState.pullFromICloud() }
-                            }
-                            .disabled(appState.syncStatus == .syncing)
-                        }
-                    }
-                }
-
                 // AI 设置
+                //
+                // 所有字段都必须经由 `appState.llmConfiguration` 这个可写属性。
+                //
+                // 原因：该属性的 setter 里除了持久化，还负责调用
+                // `llmService.updateConfiguration(newValue)`。而 `LLMService`
+                // 在 init 时拿的是**当时**那份配置的快照；此后它不再读
+                // `appSettings`，只读自己手里的 `configuration`。
+                //
+                // 原先这里直接写 `appState.appSettings.llmConfiguration.xxx`
+                // 再 `saveSettings`：磁盘上的配置确实变了，但**内存里的
+                // llmService 永远停留在启动时的旧值**，于是
+                // `LLMService.isConfigured()`（= `enabled && !modelID.isEmpty`）
+                // 一直是 false，所有 AI 功能都报「LLM 未正确配置」——
+                // 即使用户已经正确填好 API。这与 macOS 的
+                // `LLMSettingsView` 写法不一致，那边走的是 `appState.llmConfiguration = config`。
                 Section("AI 分析") {
-                    Toggle("启用 AI 分析", isOn: Binding(
-                        get: { appState.appSettings.llmConfiguration.enabled },
-                        set: { appState.appSettings.llmConfiguration.enabled = $0; appState.storageService.saveSettings(appState.appSettings) }
-                    ))
+                    Toggle("启用 AI 分析", isOn: llmBinding(\.enabled))
 
                     if appState.appSettings.llmConfiguration.enabled {
                         // `baseURL` 是按 provider 推导的只读属性（会给空值补默认地址），
                         // 因此输入框绑定的是真正可写的 `serverURL`。
-                        TextField("API Base URL", text: Binding(
-                            get: { appState.appSettings.llmConfiguration.serverURL },
-                            set: {
-                                appState.appSettings.llmConfiguration.serverURL = $0
-                                appState.storageService.saveSettings(appState.appSettings)
-                            }
-                        ))
-                        .textInputAutocapitalization(.never)
-                        .keyboardType(.URL)
+                        TextField("API Base URL", text: llmBinding(\.serverURL))
+                            .textInputAutocapitalization(.never)
+                            .keyboardType(.URL)
 
-                        SecureField("API Key", text: Binding(
-                            get: { appState.appSettings.llmConfiguration.apiKey },
-                            set: { appState.appSettings.llmConfiguration.apiKey = $0; appState.storageService.saveSettings(appState.appSettings) }
-                        ))
+                        SecureField("API Key", text: llmBinding(\.apiKey))
 
-                        TextField("模型名称", text: Binding(
-                            get: { appState.appSettings.llmConfiguration.modelID },
-                            set: { appState.appSettings.llmConfiguration.modelID = $0; appState.storageService.saveSettings(appState.appSettings) }
-                        ))
+                        TextField("模型名称", text: llmBinding(\.modelID))
 
-                        Stepper("Temperature: \(appState.appSettings.llmConfiguration.temperature, specifier: "%.2f")", value: Binding(
-                            get: { appState.appSettings.llmConfiguration.temperature },
-                            set: { appState.appSettings.llmConfiguration.temperature = $0; appState.storageService.saveSettings(appState.appSettings) }
-                        ), in: 0...2, step: 0.1)
+                        Stepper("Temperature: \(appState.appSettings.llmConfiguration.temperature, specifier: "%.2f")",
+                                value: llmBinding(\.temperature), in: 0...2, step: 0.1)
                     }
                 }
 
@@ -221,8 +195,10 @@ struct SettingsView_iOS: View {
                             .foregroundStyle(appTheme.secondaryText)
                     }
 
-                    Link("隐私政策", destination: URL(string: "https://smartnote.app/privacy")!)
-                    Link("用户协议", destination: URL(string: "https://smartnote.app/terms")!)
+                    // 原先这里有「隐私政策」与「用户协议」两个 Link，
+                    // 指向 https://smartnote.app/privacy 与 /terms。
+                    // 这两个页面并不存在，点开只会得到一个 404，
+                    // 因此已移除；等真的有这两份文档了再放回来。
                     Link("GitHub", destination: URL(string: "https://github.com/XiJian-Development-Group/SmartNote")!)
                 }
             }

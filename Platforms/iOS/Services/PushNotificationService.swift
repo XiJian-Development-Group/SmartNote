@@ -2,9 +2,13 @@ import Foundation
 import UserNotifications
 import SwiftUI
 
+/// 本地通知服务。
+///
+/// 只负责 `UNUserNotificationCenter` 的本地提醒与点击路由，
+/// 不涉及远程推送（APNs）——那需要 `aps-environment` entitlement，
+/// 个人（免费）开发者账号无法获取，相关代码已移除。
 @MainActor
 class PushNotificationService: NSObject, ObservableObject {
-    @Published var deviceToken: String?
     @Published var authorizationStatus: UNAuthorizationStatus = .notDetermined
     @Published var errorMessage: String?
 
@@ -22,67 +26,25 @@ class PushNotificationService: NSObject, ObservableObject {
         UNUserNotificationCenter.current().delegate = self
     }
 
+    /// 请求通知权限。
+    ///
+    /// **只申请本地通知**：本地提醒（待办、习惯、纪念日、复习、番茄钟）
+    /// 走 `UNUserNotificationCenter`，不需要任何 entitlement，功能完整。
+    ///
+    /// 这里**不**调用 `registerForRemoteNotifications()`：远程推送需要描述文件里
+    /// 带 `aps-environment`，也就是要声明 `com.apple.developer.push-notifications`。
+    /// 个人（免费）开发者账号拿不到该项，与其发起一个注定拿不到 token 的请求，
+    /// 不如彻底不调用——相关代码（deviceToken / getDeviceToken /
+    /// handleDeviceToken / sendTokenToServer / supportsRemotePush）已全部删除。
     func requestAuthorization() async -> Bool {
         do {
             let granted = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge, .provisional])
             authorizationStatus = await UNUserNotificationCenter.current().notificationSettings().authorizationStatus
-            if granted, supportsRemotePush {
-                await registerForRemoteNotifications()
-            }
             return granted
         } catch {
             errorMessage = "请求通知权限失败：\(error.localizedDescription)"
             return false
         }
-    }
-
-    /// 当前签名是否支持**远程**推送。
-    ///
-    /// 远程推送需要描述文件里带 `aps-environment`，也就是要声明
-    /// `com.apple.developer.push-notifications`。个人（免费）开发者账号在
-    /// 本工程当前配置下拿不到该项（见 project.yml 的 entitlements 说明），
-    /// 此时 `registerForRemoteNotifications()` 不会崩溃，但也不会回调
-    /// device token——与其发起一个注定无果的请求，不如直接跳过。
-    ///
-    /// 注意：这**不影响本地通知**。本地提醒（待办、习惯、纪念日、复习、番茄钟）
-    /// 由 `NotificationService_iOS` 走 `UNUserNotificationCenter`，
-    /// 不需要任何 entitlement，功能完整可用。
-    private var supportsRemotePush: Bool {
-        // 判据：aps-environment 只存在于带推送能力的描述文件里。
-        // 读取 App 自身的 provisioning profile 是最可靠的运行时判据。
-        guard let profilePath = Bundle.main.path(forResource: "embedded", ofType: "mobileprovision"),
-              let profile = try? Data(contentsOf: URL(fileURLWithPath: profilePath))
-        else {
-            // 模拟器 / 侧载包没有描述文件：按不支持处理。
-            return false
-        }
-        // plist 是二进制或 XML，二进制格式里字符串以字面量形式存在，
-        // 因此直接按字节匹配即可，无需完整解析。
-        return profile.range(of: Data("aps-environment".utf8)) != nil
-    }
-
-    private func registerForRemoteNotifications() async {
-        await UIApplication.shared.registerForRemoteNotifications()
-    }
-
-    func getDeviceToken() async -> String? {
-        return deviceToken
-    }
-
-    func handleDeviceToken(_ token: Data) {
-        let tokenString = token.map { String(format: "%02.2hhx", $0) }.joined()
-        deviceToken = tokenString
-        // 发送到服务器
-        Task { await sendTokenToServer(tokenString) }
-    }
-
-    func handleRegistrationError(_ error: Error) {
-        errorMessage = "注册远程通知失败：\(error.localizedDescription)"
-    }
-
-    private func sendTokenToServer(_ token: String) async {
-        // TODO: 发送到后端服务器
-        // 如果有后端 API，在这里调用
     }
 
     // 本地通知调度（用于复习提醒、习惯打卡、纪念日等）
@@ -267,16 +229,5 @@ extension PushNotificationService: UNUserNotificationCenterDelegate {
             PushNotificationService.shared.onNotificationTapped?(userInfo)
         }
         completionHandler()
-    }
-}
-
-// AppDelegate 扩展方法（在 AppDelegate 中调用）
-extension PushNotificationService {
-    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        handleDeviceToken(deviceToken)
-    }
-
-    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        handleRegistrationError(error)
     }
 }

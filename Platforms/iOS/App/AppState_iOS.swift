@@ -1,11 +1,32 @@
 import SwiftUI
 import Combine
 import UserNotifications
-import BackgroundTasks
 
 @MainActor
 class AppState_iOS: ObservableObject {
     @Published var selectedTab: Int = 0
+    /// iPhone 底部标签栏当前选中项。**与 `selectedTab` 是两套独立编号。**
+    ///
+    /// 之前两种布局共用 `selectedTab`，编号含义却完全不同：
+    /// iPhone 是「资料库/学习/计划/工具/历史/设置」，
+    /// iPad 详情区是「全部资料/课件/真题/笔记/收藏/考点提取/…」。
+    /// 结果是同一个数字在两端指向不同页面，于是：
+    ///   - iPhone 上「课件/真题/笔记/收藏」永远到不了（资料分类不可达）；
+    ///   - 通知点击路由（`routeNotification`）在 iPhone 上会跳错页面；
+    ///   - `smartnote://tab/N` 深链在 iPhone 上指向错误的 tab；
+    ///   - 设为 9（番茄钟）等超出 TabView 范围的编号时完全无反应。
+    ///
+    /// 现在拆开：iPhone 用 `iphoneTab`，iPad 继续用 `selectedTab`。
+    @Published var iphoneTab: IPhoneTab = .materials
+    /// iPhone 底部标签栏。
+    enum IPhoneTab: Int, Hashable, CaseIterable {
+        case materials = 0
+        case study
+        case plans
+        case tools
+        case history
+        case settings
+    }
     @Published var showFileImporter: Bool = false
     @Published var isScanning: Bool = false
     @Published var isProcessingOCR: Bool = false
@@ -43,17 +64,6 @@ class AppState_iOS: ObservableObject {
     @Published var isRecordingVoice: Bool = false
     @Published var showCameraScanner: Bool = false
     @Published var showVoiceMemo: Bool = false
-    @Published var pushNotificationToken: String?
-    @Published var isICloudSyncEnabled: Bool = false
-
-    /// 当前签名是否带 iCloud 能力。
-    ///
-    /// 个人（免费）开发者账号无法生成带 iCloud 能力的描述文件，
-    /// 此时 `project.yml` 已注释掉 iCloud entitlement。界面据此隐藏同步开关，
-    /// 避免给用户一个「按了必然报错」的选项。
-    var isCloudKitAvailable: Bool { iCloudSyncService.isAvailable }
-    @Published var lastSyncDate: Date?
-    @Published var syncStatus: SyncStatus = .idle
 
     var shouldShowBlessingBar: Bool { theme.isFestive || isNationalDayPeriod }
     var colorScheme: ColorScheme? {
@@ -97,11 +107,9 @@ class AppState_iOS: ObservableObject {
     /// 持有的是 iOS 实现。
     let fileScanner = FileScannerService_iOS()
     let pushNotificationService = PushNotificationService.shared
-    let iCloudSyncService = ICloudSyncService()
     let shortcutsProvider = ShortcutsProvider()
     let spotlightIndexer = SpotlightIndexer.shared
     let hapticFeedbackService = HapticFeedbackService.shared
-    let backgroundTaskService = BackgroundTaskService.shared
 
     // 共享层服务（需要平台注入）
     let storageService: StorageService
@@ -111,8 +119,6 @@ class AppState_iOS: ObservableObject {
     private var hasLoadedExamCountdowns: Bool = false
     private var isRestoringExamCountdowns: Bool = false
     private var storageClearObserver: NSObjectProtocol?
-    /// 等待 CloudKit 账号/能力状态落定的短任务；仅用于启动时的一次性判断。
-    private var cloudKitStatusTask: Task<Void, Never>?
     private var appSettingsCancellable: AnyCancellable?
     private var nestedCancellables: [AnyCancellable] = []
 
@@ -155,10 +161,8 @@ class AppState_iOS: ObservableObject {
 
         // iOS 专用初始化
         setupPushNotifications()
-        setupICloudSync()
         setupShortcuts()
         setupSpotlightIndexing()
-        registerBackgroundTasks()
 
         if settings.autoScanDirectories && !settings.scanPaths.isEmpty {
             let startupScanPaths = settings.scanPaths
@@ -181,8 +185,6 @@ class AppState_iOS: ObservableObject {
         forwardNestedChanges(of: learningAnalysisService)
         forwardNestedChanges(of: updateService)
         forwardNestedChanges(of: pushNotificationService)
-        forwardNestedChanges(of: iCloudSyncService)
-        forwardNestedChanges(of: backgroundTaskService)
 
         // 注：macOS 用 `SharedAppStateProxy` 把通知点击/快捷指令路由回主界面，
         // 它绑定的是 `AppState_macOS`。iOS 端由 SwiftUI 的 `onOpenURL` 与
@@ -209,7 +211,6 @@ class AppState_iOS: ObservableObject {
     }
 
 
-
     // MARK: - iOS 专用设置
 
     private func setupPushNotifications() {
@@ -221,68 +222,76 @@ class AppState_iOS: ObservableObject {
         }
 
         Task {
-            let granted = await pushNotificationService.requestAuthorization()
-            if granted {
-                pushNotificationToken = await pushNotificationService.getDeviceToken()
-                // 注册到服务器（如果有）
-            }
+            // 只申请本地通知权限（不需要任何 entitlement）。
+            _ = await pushNotificationService.requestAuthorization()
         }
     }
 
-    /// 根据通知的 `kind` 字段跳转到相应标签页。
+    /// 根据通知的 `kind` 字段跳转到相应页面。
     ///
     /// 只做导航，不读取任何正文——详情由目标页面按 `userInfo` 里的 ID 自行查询。
+    ///
+    /// 两套布局要分别落到正确的 tab：iPhone 的编号与 iPad 完全不同
+    /// （见 `IPhoneTab` 的说明），因此这里两个都写。
     private func routeNotification(_ userInfo: [String: Any]) {
         switch userInfo["kind"] as? String {
-        case "todo": selectedTab = 2
-        case "habit": selectedTab = 3
-        case "anniversary": selectedTab = 4
-        case "review": selectedTab = 5
-        case "pomodoro": selectedTab = 9
+        case "todo":
+            selectedTab = IPadSection.todo.rawValue
+            iphoneTab = .plans
+        case "habit":
+            selectedTab = IPadSection.habit.rawValue
+            iphoneTab = .plans
+        case "anniversary":
+            selectedTab = IPadSection.anniversary.rawValue
+            iphoneTab = .tools
+        case "review":
+            selectedTab = IPadSection.reviewPlan.rawValue
+            iphoneTab = .plans
+        case "pomodoro":
+            selectedTab = IPadSection.pomodoro.rawValue
+            iphoneTab = .study
         default: break
         }
     }
 
-    private func setupICloudSync() {
-        iCloudSyncService.delegate = self
-
-        // `isCloudKitAvailable` 要等 `accountStatus` 回调才有结论，
-        // 这里先按「已开启但能力未知」处理，收到结论后由
-        // `applyCloudKitAvailability()` 决定是否真正同步。
-        isICloudSyncEnabled = appSettings.iCloudSyncEnabled
-        observeCloudKitAvailability()
-    }
-
-    /// 监听账号/能力状态变化。
+    /// iPad 侧栏/详情区的页面编号。**严格对应 `DetailView_iOS` 里的 `switch`。**
     ///
-    /// 一旦确认没有 iCloud 能力，就把已保存的开关关掉并停止一切同步尝试，
-    /// 避免每次回到前台都失败一次。
-    private func observeCloudKitAvailability() {
-        cloudKitStatusTask?.cancel()
-        cloudKitStatusTask = Task { [weak self] in
-            guard let self else { return }
-            // 轮询到状态稳定即可：accountStatus 是冷启动时一次性回调的，
-            // 短时间内观察到非 .couldNotDetermine 就说明有结论。
-            for _ in 0..<10 {
-                if !Task.isCancelled, await self.settledCloudKitAvailability() {
-                    self.applyCloudKitAvailability()
-                    return
-                }
-                try? await Task.sleep(for: .milliseconds(300))
-            }
-        }
-    }
-
-    private func settledCloudKitAvailability() -> Bool {
-        iCloudSyncService.accountStatus != .couldNotDetermine
-    }
-
-    private func applyCloudKitAvailability() {
-        guard !isCloudKitAvailable, isICloudSyncEnabled else { return }
-        isICloudSyncEnabled = false
-        appSettings.iCloudSyncEnabled = false
-        storageService.saveSettings(appSettings)
-        syncStatus = .idle
+    /// 以前这些数字只是散落在各处的字面量，于是踩了两个坑：
+    ///   - `routeNotification` 认为 9 是番茄钟，实际 9 是**智能阅卷**、10 才是番茄钟；
+    ///   - 答案之书的快捷指令写 `selectedTab = 17`，实际 17 是**放松亿下**。
+    /// 两处都会跳到完全不相干的页面。
+    ///
+    /// 另外 `switch` 里本来就**没有 `case 15`**（编号空缺），
+    /// 所以这里必须显式写 raw value，不能用隐式递增。
+    enum IPadSection: Int {
+        case allMaterials = 0
+        case lecture = 1
+        case exam = 2
+        case notes = 3
+        case favorites = 4
+        case keyPoints = 5
+        case reviewPlan = 6
+        case statistics = 7
+        case aiChat = 8
+        case smartGrading = 9
+        case pomodoro = 10
+        case wrongQuestion = 11
+        case flashCard = 12
+        case examCountdown = 13
+        case duplicateScanner = 14
+        /// 15 在 `DetailView_iOS` 中空缺，保留编号不可占用。
+        case p2pSocial = 16
+        case relaxGame = 17
+        case diary = 18
+        case whiteboard = 19
+        case todo = 20
+        case habit = 21
+        case fileCrypto = 22
+        case whiteNoise = 23
+        case answerBook = 24
+        case anniversary = 25
+        case calculator = 26
+        case history = 27
     }
 
     private func setupShortcuts() {
@@ -293,18 +302,10 @@ class AppState_iOS: ObservableObject {
         Task { await spotlightIndexer.indexAll(materials: materials, diaries: [], wrongQuestions: []) }
     }
 
-    private func registerBackgroundTasks() {
-        backgroundTaskService.registerTasks()
-    }
-
     // MARK: - 生命周期
 
     func applicationDidBecomeActive() {
         UIApplication.shared.applicationIconBadgeNumber = 0
-        // 能力缺失时不尝试同步：否则每次切回前台都会弹一次错误。
-        if isICloudSyncEnabled && isCloudKitAvailable {
-            Task { await performICloudSync() }
-        }
         shortcutsProvider.updateShortcuts(basedOn: appSettings)
     }
 
@@ -314,8 +315,6 @@ class AppState_iOS: ObservableObject {
 
     func applicationDidEnterBackground() {
         flushPendingChangesBeforeTerminate()
-        backgroundTaskService.scheduleAppRefresh()
-        backgroundTaskService.scheduleBackgroundSync()
     }
 
     func handleDeepLink(_ url: URL) {
@@ -323,13 +322,36 @@ class AppState_iOS: ObservableObject {
         guard url.scheme == "smartnote" else { return }
         let components = url.pathComponents.filter { $0 != "/" }
         if components.first == "tab", let tabIndex = Int(components.dropFirst().first ?? "") {
-            selectedTab = tabIndex
+            goToSection(tabIndex)
         } else if components.first == "newMaterial" {
             showFileImporter = true
         } else if components.first == "newDiary" {
             // 打开日记编辑器
         } else if components.first == "pomodoro" {
-            selectedTab = 9 // 番茄钟 tab 索引
+            goToSection(IPadSection.pomodoro.rawValue)
+        }
+    }
+
+    /// 跳到某个功能页。**同时**更新 iPad 与 iPhone 的导航状态。
+    ///
+    /// 深链、快捷指令、通知点击都走这里：iPad 直接用 `selectedTab`，
+    /// iPhone 还需要把对应的底部标签切过去，否则用户点了通知仍停在别的 tab。
+    func goToSection(_ section: Int) {
+        selectedTab = section
+        if let pad = IPadSection(rawValue: section) {
+            switch pad {
+            case .allMaterials, .lecture, .exam, .notes, .favorites:
+                iphoneTab = .materials
+            case .keyPoints, .aiChat, .smartGrading, .pomodoro,
+                 .wrongQuestion, .flashCard, .whiteboard:
+                iphoneTab = .study
+            case .reviewPlan, .examCountdown, .todo, .habit:
+                iphoneTab = .plans
+            case .statistics, .p2pSocial, .relaxGame, .diary, .fileCrypto,
+                 .whiteNoise, .answerBook, .anniversary, .calculator,
+                 .duplicateScanner, .history:
+                iphoneTab = .tools
+            }
         }
     }
 
@@ -337,82 +359,6 @@ class AppState_iOS: ObservableObject {
         guard userActivity.activityType == NSUserActivityTypeBrowsingWeb,
               let url = userActivity.webpageURL else { return }
         handleDeepLink(url)
-    }
-
-    // MARK: - iCloud 同步
-
-    func toggleICloudSync(_ enabled: Bool) {
-        guard enabled else {
-            appSettings.iCloudSyncEnabled = false
-            isICloudSyncEnabled = false
-            storageService.saveSettings(appSettings)
-            return
-        }
-
-        guard isCloudKitAvailable else {
-            errorMessage = ICloudSyncService.SyncError.capabilityUnavailable.localizedDescription
-            showError = true
-            hapticFeedbackService.error()
-            return
-        }
-
-        appSettings.iCloudSyncEnabled = true
-        isICloudSyncEnabled = true
-        storageService.saveSettings(appSettings)
-        Task { await performICloudSync() }
-    }
-
-    func performICloudSync() async {
-        syncStatus = .syncing
-        do {
-            try await iCloudSyncService.syncAll(
-                materials: materials,
-                reviewPlans: reviewPlans,
-                examCountdowns: examCountdowns
-            )
-            // 设置项不做同步：里面含设备相关的路径与钥匙串引用，
-            // 跨设备照搬会让另一台机器指向不存在的路径。
-            lastSyncDate = iCloudSyncService.lastSyncDate ?? Date()
-            syncStatus = .success(lastSyncDate!)
-            spotlightIndexer.indexAll(materials: materials, diaries: [], wrongQuestions: [])
-            hapticFeedbackService.success()
-        } catch {
-            syncStatus = .failed(error)
-            hapticFeedbackService.error()
-        }
-    }
-
-    /// 从 iCloud 拉回远端记录，并按「远端覆盖本机同 ID 记录」的规则合并。
-    ///
-    /// 合并策略刻意保持保守：以本机为主，仅补充本机没有的实体。
-    /// 这样一次误触同步不会覆盖用户刚在本地做的编辑。
-    func pullFromICloud() async {
-        syncStatus = .syncing
-        do {
-            let pulled = try await iCloudSyncService.pullAll()
-            merge(pulled)
-            lastSyncDate = iCloudSyncService.lastSyncDate ?? Date()
-            syncStatus = .success(lastSyncDate!)
-            hapticFeedbackService.success()
-        } catch {
-            syncStatus = .failed(error)
-            hapticFeedbackService.error()
-        }
-    }
-
-    private func merge(_ pulled: ICloudSyncService.PulledRecords) {
-        let existingMaterialIDs = Set(materials.map(\.id))
-        materials.append(contentsOf: pulled.materials.filter { !existingMaterialIDs.contains($0.id) })
-
-        let existingPlanIDs = Set(reviewPlans.map(\.id))
-        reviewPlans.append(contentsOf: pulled.reviewPlans.filter { !existingPlanIDs.contains($0.id) })
-
-        let existingExamIDs = Set(examCountdowns.map(\.id))
-        examCountdowns.append(contentsOf: pulled.examCountdowns.filter { !existingExamIDs.contains($0.id) })
-
-        storageService.saveMaterials(materials)
-        storageService.saveReviewPlans(reviewPlans)
-        storageService.saveExamCountdowns(examCountdowns)
     }
 
     // MARK: - 相机扫描 / 语音备忘
@@ -459,10 +405,37 @@ class AppState_iOS: ObservableObject {
     }
 
     private func importScannedPDF(_ data: Data) async {
-        let fileName = "扫描文档_\(DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .short)).pdf"
-        let url = storageService.getMaterialsDirectory().appendingPathComponent(fileName)
+        // 文件名必须是不含路径分隔符的**安全名**。
+        //
+        // 原先这里用 `DateFormatter.localizedString(from:dateStyle:.short,
+        // timeStyle:.short)`，在 zh-Hans 下产出的是 `2026/10/7 12:36` ——
+        // **含斜杠**。`appendingPathComponent` 会把它当成多级路径，
+        // 于是最终路径变成 `Materials/扫描文档_2026/10/7 12:36.pdf`，
+        // 而那些中间目录并不存在，`data.write(to:)` 直接抛
+        // "No such file or directory"，扫描结果保存必然失败。
+        //
+        // 这里改用固定格式 + en_US_POSIX，且不依赖当前区域设置。
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        let fileName = "扫描文档_\(formatter.string(from: Date())).pdf"
+
+        let directory = storageService.getMaterialsDirectory()
+        // 兜底：目录可能因权限或清理而消失，先确保存在再写。
         do {
-            try data.write(to: url)
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        } catch {
+            await MainActor.run {
+                errorMessage = "无法创建资料目录：\(error.localizedDescription)"
+                showError = true
+                hapticFeedbackService.error()
+            }
+            return
+        }
+
+        let url = directory.appendingPathComponent(fileName)
+        do {
+            try data.write(to: url, options: .atomic)
             let material = StudyMaterial(name: fileName, type: .pdf, localURL: url, content: "")
             await MainActor.run {
                 materials.insert(material, at: 0)
@@ -825,23 +798,52 @@ class AppState_iOS: ObservableObject {
     }
 
     func processOCR(for material: StudyMaterial) {
-        guard let imageURL = material.localURL else { return }
+        // 两个「早退」分支都必须先把 `isProcessingOCR` 置 false，
+        // 否则 `OCRProgressView` 的 `.onChange(of: isProcessingOCR)`
+        // 永远不会触发 dismiss，弹窗会一直卡在转圈状态。
+        // 原先这里是裸 `guard ... else { return }`，直接 return 掉，
+        // 表现就是「点了 OCR 一直转圈、关不掉」。
+        guard let fileURL = material.localURL else {
+            isProcessingOCR = false
+            errorMessage = "这份资料没有关联文件，无法识别。请先导入原始文件。"
+            showError = true
+            hapticFeedbackService.error()
+            return
+        }
         isProcessingOCR = true
         Task {
-            let text = await ocrService.recognizeText(from: imageURL)
+            let text = await ocrService.recognizeText(from: fileURL)
             await MainActor.run {
                 if let index = materials.firstIndex(where: { $0.id == material.id }) {
                     materials[index].extractedText = text
                     storageService.saveMaterials(materials)
                 }
                 isProcessingOCR = false
+                // 识别失败时必须给出反馈：原先 text 为 nil 时一切照旧，
+                // 界面毫无变化，用户只能以为「点了没反应」。
+                if let text, !text.isEmpty {
+                    hapticFeedbackService.success()
+                } else {
+                    errorMessage = material.type == .pdf
+                        ? "未能从这份 PDF 中提取到文字。扫描版 PDF 可尝试先另存为图片后再导入。"
+                        : "未能识别出文字。请确认文件是清晰的图片。"
+                    showError = true
+                    hapticFeedbackService.error()
+                }
             }
         }
     }
 
     func extractKeywords(for material: StudyMaterial) {
         let text = material.extractedText ?? material.content
-        guard !text.isEmpty else { return }
+        // 同上：早退时也要复位标志，否则弹窗关不掉。
+        guard !text.isEmpty else {
+            isExtractingKeywords = false
+            errorMessage = "这份资料还没有可用文字，无法提取关键词。请先做 OCR 识别或手动填写内容。"
+            showError = true
+            hapticFeedbackService.error()
+            return
+        }
         isExtractingKeywords = true
         Task {
             let keywords = keywordService.extractKeywords(from: text)
@@ -852,6 +854,13 @@ class AppState_iOS: ObservableObject {
                 }
                 extractedKeywords = keywords
                 isExtractingKeywords = false
+                if keywords.isEmpty {
+                    errorMessage = "没有提取到关键词，文字可能太短。"
+                    showError = true
+                    hapticFeedbackService.error()
+                } else {
+                    hapticFeedbackService.success()
+                }
             }
         }
     }
@@ -910,17 +919,5 @@ class AppState_iOS: ObservableObject {
             (material.keywords?.contains { $0.localizedCaseInsensitiveContains(searchText) } ?? false) ||
             material.content.localizedCaseInsensitiveContains(searchText)
         }
-    }
-}
-
-// MARK: - iCloudSyncServiceDelegate
-
-extension AppState_iOS: ICloudSyncServiceDelegate {
-    func iCloudSyncDidChange(_ service: ICloudSyncService) {
-        Task { await performICloudSync() }
-    }
-
-    func iCloudSyncDidFail(_ service: ICloudSyncService, error: Error) {
-        syncStatus = .failed(error)
     }
 }

@@ -12,7 +12,6 @@
 		03F8BB3ECF5FFAD917E6E893 /* SmartGradingView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93B3CDD776FA7FB765B587B2 /* SmartGradingView_iOS.swift */; };
 		063F0660501A607FCB4EA3DF /* WhiteNoiseView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C7806B56B5D90A7A09677ED /* WhiteNoiseView_iOS.swift */; };
 		076F6ACEF47AE0610A968283 /* WhiteboardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE55894F2E581F406D83C403 /* WhiteboardService.swift */; };
-		07D68B8590DE25FC2DDB3346 /* SmartNoteLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1652016072D6DF3CBF9A2485 /* SmartNoteLiveActivity.swift */; };
 		081228F69A2825F6927BF1F8 /* PomodoroView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE79010C4384E3165643DC11 /* PomodoroView.swift */; };
 		0B3507337BD941FC276AC562 /* snowDawn.png in Resources */ = {isa = PBXBuildFile; fileRef = 4709743DFFA9C4233886202F /* snowDawn.png */; };
 		0BD8FD666FC283EB878160F9 /* UpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4382C222F25990D2C6A2DD69 /* UpdateService.swift */; };
@@ -43,7 +42,6 @@
 		27D6C7626036A16BECD5FCD4 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52785E48C33ACE9365E8A953 /* KeychainService.swift */; };
 		27EA6341FEA175E45B310C36 /* OCRService_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4BF60E7861C54B701AC0E02 /* OCRService_iOS.swift */; };
 		2A7E17F55356C823C7837454 /* P2PSocialView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CC0ED9E975C986D47219937 /* P2PSocialView_iOS.swift */; };
-		2ABD4DFB3F494F51D78F3578 /* SmartNoteLiveActivity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EAD7D999018EA29B67FCDF9B /* SmartNoteLiveActivity.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2C337E8A25A28850DD61C95A /* P2PSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D87D2D33B06232ACDADB025 /* P2PSettingsView.swift */; };
 		2D50AF7E57BD4F9AFECF5769 /* P2PCreateIdentityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7913AAB95FAA11CF84A8470 /* P2PCreateIdentityView.swift */; };
 		2F5FDFB01746B68739D6F215 /* AmbientSoundService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56A51062B9347AE31BCDBCCF /* AmbientSoundService.swift */; };
@@ -56,7 +54,6 @@
 		3291E0B7A0CF0100113CE1F7 /* HistoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20BEB172480D04F1F9C712CA /* HistoryService.swift */; };
 		3335CC98F896C42D363BC34C /* HistoryHomeView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E0F0EB483CDBA03B1DB7821 /* HistoryHomeView_iOS.swift */; };
 		374C9EABCF1193DDEF188E89 /* SettingsView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 825278F84C8E0B715E3CAF46 /* SettingsView_iOS.swift */; };
-		382A7A458A5B842D7D5A178D /* SmartNoteLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1652016072D6DF3CBF9A2485 /* SmartNoteLiveActivity.swift */; };
 		3D5B96008B12739D2048D97D /* ContentView_macOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A69C8393F3090769595A45F /* ContentView_macOS.swift */; };
 		3E066B938FC3DCC9861B83BB /* FeatureUnavailableViews_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 341791950801290A9E959A8B /* FeatureUnavailableViews_iOS.swift */; };
 		3E8173BCBD52CAB0F7F9FD84 /* DiaryEncryptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9499076C32831EF493338527 /* DiaryEncryptionService.swift */; };
@@ -110,7 +107,6 @@
 		7550925552B7FE3A2863A574 /* VoiceMemoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 048DAD7B1DC2094637C138E2 /* VoiceMemoView.swift */; };
 		772415CA23CA7F1CF37423D8 /* StudyMaterial.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5A4F0E7003F0C4D1009331E /* StudyMaterial.swift */; };
 		77351E3D92143F1A278D0FCD /* BackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D459175E65933D1AF0CCF5 /* BackupService.swift */; };
-		78713EE44983E42E47AC5AD8 /* BackgroundTaskService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF1810AA207DC8D49149146E /* BackgroundTaskService.swift */; };
 		78A909B88C56FA7AC9FEAF06 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A55B02FE0F44A2263449CE6F /* AppTheme.swift */; };
 		78F3C996E98A7788ED4BAFBC /* AlgebraEvaluator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB2036CC750E3D28DA8B36B1 /* AlgebraEvaluator.swift */; };
 		7953AE6D23EB9A2411D67636 /* PDFAnnotationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F17C93C624FB7F5D051EF585 /* PDFAnnotationView.swift */; };
@@ -151,7 +147,6 @@
 		9D508F6A84C8069A8A17141E /* PlatformImageCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8103B1D4C107B8C8CD76459 /* PlatformImageCodec.swift */; };
 		9FDF7DDB872E141043299328 /* AIChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6F2F6B025E032148BE9667 /* AIChatView.swift */; };
 		A085D48E62BFF22A4281C045 /* SmartNoteApp_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BDF1EEA6465B5127004ECDC /* SmartNoteApp_iOS.swift */; };
-		A0DB065258CAA315D2563ACB /* ICloudSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37DA471572CD81C7CE4B32D /* ICloudSyncService.swift */; };
 		A3D32B5389450AA3B91BD7AA /* LLMConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CD6AABF2DF0A52032DADFBF /* LLMConfiguration.swift */; };
 		A4CC3A5AFD8AECB64E2B8077 /* LearningAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D416DE47BBD1C5B90026F14A /* LearningAnalysisService.swift */; };
 		A56B70611ECC300C6E002708 /* HabitService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25B3727837CE92F1B3FF6EE1 /* HabitService.swift */; };
@@ -164,6 +159,7 @@
 		ABC1DC5BA4481C98CC67F813 /* StatisticsView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8F196D5FECD2CE77B2DFFED /* StatisticsView_iOS.swift */; };
 		ABCAD21EF3C1B278BC8885D1 /* nationalDay.png in Resources */ = {isa = PBXBuildFile; fileRef = C0A3540C039FA036CBBDF21C /* nationalDay.png */; };
 		AE1A68DCCD91028CE24231F7 /* LLMService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58D40571D19AB955F1517089 /* LLMService.swift */; };
+		AE34F26EF2BBC426B9056B6B /* BackgroundImageView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8600124E27899DE09EA964EE /* BackgroundImageView_iOS.swift */; };
 		AF44A4684FCEFA9A9B8455E1 /* Markdown in Frameworks */ = {isa = PBXBuildFile; productRef = 44E819ACF011BFB1CBCEC366 /* Markdown */; };
 		B0E7CA335B6CB2F6B842B899 /* ExamCountdownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44073C651CFF1A225C5570A8 /* ExamCountdownView.swift */; };
 		B1245C094DCA032E098D1C0B /* UserLearningProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B4C875D50364C3DBC222B6 /* UserLearningProfile.swift */; };
@@ -236,30 +232,6 @@
 		FF4CC7C360A47F2C0BDCD4AF /* DuplicateScannerView_iOS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4923FFB9B2ABAABA2BDFD52A /* DuplicateScannerView_iOS.swift */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		490FD120B2EFFF7EF57E3F19 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 2C1A81DFD445D6D2BC2EBC90 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = EC6FDAFF1B66F2D23455288C;
-			remoteInfo = SmartNoteLiveActivity;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		4BB6BB5F27FDD748C0C7BBC8 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				2ABD4DFB3F494F51D78F3578 /* SmartNoteLiveActivity.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
 		00D104ACFDFA271E92D4DDB9 /* FileCryptoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCryptoService.swift; sourceTree = "<group>"; };
 		048DAD7B1DC2094637C138E2 /* VoiceMemoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceMemoView.swift; sourceTree = "<group>"; };
@@ -276,7 +248,6 @@
 		120482A9B0E71AFE22A26957 /* StatisticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatisticsView.swift; sourceTree = "<group>"; };
 		1381EBBC2B04E1B4CE3D99C4 /* HistoryArticle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryArticle.swift; sourceTree = "<group>"; };
 		16039CAFE7906B3EAF9EC94F /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
-		1652016072D6DF3CBF9A2485 /* SmartNoteLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartNoteLiveActivity.swift; sourceTree = "<group>"; };
 		182DB8F3C4DAFF5DF80340E9 /* DiaryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryService.swift; sourceTree = "<group>"; };
 		19053E9AE010DEE54AA32C5E /* SmartNoteApp_macOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartNoteApp_macOS.swift; sourceTree = "<group>"; };
 		19663FCB8D2A73CA175469C4 /* PDFService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFService.swift; sourceTree = "<group>"; };
@@ -346,6 +317,7 @@
 		826B8B367BAC11EAA56D47D5 /* TodoEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoEditorView.swift; sourceTree = "<group>"; };
 		83BB83A6440B00C0611A5CDC /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		84F541FEA71C392BD083C3DD /* KeywordExtractionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeywordExtractionService.swift; sourceTree = "<group>"; };
+		8600124E27899DE09EA964EE /* BackgroundImageView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundImageView_iOS.swift; sourceTree = "<group>"; };
 		8691C209232ED29CA6F5E721 /* AnswerBookView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnswerBookView.swift; sourceTree = "<group>"; };
 		8820B77D08E72FF8CF277A79 /* KeychainService_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService_iOS.swift; sourceTree = "<group>"; };
 		8980ADBE86C56FC013DB656D /* FlashCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlashCardView.swift; sourceTree = "<group>"; };
@@ -363,9 +335,7 @@
 		98D84FC83ABC041020AADCAF /* DuplicateScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DuplicateScanner.swift; sourceTree = "<group>"; };
 		9BDCEFF009DFB7ECD8ACA930 /* WhiteBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhiteBoardView.swift; sourceTree = "<group>"; };
 		9CA81F85841565D1CA059DA5 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
-		9D1E14A6F0650640B94C6389 /* SmartNoteLiveActivity.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SmartNoteLiveActivity.entitlements; sourceTree = "<group>"; };
 		A2BC1CF23A834A64B186B837 /* DiaryListView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiaryListView_iOS.swift; sourceTree = "<group>"; };
-		A37DA471572CD81C7CE4B32D /* ICloudSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ICloudSyncService.swift; sourceTree = "<group>"; };
 		A39BCAB23F8F17C545626737 /* PushNotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushNotificationService.swift; sourceTree = "<group>"; };
 		A4BF60E7861C54B701AC0E02 /* OCRService_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRService_iOS.swift; sourceTree = "<group>"; };
 		A55B02FE0F44A2263449CE6F /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
@@ -373,7 +343,6 @@
 		A9F31DB812BF20A39570707C /* HapticFeedbackService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticFeedbackService.swift; sourceTree = "<group>"; };
 		AB2640F99050904BEF4C3509 /* TodoListView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoListView_iOS.swift; sourceTree = "<group>"; };
 		AB8D1A2A8E7EF0711FF84D40 /* AnswerBookService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnswerBookService.swift; sourceTree = "<group>"; };
-		AF1810AA207DC8D49149146E /* BackgroundTaskService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundTaskService.swift; sourceTree = "<group>"; };
 		AFAFE4786C5EDC9DDAE7C68F /* SmartNoteiOSAssets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = SmartNoteiOSAssets.xcassets; sourceTree = "<group>"; };
 		AFCCE81DCE2EE6E4E8A2BC2A /* QuickNoteStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickNoteStore.swift; sourceTree = "<group>"; };
 		B018B16D48BB478FFCE969D3 /* Whiteboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Whiteboard.swift; sourceTree = "<group>"; };
@@ -408,7 +377,7 @@
 		D1A5F0F66A9012608BCE96A7 /* AnniversaryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnniversaryModel.swift; sourceTree = "<group>"; };
 		D2B4522D0BE04738FB851013 /* RelaxGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RelaxGameView.swift; sourceTree = "<group>"; };
 		D416DE47BBD1C5B90026F14A /* LearningAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningAnalysisService.swift; sourceTree = "<group>"; };
-		D717E1F38E8426C09DAFE22C /* SmartNote-iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "SmartNote-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D717E1F38E8426C09DAFE22C /* SmartNote.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmartNote.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D83AF0D81821E5183B981451 /* P2PSocialView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PSocialView.swift; sourceTree = "<group>"; };
 		D949F00B398A985384806C01 /* ThumbnailDataProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailDataProvider.swift; sourceTree = "<group>"; };
 		D97C1598821C59916941011F /* PomodoroView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PomodoroView_iOS.swift; sourceTree = "<group>"; };
@@ -422,7 +391,6 @@
 		E86787EC945E30323740B288 /* WishView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WishView.swift; sourceTree = "<group>"; };
 		E97DB823A3C82FD77A13D41B /* ContentView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView_iOS.swift; sourceTree = "<group>"; };
 		E9CE330413EDA25844A04531 /* HistoryArticleDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryArticleDetailView.swift; sourceTree = "<group>"; };
-		EAD7D999018EA29B67FCDF9B /* SmartNoteLiveActivity.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = SmartNoteLiveActivity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		EC14006B672BA2A9761B462A /* P2PModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = P2PModels.swift; sourceTree = "<group>"; };
 		EF23E5593474A5D5CA3A8148 /* HabitTrackerView_iOS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitTrackerView_iOS.swift; sourceTree = "<group>"; };
 		F04DC76BF76F1C0E1F48533C /* DocumentScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentScannerView.swift; sourceTree = "<group>"; };
@@ -483,6 +451,7 @@
 				661FA7BF3EE1337DADF93821 /* AIChatView_iOS.swift */,
 				07B0426554F7356EE5C8B27C /* AnniversaryView_iOS.swift */,
 				924BD09E3E23A303E328F265 /* AnswerBookView_iOS.swift */,
+				8600124E27899DE09EA964EE /* BackgroundImageView_iOS.swift */,
 				54C2A4363E2BFE9B9C9B328C /* CalculatorView_iOS.swift */,
 				E97DB823A3C82FD77A13D41B /* ContentView_iOS.swift */,
 				A2BC1CF23A834A64B186B837 /* DiaryListView_iOS.swift */,
@@ -508,7 +477,6 @@
 				2C7806B56B5D90A7A09677ED /* WhiteNoiseView_iOS.swift */,
 				943D8281192AEFE9B7948FD6 /* WrongQuestionView_iOS.swift */,
 				74C9133620434BFDE6A47F2B /* Components */,
-				58AC45F59086C08520A32D8C /* LiveActivity */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -570,11 +538,9 @@
 		39DA88EC3302CB5FA4F2D1E8 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				AF1810AA207DC8D49149146E /* BackgroundTaskService.swift */,
 				344B33C9D817F7D4158C1C98 /* DocumentScannerService_iOS.swift */,
 				91AE859556602E96C314773C /* FileScannerService_iOS.swift */,
 				A9F31DB812BF20A39570707C /* HapticFeedbackService.swift */,
-				A37DA471572CD81C7CE4B32D /* ICloudSyncService.swift */,
 				8820B77D08E72FF8CF277A79 /* KeychainService_iOS.swift */,
 				5DE445D650D1F5AB269AEABD /* NotificationService_iOS.swift */,
 				A4BF60E7861C54B701AC0E02 /* OCRService_iOS.swift */,
@@ -628,15 +594,6 @@
 			);
 			name = macOS;
 			path = Platforms/macOS;
-			sourceTree = "<group>";
-		};
-		58AC45F59086C08520A32D8C /* LiveActivity */ = {
-			isa = PBXGroup;
-			children = (
-				9D1E14A6F0650640B94C6389 /* SmartNoteLiveActivity.entitlements */,
-				1652016072D6DF3CBF9A2485 /* SmartNoteLiveActivity.swift */,
-			);
-			path = LiveActivity;
 			sourceTree = "<group>";
 		};
 		74C9133620434BFDE6A47F2B /* Components */ = {
@@ -722,9 +679,8 @@
 		DB91F87EFACDB75871C18F39 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				D717E1F38E8426C09DAFE22C /* SmartNote-iOS.app */,
+				D717E1F38E8426C09DAFE22C /* SmartNote.app */,
 				48DD289F04C084C67319D15A /* SmartNote.app */,
-				EAD7D999018EA29B67FCDF9B /* SmartNoteLiveActivity.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -829,23 +785,6 @@
 			productReference = 48DD289F04C084C67319D15A /* SmartNote.app */;
 			productType = "com.apple.product-type.application";
 		};
-		EC6FDAFF1B66F2D23455288C /* SmartNoteLiveActivity */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 6B2EF59ABEA665BD2173F570 /* Build configuration list for PBXNativeTarget "SmartNoteLiveActivity" */;
-			buildPhases = (
-				0A6776F39EDB20157A1BCE66 /* Sources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = SmartNoteLiveActivity;
-			packageProductDependencies = (
-			);
-			productName = SmartNoteLiveActivity;
-			productReference = EAD7D999018EA29B67FCDF9B /* SmartNoteLiveActivity.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
 		F3442E5B0F927D6B9CEC3691 /* SmartNote-iOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 95CE1475CFF297023D74D730 /* Build configuration list for PBXNativeTarget "SmartNote-iOS" */;
@@ -853,19 +792,17 @@
 				139ACE601486FDF4ABEF1FB6 /* Sources */,
 				9395B72F71834523802445C0 /* Resources */,
 				ADAA862A16B4B05C32AF87A3 /* Frameworks */,
-				4BB6BB5F27FDD748C0C7BBC8 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				81313148DA4884355C6AD2C5 /* PBXTargetDependency */,
 			);
 			name = "SmartNote-iOS";
 			packageProductDependencies = (
 				3E90CAED6BF0AF5DF0DF4F93 /* Markdown */,
 			);
 			productName = "SmartNote-iOS";
-			productReference = D717E1F38E8426C09DAFE22C /* SmartNote-iOS.app */;
+			productReference = D717E1F38E8426C09DAFE22C /* SmartNote.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -878,9 +815,6 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					C8D00250DE3F8808267908AE = {
-						ProvisioningStyle = Automatic;
-					};
-					EC6FDAFF1B66F2D23455288C = {
 						ProvisioningStyle = Automatic;
 					};
 					F3442E5B0F927D6B9CEC3691 = {
@@ -907,7 +841,6 @@
 			targets = (
 				C8D00250DE3F8808267908AE /* SmartNote */,
 				F3442E5B0F927D6B9CEC3691 /* SmartNote-iOS */,
-				EC6FDAFF1B66F2D23455288C /* SmartNoteLiveActivity */,
 			);
 		};
 /* End PBXProject section */
@@ -963,14 +896,6 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		0A6776F39EDB20157A1BCE66 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				382A7A458A5B842D7D5A178D /* SmartNoteLiveActivity.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		139ACE601486FDF4ABEF1FB6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -986,7 +911,7 @@
 				496E22354F99D61ECDD2E6B6 /* AnswerBookView_iOS.swift in Sources */,
 				9C365E806949B7A2170A017A /* AppState_iOS.swift in Sources */,
 				78A909B88C56FA7AC9FEAF06 /* AppTheme.swift in Sources */,
-				78713EE44983E42E47AC5AD8 /* BackgroundTaskService.swift in Sources */,
+				AE34F26EF2BBC426B9056B6B /* BackgroundImageView_iOS.swift in Sources */,
 				AA99E09B877579421B4103C3 /* BackupService.swift in Sources */,
 				CB892465DF7D8349DCCD2427 /* BlessingService.swift in Sources */,
 				FD47F1C76D19F882B6C82EB0 /* CalculatorEngine.swift in Sources */,
@@ -1018,7 +943,6 @@
 				6AD755E517362879FE3D6114 /* HistoryArticle.swift in Sources */,
 				3335CC98F896C42D363BC34C /* HistoryHomeView_iOS.swift in Sources */,
 				3291E0B7A0CF0100113CE1F7 /* HistoryService.swift in Sources */,
-				A0DB065258CAA315D2563ACB /* ICloudSyncService.swift in Sources */,
 				849816B6AAD24311BA594029 /* KeyPointsView_iOS.swift in Sources */,
 				C75D35543369391E4B43B6C4 /* KeychainService_iOS.swift in Sources */,
 				7BB1C7731BCD8C8E50B28896 /* KeywordExtractionService.swift in Sources */,
@@ -1049,7 +973,6 @@
 				AA7E2B70115F02CC9A619BDD /* ShortcutsProvider.swift in Sources */,
 				03F8BB3ECF5FFAD917E6E893 /* SmartGradingView_iOS.swift in Sources */,
 				A085D48E62BFF22A4281C045 /* SmartNoteApp_iOS.swift in Sources */,
-				07D68B8590DE25FC2DDB3346 /* SmartNoteLiveActivity.swift in Sources */,
 				925C7E52F1CBCF7CDA5E3DF5 /* SpeechService_iOS.swift in Sources */,
 				CEA7134846681CB347B6B684 /* SpotlightIndexer.swift in Sources */,
 				ABC1DC5BA4481C98CC67F813 /* StatisticsView_iOS.swift in Sources */,
@@ -1198,14 +1121,6 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
-/* Begin PBXTargetDependency section */
-		81313148DA4884355C6AD2C5 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = EC6FDAFF1B66F2D23455288C /* SmartNoteLiveActivity */;
-			targetProxy = 490FD120B2EFFF7EF57E3F19 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
-
 /* Begin XCBuildConfiguration section */
 		77E5C4D745BB95C7F803FBF3 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1216,9 +1131,10 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(CURRENT_PROJECT_VERSION)";
+				DEVELOPMENT_TEAM = UMY8393C2A;
 				ENABLE_BITCODE = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Platforms/iOS/Views/LiveActivity/Info.plist;
+				INFOPLIST_FILE = "";
 				INFOPLIST_KEY_CFBundleDevelopmentRegion = "zh-Hans";
 				INFOPLIST_KEY_CFBundleDisplayName = "智学笔记";
 				INFOPLIST_KEY_CFBundleExecutable = SmartNote;
@@ -1241,9 +1157,11 @@
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "智学笔记需要访问麦克风，用于语音笔记、语音转文字。";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "智学笔记需要访问相册，用于导入图片资料、设置背景图片。";
 				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "智学笔记需要访问提醒事项，以便将复习任务创建为提醒。";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "智学笔记需要语音识别权限，用于将语音笔记实时转换成文字。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_UIApplicationSupportsMultipleScenes = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_UISceneConfigurations_UIWindowSceneSessionRoleApplication_0_UISceneConfigurationName = "Default Configuration";
 				INFOPLIST_KEY_UIApplicationSceneManifest_UISceneConfigurations_UIWindowSceneSessionRoleApplication_0_UISceneDelegateClassName = "$(PRODUCT_MODULE_NAME).SceneDelegate";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = NO;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				"INFOPLIST_KEY_UISupportedInterfaceOrientations~ipad" = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -1330,9 +1248,10 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(CURRENT_PROJECT_VERSION)";
+				DEVELOPMENT_TEAM = UMY8393C2A;
 				ENABLE_BITCODE = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Platforms/iOS/Views/LiveActivity/Info.plist;
+				INFOPLIST_FILE = "";
 				INFOPLIST_KEY_CFBundleDevelopmentRegion = "zh-Hans";
 				INFOPLIST_KEY_CFBundleDisplayName = "智学笔记";
 				INFOPLIST_KEY_CFBundleExecutable = SmartNote;
@@ -1355,9 +1274,11 @@
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "智学笔记需要访问麦克风，用于语音笔记、语音转文字。";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "智学笔记需要访问相册，用于导入图片资料、设置背景图片。";
 				INFOPLIST_KEY_NSRemindersFullAccessUsageDescription = "智学笔记需要访问提醒事项，以便将复习任务创建为提醒。";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "智学笔记需要语音识别权限，用于将语音笔记实时转换成文字。";
 				INFOPLIST_KEY_UIApplicationSceneManifest_UIApplicationSupportsMultipleScenes = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_UISceneConfigurations_UIWindowSceneSessionRoleApplication_0_UISceneConfigurationName = "Default Configuration";
 				INFOPLIST_KEY_UIApplicationSceneManifest_UISceneConfigurations_UIWindowSceneSessionRoleApplication_0_UISceneDelegateClassName = "$(PRODUCT_MODULE_NAME).SceneDelegate";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIRequiresFullScreen = NO;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				"INFOPLIST_KEY_UISupportedInterfaceOrientations~ipad" = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -1385,6 +1306,7 @@
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
 				INFOPLIST_KEY_CFBundleDevelopmentRegion = "zh-Hans";
 				INFOPLIST_KEY_CFBundleDisplayName = "智学笔记";
 				INFOPLIST_KEY_CFBundleExecutable = SmartNote;
@@ -1412,26 +1334,6 @@
 				SDKROOT = macosx;
 			};
 			name = Debug;
-		};
-		A014FF445706F3F5B6A71B76 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = Platforms/iOS/Views/LiveActivity/SmartNoteLiveActivity.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(CURRENT_PROJECT_VERSION)";
-				INFOPLIST_FILE = Platforms/iOS/Views/LiveActivity/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = "$(MARKETING_VERSION)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.smartnote.ios.liveactivity;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
 		};
 		B302FF9B02A5E993117D9FC0 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1444,6 +1346,7 @@
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "";
 				INFOPLIST_KEY_CFBundleDevelopmentRegion = "zh-Hans";
 				INFOPLIST_KEY_CFBundleDisplayName = "智学笔记";
 				INFOPLIST_KEY_CFBundleExecutable = SmartNote;
@@ -1471,26 +1374,6 @@
 				SDKROOT = macosx;
 			};
 			name = Release;
-		};
-		C0BB6C771CC236350A5C9A6B /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = Platforms/iOS/Views/LiveActivity/SmartNoteLiveActivity.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(CURRENT_PROJECT_VERSION)";
-				INFOPLIST_FILE = Platforms/iOS/Views/LiveActivity/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = "$(MARKETING_VERSION)";
-				PRODUCT_BUNDLE_IDENTIFIER = com.skyc8266.smartnote.ios.liveactivity;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
 		};
 		EA80C529DCAA694AE907B1C9 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -1563,15 +1446,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		6B2EF59ABEA665BD2173F570 /* Build configuration list for PBXNativeTarget "SmartNoteLiveActivity" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				C0BB6C771CC236350A5C9A6B /* Debug */,
-				A014FF445706F3F5B6A71B76 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
 		95CE1475CFF297023D74D730 /* Build configuration list for PBXNativeTarget "SmartNote-iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

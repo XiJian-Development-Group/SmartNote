@@ -1151,11 +1151,6 @@ class AppSettings: ObservableObject, Codable, Equatable {
     @Published var updateRepoName: String = "SmartNote"
     @Published var updateCheckIntervalHours: Int = 24
 
-    /// 是否启用 iCloud 同步。
-    ///
-    /// 目前只有 iOS 目标使用该开关（其界面在“设置 → iCloud 同步”里暴露）。
-    /// macOS 不读写它，默认 `false`，因此既有 settings.json 也不受影响。
-    @Published var iCloudSyncEnabled: Bool = false
     @Published var lastUpdateCheckDate: Date? = nil
     @Published var lastFoundReleaseName: String? = nil
     @Published var p2pBackgroundEnabled: Bool = false
@@ -1208,8 +1203,7 @@ class AppSettings: ObservableObject, Codable, Equatable {
         lhs.backgroundImageActiveName == rhs.backgroundImageActiveName &&
         lhs.backgroundBlurEnabled == rhs.backgroundBlurEnabled &&
         lhs.backgroundBlurRadius == rhs.backgroundBlurRadius &&
-        lhs.backgroundOpacity == rhs.backgroundOpacity &&
-        lhs.iCloudSyncEnabled == rhs.iCloudSyncEnabled
+        lhs.backgroundOpacity == rhs.backgroundOpacity
     }
     
     enum DarkModePreference: String, Codable, Equatable, CaseIterable, Identifiable {
@@ -1288,7 +1282,6 @@ class AppSettings: ObservableObject, Codable, Equatable {
         case updateRepoOwner
         case updateRepoName
         case updateCheckIntervalHours
-        case iCloudSyncEnabled
         case lastUpdateCheckDate
         case lastFoundReleaseName
         case p2pBackgroundEnabled
@@ -1355,7 +1348,6 @@ class AppSettings: ObservableObject, Codable, Equatable {
         updateRepoOwner = try container.decodeIfPresent(String.self, forKey: .updateRepoOwner) ?? "XiJian-Development-Group"
         updateRepoName = try container.decodeIfPresent(String.self, forKey: .updateRepoName) ?? "SmartNote"
         updateCheckIntervalHours = try container.decodeIfPresent(Int.self, forKey: .updateCheckIntervalHours) ?? 24
-        iCloudSyncEnabled = try container.decodeIfPresent(Bool.self, forKey: .iCloudSyncEnabled) ?? false
         lastUpdateCheckDate = try container.decodeIfPresent(Date.self, forKey: .lastUpdateCheckDate)
         lastFoundReleaseName = try container.decodeIfPresent(String.self, forKey: .lastFoundReleaseName)
         p2pBackgroundEnabled = try container.decodeIfPresent(Bool.self, forKey: .p2pBackgroundEnabled) ?? false
@@ -1399,7 +1391,6 @@ class AppSettings: ObservableObject, Codable, Equatable {
         try container.encode(updateRepoOwner, forKey: .updateRepoOwner)
         try container.encode(updateRepoName, forKey: .updateRepoName)
         try container.encode(updateCheckIntervalHours, forKey: .updateCheckIntervalHours)
-        try container.encode(iCloudSyncEnabled, forKey: .iCloudSyncEnabled)
         try container.encodeIfPresent(lastUpdateCheckDate, forKey: .lastUpdateCheckDate)
         try container.encodeIfPresent(lastFoundReleaseName, forKey: .lastFoundReleaseName)
         try container.encode(p2pBackgroundEnabled, forKey: .p2pBackgroundEnabled)

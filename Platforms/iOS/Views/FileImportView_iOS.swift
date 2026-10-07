@@ -96,18 +96,17 @@ struct FileImportView_iOS: View {
                 switch result {
                 case .success(let urls):
                     guard !urls.isEmpty else { return }
-                    // 文档选择器返回的是安全作用域 URL，必须先取得访问权。
-                    let accessed = urls.filter { url in
-                        guard url.startAccessingSecurityScopedResource() else { return false }
-                        defer { url.stopAccessingSecurityScopedResource() }
-                        return true
-                    }
-                    guard !accessed.isEmpty else {
-                        appState.errorMessage = "没有可访问的文件，请在系统文件中重新选择。"
-                        appState.showError = true
-                        return
-                    }
-                    appState.importFiles(accessed, storageMode: storageMode)
+                    // 直接把 URL 交给 `importFiles`，**不要**在这里碰安全作用域。
+                    //
+                    // 这里原先用 `urls.filter { ... startAccessing...
+                    // defer { stopAccessing... } }` 先「试一下能不能访问」，
+                    // 但 `defer` 在 `filter` 的闭包返回时就执行了——也就是说
+                    // 访问权在 `importFiles` 被调用**之前**就已经释放，
+                    // 随后 `copyItem` 必然失败，表现为「导入没反应 / 全部失败」。
+                    //
+                    // 正确的位置是真正读文件的地方：`FileScannerService_iOS.processFile`
+                    // 里用 `defer` 包住整个处理过程（与 macOS 版一致）。
+                    appState.importFiles(urls, storageMode: storageMode)
                     didImport = true
                 case .failure(let error):
                     appState.errorMessage = "选择文件失败：\(error.localizedDescription)"

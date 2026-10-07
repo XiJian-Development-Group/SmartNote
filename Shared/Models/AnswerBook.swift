@@ -2,14 +2,14 @@ import Foundation
 
 /// 答案之书里一条答案的性质。
 ///
-/// 常规答案是绝大多数；`lost` 与 `glitch` 是搬迁前遗留的彩蛋条目，
-/// 抽取概率极低，命中时会用不同视觉呈现，不会被误当成 bug。
+/// 绝大多数是常规答案；另外两种是稀有条目，抽取概率极低，
+/// 命中时会用不同视觉呈现，不会被误当成 bug。
 enum AnswerBookKind: String, Codable, Hashable {
     /// 常规答案。
     case normal
-    /// 「迷失页」：原数据 target 为 `Lost / Dark` 的条目。
+    /// 稀有答案之一。
     case lost
-    /// 「书页故障」：原数据 target 为 `SystemError=404` 的报错条目。
+    /// 稀有答案之一。
     case glitch
 }
 
